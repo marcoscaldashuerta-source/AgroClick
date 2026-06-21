@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AgroClick</title>
+</head>
+<body>
+
+<h1>AgroClick</h1>
+
+<p>Conectando productores y compradores de Arica.</p>
+
+{% if user.is_authenticated %}
+    <h3>Bienvenido {{ user.username }}</h3>
+
+    <p>
+        <a href="/accounts/logout/">
+            Cerrar sesión
+        </a>
+    </p>
+
+{% else %}
+
+    <p>
+        <a href="/accounts/login/">
+            Iniciar sesión
+        </a>
+    </p>
+
+    <p>
+        <a href="/registro/">
+            Registrarse
+        </a>
+    </p>
+
+{% endif %}
+
+</body>
+</html>
