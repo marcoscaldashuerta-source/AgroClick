@@ -1,4 +1,5 @@
 from django import forms
+from .models import Producto
 from django.contrib.auth.models import User
 
 class RegistroForm(forms.Form):
@@ -17,3 +18,25 @@ class RegistroForm(forms.Form):
     rol = forms.ChoiceField(
         choices=ROL_CHOICES
     )
+
+class ProductoForm(forms.ModelForm):
+
+    CATEGORIA_CHOICES = [
+        ('Fruta', 'Fruta'),
+        ('Verdura', 'Verdura'),
+    ]
+
+    categoria = forms.ChoiceField(choices=CATEGORIA_CHOICES)
+
+    class Meta:
+        model = Producto
+
+        fields = [
+            'nombre',
+            'categoria',
+            'descripcion',
+            'precio',
+            'unidad_venta',
+            'stock',
+            'imagen'
+        ]

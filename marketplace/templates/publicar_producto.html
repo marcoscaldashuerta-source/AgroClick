@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+<head>
+    <title>Publicar Producto - AgroClick</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .back-link {
+            color: #4CAF50;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        input[type="file"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: Arial, sans-serif;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        button, .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-publish {
+            background-color: #4CAF50;
+            color: white;
+            flex: 1;
+        }
+        .btn-publish:hover {
+            background-color: #45a049;
+        }
+        .btn-draft {
+            background-color: #2196F3;
+            color: white;
+            flex: 1;
+        }
+        .btn-draft:hover {
+            background-color: #0b7dda;
+        }
+        .btn-cancel {
+            background-color: #f44336;
+            color: white;
+            flex: 1;
+        }
+        .btn-cancel:hover {
+            background-color: #da190b;
+        }
+        .info-box {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+        }
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #555;
+        }
+        .info-box li {
+            margin: 5px 0;
+        }
+        .field-required {
+            color: #f44336;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .errorlist {
+            color: #f44336;
+            list-style: none;
+            padding: 0;
+            margin: 5px 0 0 0;
+        }
+        .errorlist li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
+        
+        <h1>Publicar nuevo producto</h1>
+
+        <div class="info-box">
+            <h3>Consejos para una buena publicación:</h3>
+            <ul>
+                <li>Usa un nombre descriptivo y claro para el producto</li>
+                <li>Describe detalladamente características, uso y beneficios</li>
+                <li>Incluye una foto de buena calidad</li>
+                <li>Asegúrate que el precio y stock sean correctos</li>
+                <li>Puedes guardar como borrador y publicar después</li>
+            </ul>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.nombre.id_for_label }}">
+                    Nombre del producto <span class="field-required">*</span>
+                </label>
+                {{ form.nombre }}
+                {{ form.nombre.errors }}
+                <div class="help-text">Nombre descriptivo del producto (máx. 100 caracteres)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.categoria.id_for_label }}">
+                    Categoría <span class="field-required">*</span>
+                </label>
+                {{ form.categoria }}
+                {{ form.categoria.errors }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.descripcion.id_for_label }}">
+                    Descripción <span class="field-required">*</span>
+                </label>
+                {{ form.descripcion }}
+                {{ form.descripcion.errors }}
+                <div class="help-text">Describe detalladamente tu producto, características, uso, etc.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.precio.id_for_label }}">
+                    Precio ($) <span class="field-required">*</span>
+                </label>
+                {{ form.precio }}
+                {{ form.precio.errors }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.unidad_venta.id_for_label }}">
+                    Unidad de venta <span class="field-required">*</span>
+                </label>
+                {{ form.unidad_venta }}
+                {{ form.unidad_venta.errors }}
+                <div class="help-text">Ej: kg, litro, unidad, docena, etc.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.stock.id_for_label }}">
+                    Cantidad en stock <span class="field-required">*</span>
+                </label>
+                {{ form.stock }}
+                {{ form.stock.errors }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.imagen.id_for_label }}">
+                    Foto del producto
+                </label>
+                {{ form.imagen }}
+                {{ form.imagen.errors }}
+                <div class="help-text">Selecciona una imagen. Los formatos soportados son: JPG, PNG, GIF</div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" name="publicar" class="btn-publish">Publicar ahora</button>
+                <button type="submit" name="guardar_borrador" class="btn-draft">Guardar borrador</button>
+                <a href="{% url 'inicio' %}" class="btn btn-cancel">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <script src="{% static 'marketplace/js/app.js' %}"></script>
+</body>
+</html>

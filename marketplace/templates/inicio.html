@@ -1,38 +1,647 @@
 <!DOCTYPE html>
+
 <html>
+{% load static %}
 <head>
-    <title>AgroClick</title>
+    <title>AgroClick - Marketplace Agrícola</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .navbar {
+            background-color: #4CAF50;
+            padding: 15px 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .nav-links a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+        .nav-links span {
+            color: white;
+            font-weight: 600;
+            margin-right: 18px;
+            letter-spacing: 0.01em;
+        }
+        .nav-links button {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .nav-links button:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px 32px;
+        }
+        .welcome p {
+            margin-bottom: 12px;
+        }
+        .auth-buttons {
+            background-color: white;
+            padding: 24px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .auth-buttons h2 {
+            margin-bottom: 12px;
+        }
+        .auth-buttons p {
+            margin: 0 0 20px;
+            color: #4b5563;
+            line-height: 1.7;
+        }
+        .auth-buttons a {
+            padding: 12px 28px;
+            margin: 0 8px;
+            display: inline-block;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .action-buttons {
+            gap: 14px;
+        }
+        .product-card {
+            min-height: 420px;
+        }
+        .product-description {
+            max-height: 80px;
+        }
+        .welcome {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .welcome h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .seller-actions {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .seller-actions h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+        .btn-secondary {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #0b7dda;
+        }
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        .admin-section {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #FF9800;
+        }
+        .admin-section h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        /* Estilos para búsqueda */
+        .search-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .search-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .btn-search {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-search:hover {
+            background-color: #45a049;
+        }
+        .btn-clear {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-clear:hover {
+            background-color: #da190b;
+        }
+        .active-filters {
+            background-color: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .active-filters p {
+            margin: 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        .filter-tag {
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 3px;
+            font-size: 12px;
+        }
+        .products-section {
+            margin-top: 30px;
+        }
+        .products-header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .products-header h2 {
+            color: #333;
+            margin: 0;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .product-image {
+            width: 100%;
+            height: 250px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .product-category {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .product-price {
+            font-size: 24px;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .product-details {
+            color: #555;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+        .product-description {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.4;
+            margin: 10px 0;
+            max-height: 60px;
+            overflow: hidden;
+        }
+        .no-products {
+            background-color: white;
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .no-products h2 {
+            color: #999;
+            margin-bottom: 10px;
+        }
+        .no-products p {
+            color: #bbb;
+            margin: 10px 0;
+        }
+        .pending-vendors {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .pending-vendors ul {
+            list-style: none;
+            margin: 10px 0;
+        }
+        .pending-vendors li {
+            padding: 8px;
+            background-color: #f9f9f9;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .not-approved {
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #f44336;
+        }
+        .not-approved h3 {
+            color: #c62828;
+            margin-bottom: 10px;
+        }
+        .auth-buttons {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .auth-buttons h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .auth-buttons a {
+            padding: 12px 30px;
+            margin: 0 10px;
+            display: inline-block;
+        }
+        @media (max-width: 768px) {
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+            .products-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<h1>AgroClick</h1>
+<div class="navbar page-bg">
+    <div class="brand">
+        <img src="/static/marketplace/img/asoagro-fb.jpg" alt="ASOAGRO logo" />
+        <div class="site-title">AgroClick</div>
+    </div>
+    <div class="nav-links">
+        {% if user.is_authenticated %}
+            <span>{{ user.username }}</span>
+            <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+        {% else %}
+            <a href="/accounts/login/">Iniciar sesión</a>
+            <a href="/registro/">Registrarse</a>
+        {% endif %}
+    </div>
+</div>
 
-<p>Conectando productores y compradores de Arica.</p>
+<div class="container">
+    <div class="welcome">
+        <p style="color: #666; font-size: 14px;">Conectando productores y compradores de Arica</p>
+        {% if user.is_authenticated %}
+            <h2>Bienvenido, {{ user.username }}! 👋</h2>
+        {% endif %}
+    </div>
 
-{% if user.is_authenticated %}
-    <h3>Bienvenido {{ user.username }}</h3>
+    {% if is_admin %}
+            <div class="admin-section">
+            <h3>Panel de administrador</h3>
+            {% if pending_vendedores %}
+                <div class="pending-vendors">
+                    <p><strong>Vendedores pendientes de aprobación:</strong></p>
+                    <ul>
+                        {% for perfil in pending_vendedores %}
+                            <li>{{ perfil.usuario.username }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{% url 'aprobar_vendedores' %}" class="btn btn-primary">Ir a aprobaciones</a>
+                </div>
+            {% else %}
+                <p>✓ No hay vendedores pendientes de aprobación</p>
+            {% endif %}
+        </div>
+    {% endif %}
 
-    <p>
-        <a href="/accounts/logout/">
-            Cerrar sesión
-        </a>
-    </p>
+    {% if is_vendedor %}
+        {% if is_aprobado %}
+            <div class="seller-actions">
+                <h3>Acciones de vendedor</h3>
+                <div class="action-buttons">
+                    <a href="{% url 'publicar_producto' %}" class="btn btn-primary">+ Publicar nuevo producto</a>
+                    <a href="{% url 'mis_productos' %}" class="btn btn-secondary">Ver mis productos</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="not-approved">
+                <h3>Tu cuenta está en proceso de revisión</h3>
+                <p>Tu solicitud como vendedor fue recibida. Un administrador revisará tu perfil pronto.</p>
+                <p><strong>Estado:</strong> Pendiente de aprobación</p>
+            </div>
+        {% endif %}
+    {% endif %}
 
-{% else %}
+    {% if not user.is_authenticated %}
+            <div class="auth-buttons">
+                <h2>Únete a AgroClick</h2>
+            <p>Crea una cuenta para comprar o vender productos agrícolas</p>
+            <a href="/accounts/login/" class="btn btn-primary">Iniciar sesión</a>
+            <a href="/registro/" class="btn btn-secondary">Crear cuenta</a>
+        </div>
+    {% endif %}
 
-    <p>
-        <a href="/accounts/login/">
-            Iniciar sesión
-        </a>
-    </p>
+    <!-- SECCIÓN DE BÚSQUEDA Y FILTROS -->
+    <div class="search-section">
+        <h3>Buscar productos</h3>
+        
+        <form method="GET" class="search-form">
+            <!-- Fila 1: Búsqueda por nombre -->
+            <div class="form-group">
+                <label for="busqueda">Buscar por nombre o descripción:</label>
+                <input 
+                    type="text" 
+                    id="busqueda" 
+                    name="busqueda" 
+                    value="{{ busqueda }}"
+                    placeholder="Ej: Tomate, Lechuga, Cebolla..."
+                />
+            </div>
 
-    <p>
-        <a href="/registro/">
-            Registrarse
-        </a>
-    </p>
+            <!-- Fila 2: Categoría, Precio mín, Precio máx, Ordenamiento -->
+            <div class="search-row">
+                <div class="form-group">
+                    <label for="categoria">Categoría:</label>
+                    <select id="categoria" name="categoria">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias %}
+                            <option value="{{ cat }}" {% if categoria == cat %}selected{% endif %}>
+                                {{ cat }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-{% endif %}
+                <div class="form-group">
+                    <label for="precio_min">Precio mínimo ($):</label>
+                    <input 
+                        type="number" 
+                        id="precio_min" 
+                        name="precio_min" 
+                        value="{{ precio_min }}"
+                        placeholder="0"
+                        step="100"
+                        min="0"
+                    />
+                </div>
 
+                <div class="form-group">
+                    <label for="precio_max">Precio máximo ($):</label>
+                    <input 
+                        type="number" 
+                        id="precio_max" 
+                        name="precio_max" 
+                        value="{{ precio_max }}"
+                        placeholder="100000"
+                        step="100"
+                        min="0"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="orden">Ordenar por:</label>
+                    <select id="orden" name="orden">
+                        <option value="-fecha_creacion" {% if orden == '-fecha_creacion' %}selected{% endif %}>
+                            Más recientes primero
+                        </option>
+                        <option value="fecha_creacion" {% if orden == 'fecha_creacion' %}selected{% endif %}>
+                            Más antiguos primero
+                        </option>
+                        <option value="precio_asc" {% if orden == 'precio_asc' %}selected{% endif %}>
+                            Precio: Menor a Mayor
+                        </option>
+                        <option value="precio_desc" {% if orden == 'precio_desc' %}selected{% endif %}>
+                            Precio: Mayor a Menor
+                        </option>
+                        <option value="nombre_asc" {% if orden == 'nombre_asc' %}selected{% endif %}>
+                            Nombre: A-Z
+                        </option>
+                        <option value="nombre_desc" {% if orden == 'nombre_desc' %}selected{% endif %}>
+                            Nombre: Z-A
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="search-buttons">
+                <button type="submit" class="btn-search">Buscar</button>
+                <a href="{% url 'inicio' %}" class="btn-clear">Limpiar filtros</a>
+            </div>
+        </form>
+
+        <!-- Mostrar filtros activos -->
+        {% if tiene_filtros %}
+            <div class="active-filters">
+                <p><strong>Filtros activos:</strong>
+                    {% if busqueda %}<span class="filter-tag">{{ busqueda }}</span>{% endif %}
+                    {% if categoria %}<span class="filter-tag">{{ categoria }}</span>{% endif %}
+                    {% if precio_min %}<span class="filter-tag">💰 Mín: ${{ precio_min }}</span>{% endif %}
+                    {% if precio_max %}<span class="filter-tag">💰 Máx: ${{ precio_max }}</span>{% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- SECCIÓN DE PRODUCTOS -->
+    <div class="products-section">
+        {% if productos %}
+            <div class="products-header">
+                <h2>Productos disponibles ({{ productos.count }})</h2>
+            </div>
+            <div class="product-grid">
+            {% for producto in productos %}
+                <div class="product-card">
+                    {% if producto.imagen %}
+                        <div class="product-image">
+                            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+                        </div>
+                    {% else %}
+                        <div class="product-image" style="background-color: #e0e0e0;">
+                            <span style="color: #999;">Sin imagen</span>
+                        </div>
+                    {% endif %}
+                    {% if producto.is_new %}
+                        <div class="badge-new">Nuevo</div>
+                    {% endif %}
+                    <div class="card-actions">
+                        <button class="btn-add" data-name="{{ producto.nombre }}">Añadir</button>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category">{{ producto.categoria }}</div>
+                        <div class="product-name">{{ producto.nombre }}</div>
+                        <div class="product-price">${{ producto.precio }} / {{ producto.unidad_venta }}</div>
+                        <div class="product-details">
+                            <strong>Stock:</strong> {{ producto.stock }} disponibles
+                        </div>
+                        <div class="product-description">
+                            {{ producto.descripcion }}
+                        </div>
+                        <div style="margin-top: 10px; color: #999; font-size: 12px;">
+                            Vendedor: <strong>{{ producto.vendedor.username }}</strong>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+                    <div class="no-products">
+                {% if tiene_filtros %}
+                    <h2>No se encontraron productos</h2>
+                    <p>No hay productos que coincidan con los filtros seleccionados.</p>
+                    <p>Intenta con otros términos de búsqueda o filtros diferentes.</p>
+                    <br>
+                    <a href="{% url 'inicio' %}" class="btn btn-primary">Ver todos los productos</a>
+                {% else %}
+                    <h2>Sin productos disponibles</h2>
+                    <p>Aún no hay productos publicados. Vuelve más tarde.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+    <script src="{% static 'marketplace/js/app.js' %}"></script>
 </body>
 </html>
