@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirmar eliminación - AgroClick</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .back-link {
+            color: #4CAF50;
+            text-decoration: none;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 2px solid #f44336;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .warning-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-top: 0;
+        }
+        h2 {
+            color: #f44336;
+            text-align: center;
+        }
+        .product-info {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .product-info h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .info-item {
+            margin: 5px 0;
+            color: #555;
+        }
+        .description {
+            color: #555;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-delete:hover {
+            background-color: #da190b;
+        }
+        .btn-cancel {
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-cancel:hover {
+            background-color: #45a049;
+        }
+        .consequences {
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #f44336;
+        }
+        .consequences h4 {
+            margin: 0 0 10px 0;
+            color: #c62828;
+        }
+        .consequences ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #555;
+        }
+        .consequences li {
+            margin: 5px 0;
+        }
+        .checkbox-group {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            cursor: pointer;
+            color: #555;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .confirm-button {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .confirm-button:not(:disabled) {
+            opacity: 1;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'mis_productos' %}" class="back-link">← Volver a mis productos</a>
+        
+        <h1>⚠️ Confirmar Eliminación</h1>
+
+        <div class="warning-box">
+            <div class="warning-icon">🚨</div>
+            <h2>¿Estás seguro?</h2>
+            <p>Esta es una acción permanente que no se puede deshacer.</p>
+        </div>
+
+        <div class="product-info">
+            <h3>{{ producto.nombre }}</h3>
+            <div class="info-item"><strong>Categoría:</strong> {{ producto.categoria }}</div>
+            <div class="info-item"><strong>Precio:</strong> ${{ producto.precio }}</div>
+            <div class="info-item"><strong>Stock actual:</strong> {{ producto.stock }}</div>
+        </div>
+
+        <div class="consequences">
+            <h4>⚠️ Consecuencias de eliminar este producto:</h4>
+            <ul>
+                <li>El producto será eliminado permanentemente de la base de datos</li>
+                <li>Los compradores no podrán verlo ni comprarlo</li>
+                <li>Si hay ofertas activas, serán canceladas</li>
+                <li>No podrás recuperar esta información después</li>
+                <li>El historial de ventas asociado se mantendrá para registros</li>
+            </ul>
+        </div>
+
+        <p class="description">
+            Si lo que deseas es simplemente dejar de vender temporalmente este producto, 
+            <strong>mejor usa la opción "Pausar publicación"</strong>, que te permite reactivarlo después sin perder información.
+        </p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="confirmar_checkbox" onchange="toggleButton()">
+                    Entiendo que esto eliminará permanentemente el producto y sus datos
+                </label>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-delete confirm-button" id="delete-button" disabled name="confirmar_eliminar" value="si">
+                    🗑️ Eliminar permanentemente
+                </button>
+                <a href="{% url 'mis_productos' %}" class="btn-cancel">✕ Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function toggleButton() {
+            const checkbox = document.getElementById('confirmar_checkbox');
+            const button = document.getElementById('delete-button');
+            button.disabled = !checkbox.checked;
+        }
+    </script>
+</body>
+</html>
