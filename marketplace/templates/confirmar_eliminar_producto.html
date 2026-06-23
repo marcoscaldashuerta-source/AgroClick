@@ -34,8 +34,17 @@
             text-align: center;
         }
         .warning-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
+            width:64px;
+            height:64px;
+            border-radius:50%;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            background:#f44336;
+            color:#fff;
+            font-weight:800;
+            margin-bottom:15px;
+            font-size:28px;
         }
         h1 {
             color: #333;
@@ -151,10 +160,10 @@
     <div class="container">
         <a href="{% url 'mis_productos' %}" class="back-link">← Volver a mis productos</a>
         
-        <h1>⚠️ Confirmar Eliminación</h1>
+        <h1>Confirmar eliminación</h1>
 
         <div class="warning-box">
-            <div class="warning-icon">🚨</div>
+            <div class="warning-icon">!</div>
             <h2>¿Estás seguro?</h2>
             <p>Esta es una acción permanente que no se puede deshacer.</p>
         </div>
@@ -167,7 +176,7 @@
         </div>
 
         <div class="consequences">
-            <h4>⚠️ Consecuencias de eliminar este producto:</h4>
+            <h4>Consecuencias de eliminar este producto:</h4>
             <ul>
                 <li>El producto será eliminado permanentemente de la base de datos</li>
                 <li>Los compradores no podrán verlo ni comprarlo</li>
@@ -194,9 +203,9 @@
 
             <div class="button-group">
                 <button type="submit" class="btn-delete confirm-button" id="delete-button" disabled name="confirmar_eliminar" value="si">
-                    🗑️ Eliminar permanentemente
+                    Eliminar permanentemente
                 </button>
-                <a href="{% url 'mis_productos' %}" class="btn-cancel">✕ Cancelar</a>
+                <a href="{% url 'mis_productos' %}" class="btn-cancel">Cancelar</a>
             </div>
         </form>
     </div>

@@ -1,24 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+{% load static %}
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login AgroClick</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
+    <style>
+      /* small local overrides kept for card look */
+      .page{width:min(100%,440px);background:#fff;border-radius:16px;padding:28px;margin:24px auto}
+      .page h1{color:var(--brand-green);margin:0 0 12px}
+      .page p.intro{color:var(--muted);margin:0 0 18px}
+    </style>
+    
 </head>
 <body>
+    <section class="page card">
+        <h1>Iniciar sesión</h1>
+        <p class="intro">Accede a tu cuenta para comprar frutas y verduras frescas, o para publicar tus productos en AgroClick.</p>
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="errorlist">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
 
-<h1>Iniciar Sesión</h1>
+            <div class="form-group">
+                <label for="id_username">Usuario</label>
+                <div class="input-with-icon">
+                    <input type="text" name="username" id="id_username" placeholder="usuario" required autofocus class="gc-input">
+                </div>
+                {% if form.username.errors %}
+                    <ul class="errorlist">
+                        {% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+            <div class="form-group">
+                <label for="id_password">Contraseña</label>
+                <div class="input-with-icon">
+                    <input type="password" name="password" id="id_password" placeholder="contraseña" required class="gc-input">
+                    <button type="button" class="password-toggle" aria-label="Mostrar contraseña">Mostrar</button>
+                </div>
+                {% if form.password.errors %}
+                    <ul class="errorlist">
+                        {% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
 
-    <button type="submit">
-        Entrar
-    </button>
-</form>
+            <div class="form-group">
+                <button type="submit" class="btn-primary">Entrar</button>
+            </div>
+        </form>
+        <p class="signup-text">¿Aún no tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a> como comprador o vendedor.</p>
+    </section>
 
-<p>
-    ¿Aún no tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a> como comprador o vendedor.
-</p>
-
+    <script src="{% static 'marketplace/js/app.js' %}"></script>
 </body>
 </html>

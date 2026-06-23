@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
+{% load static %}
 <head>
     <title>Publicar Producto - AgroClick</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -152,7 +154,7 @@
         <h1>Publicar nuevo producto</h1>
 
         <div class="info-box">
-            <h3>💡 Consejos para una buena publicación:</h3>
+            <h3>Consejos para una buena publicación:</h3>
             <ul>
                 <li>Usa un nombre descriptivo y claro para el producto</li>
                 <li>Describe detalladamente características, uso y beneficios</li>
@@ -217,20 +219,30 @@
             </div>
 
             <div class="form-group">
-                <label for="{{ form.imagen.id_for_label }}">
-                    Foto del producto
-                </label>
-                {{ form.imagen }}
-                {{ form.imagen.errors }}
-                <div class="help-text">Selecciona una imagen. Los formatos soportados son: JPG, PNG, GIF</div>
+                <label for="images">Imágenes del producto</label>
+                <input type="file" name="images" id="images" multiple accept="image/*">
+                <div class="help-text">Selecciona hasta 5 imágenes. La primera puede usarse como imagen principal si no seleccionas una principal.</div>
+                <div class="help-text">Espacios disponibles: <span id="remaining">{{ remaining_slots }}</span></div>
             </div>
 
             <div class="button-group">
-                <button type="submit" name="publicar" class="btn-publish">📤 Publicar ahora</button>
-                <button type="submit" name="guardar_borrador" class="btn-draft">📝 Guardar borrador</button>
-                <a href="{% url 'inicio' %}" class="btn btn-cancel">✕ Cancelar</a>
+                <button type="submit" name="publicar" class="btn-publish">Publicar ahora</button>
+                <button type="submit" name="guardar_borrador" class="btn-draft">Guardar borrador</button>
+                <a href="{% url 'inicio' %}" class="btn btn-cancel">Cancelar</a>
             </div>
         </form>
     </div>
+    <script src="{% static 'marketplace/js/app.js' %}"></script>
+    <script>
+        (function(){
+            var input = document.getElementById('images');
+            var remaining = parseInt(document.getElementById('remaining').textContent || '5', 10);
+            input.addEventListener('change', function(e){
+                if (this.files && this.files.length > remaining){
+                    alert('Solo puedes seleccionar hasta ' + remaining + ' imágenes. Se tomarán las primeras ' + remaining + '.');
+                }
+            });
+        })();
+    </script>
 </body>
 </html>

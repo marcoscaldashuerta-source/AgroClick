@@ -40,6 +40,10 @@ class Producto(models.Model):
     stock = models.IntegerField()
 
     imagen = models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen2 = models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen3 = models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen4 = models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen5 = models.ImageField(upload_to='productos/', blank=True, null=True)
 
     borrador = models.BooleanField(default=True)
 
@@ -53,3 +57,15 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class ProductImage(models.Model):
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='imagenes')
+    imagen = models.ImageField(upload_to='productos/')
+    orden = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['orden', 'id']
+
+    def __str__(self):
+        return f"Imagen de {self.producto.nombre} ({self.id})"

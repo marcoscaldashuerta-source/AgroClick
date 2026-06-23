@@ -212,27 +212,44 @@
             </div>
 
             <div class="form-group">
-                <label for="{{ form.imagen.id_for_label }}">
-                    Foto del producto
-                </label>
-                
-                {% if producto.imagen %}
-                    <div class="current-image">
-                        <p><strong>Foto actual:</strong></p>
-                        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+                <label for="images">Agregar/actualizar imágenes</label>
+
+                {% if producto.imagenes.all %}
+                    <div class="current-gallery">
+                        {% for img in producto.imagenes.all %}
+                            <div style="display:inline-block;margin-right:8px;margin-bottom:8px;">
+                                <img src="{{ img.imagen.url }}" alt="{{ producto.nombre }}" style="width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #eee;" />
+                            </div>
+                        {% endfor %}
                     </div>
                 {% endif %}
-                
-                {{ form.imagen }}
-                {{ form.imagen.errors }}
-                <div class="help-text">Selecciona una imagen para cambiar la foto actual. Los formatos soportados son: JPG, PNG, GIF</div>
+
+                <input type="file" name="images" id="images" multiple accept="image/*">
+                <div class="help-text">Selecciona imágenes para añadir a la galería. La primera subida se usará como imagen principal si aún no existe.</div>
+                <div class="help-text">Espacios disponibles: <span id="remaining">{{ remaining_slots }}</span></div>
             </div>
 
             <div class="button-group">
                 <button type="submit" class="btn-submit">💾 Guardar cambios</button>
-                <a href="{% url 'mis_productos' %}" class="btn-cancel" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">✕ Cancelar</a>
+                <a href="{% url 'mis_productos' %}" class="btn-cancel" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Cancelar</a>
             </div>
         </form>
     </div>
 </body>
+<script>
+    (function(){
+        var input = document.getElementById('images');
+        var remaining = parseInt(document.getElementById('remaining').textContent || '0', 10);
+        input.addEventListener('change', function(e){
+            if (remaining <= 0){
+                alert('Ya llegaste al límite de imágenes permitidas para este producto. Elige antes eliminar alguna.');
+                this.value = null;
+                return;
+            }
+            if (this.files && this.files.length > remaining){
+                alert('Solo puedes añadir hasta ' + remaining + ' imágenes. Se tomarán las primeras ' + remaining + '.');
+            }
+        });
+    })();
+</script>
 </html>

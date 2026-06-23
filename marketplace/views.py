@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
+from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .forms import RegistroForm, ProductoForm
 from .models import Perfil, Producto
+from django.utils import timezone
+from datetime import timedelta
 
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
@@ -83,6 +86,14 @@ def inicio(request):
     # Determinar si hay filtros activos
     tiene_filtros = bool(busqueda or categoria or precio_min or precio_max)
 
+    # Marcar productos nuevos (creados en los últimos 14 días)
+    now = timezone.now()
+    for p in productos:
+        try:
+            p.is_new = (now - p.fecha_creacion) <= timedelta(days=14)
+        except Exception:
+            p.is_new = False
+
     return render(request, 'inicio.html', {
         'productos': productos,
         'perfil': perfil,
@@ -145,6 +156,8 @@ def publicar_producto(request):
     if not perfil.aprobado:
         return redirect('/')
 
+    MAX_IMAGES = 5
+
     if request.method == 'POST':
 
         form = ProductoForm(request.POST, request.FILES)
@@ -161,6 +174,32 @@ def publicar_producto(request):
 
             producto.save()
 
+            # Handle multiple uploaded images from single input 'images'
+            images = request.FILES.getlist('images')
+            if images:
+                from .models import ProductImage
+                existing = producto.imagenes.count() + (1 if producto.imagen else 0)
+                remaining = MAX_IMAGES - existing
+                if remaining <= 0:
+                    messages.warning(request, f'Se alcanzó el límite de {MAX_IMAGES} imágenes por producto. No se añadieron imágenes adicionales.')
+                else:
+                    added = 0
+                    for f in images:
+                        if added >= remaining:
+                            break
+                        # set first available as main image if none
+                        if not producto.imagen:
+                            producto.imagen = f
+                            producto.save()
+                            added += 1
+                            continue
+                        ProductImage.objects.create(producto=producto, imagen=f, orden=added)
+                        added += 1
+                    if added < len(images):
+                        messages.warning(request, f'Se subieron {added} imágenes; el resto fueron ignoradas para cumplir el límite de {MAX_IMAGES}.')
+                    else:
+                        messages.success(request, f'Se subieron {added} imágenes correctamente.')
+
             return redirect('/')
 
     else:
@@ -170,7 +209,7 @@ def publicar_producto(request):
     return render(
         request,
         'publicar_producto.html',
-        {'form': form}
+        {'form': form, 'remaining_slots': MAX_IMAGES}
     )
 
 
@@ -183,6 +222,18 @@ def aprobar_vendedores(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/')
 
+    perfil = None
+    is_vendedor = False
+    is_aprobado = False
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        perfil = None
+
+    if perfil:
+        is_vendedor = perfil.rol == 'vendedor'
+        is_aprobado = perfil.aprobado
+
     if request.method == 'POST':
         perfil_id = request.POST.get('perfil_id')
         perfil = get_object_or_404(Perfil, id=perfil_id, rol='vendedor')
@@ -191,7 +242,11 @@ def aprobar_vendedores(request):
         return redirect('aprobar_vendedores')
 
     pending_vendedores = Perfil.objects.filter(rol='vendedor', aprobado=False)
-    return render(request, 'aprobar_vendedores.html', {'pending_vendedores': pending_vendedores})
+    return render(request, 'aprobar_vendedores.html', {
+        'pending_vendedores': pending_vendedores,
+        'is_vendedor': is_vendedor,
+        'is_aprobado': is_aprobado,
+    })
 
 
 def mis_productos(request):
@@ -235,32 +290,53 @@ def editar_producto(request, producto_id):
     if producto.estado == 'eliminado':
         return redirect('mis_productos')
 
+    MAX_IMAGES = 5
+
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES, instance=producto)
 
         if form.is_valid():
-            # Si hay una nueva imagen, actualizarla
-            if 'imagen' in request.FILES:
-                producto.imagen = request.FILES['imagen']
-
-            # Actualizar el producto
-            producto.nombre = form.cleaned_data['nombre']
-            producto.categoria = form.cleaned_data['categoria']
-            producto.descripcion = form.cleaned_data['descripcion']
-            producto.precio = form.cleaned_data['precio']
-            producto.unidad_venta = form.cleaned_data['unidad_venta']
-            producto.stock = form.cleaned_data['stock']
-
+            producto = form.save(commit=False)
+            producto.vendedor = request.user
             producto.save()
+
+            # Handle added images from single multiple input 'images' on edit
+            images = request.FILES.getlist('images')
+            if images:
+                from .models import ProductImage
+                existing = producto.imagenes.count() + (1 if producto.imagen else 0)
+                remaining = MAX_IMAGES - existing
+                if remaining <= 0:
+                    messages.warning(request, f'Se alcanzó el límite de {MAX_IMAGES} imágenes por producto. No se añadieron imágenes adicionales.')
+                else:
+                    added = 0
+                    for f in images:
+                        if added >= remaining:
+                            break
+                        if not producto.imagen:
+                            producto.imagen = f
+                            producto.save()
+                            added += 1
+                            continue
+                        ProductImage.objects.create(producto=producto, imagen=f, orden=added)
+                        added += 1
+                    if added < len(images):
+                        messages.warning(request, f'Se subieron {added} imágenes; el resto fueron ignoradas para cumplir el límite de {MAX_IMAGES}.')
+                    else:
+                        messages.success(request, f'Se subieron {added} imágenes correctamente.')
 
             return redirect('mis_productos')
 
     else:
         form = ProductoForm(instance=producto)
 
+    existing = producto.imagenes.count() + (1 if producto.imagen else 0)
+    remaining_slots = max(0, MAX_IMAGES - existing)
+
     return render(request, 'editar_producto.html', {
         'form': form,
-        'producto': producto
+        'producto': producto,
+        'remaining_slots': remaining_slots
     })
 
 

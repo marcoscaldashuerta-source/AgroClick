@@ -160,7 +160,7 @@
         <h1>Mis Productos</h1>
         
         <div class="links">
-            <a href="{% url 'publicar_producto' %}">+ Publicar nuevo producto</a>
+            <a href="{% url 'publicar_producto' %}">Publicar nuevo producto</a>
         </div>
 
         {% if productos %}
@@ -195,32 +195,32 @@
                         <strong>Descripción:</strong> {{ producto.descripcion }}
                     </div>
 
-                    {% if producto.imagen %}
+                    {% if producto.imagenes.all %}
+                        <div class="product-image">
+                            <img src="{{ producto.imagenes.all.0.imagen.url }}" alt="{{ producto.nombre }}" />
+                        </div>
+                    {% elif producto.imagen %}
                         <div class="product-image">
                             <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
                         </div>
                     {% endif %}
 
                     <div class="product-actions">
-                        <a href="{% url 'editar_producto' producto.id %}" class="btn btn-edit">
-                            ✏️ Editar
-                        </a>
+                        <a href="{% url 'editar_producto' producto.id %}" class="btn btn-edit">Editar</a>
 
                         {% if producto.estado == 'activo' %}
                             <form method="POST" action="{% url 'pausar_producto' producto.id %}" class="form-pause">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-pause">⏸️ Pausar publicación</button>
+                                <button type="submit" class="btn btn-pause">Pausar publicación</button>
                             </form>
                         {% elif producto.estado == 'pausado' %}
                             <form method="POST" action="{% url 'pausar_producto' producto.id %}" class="form-pause">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-activate">▶️ Reactivar publicación</button>
+                                <button type="submit" class="btn btn-activate">Reactivar publicación</button>
                             </form>
                         {% endif %}
 
-                        <a href="{% url 'eliminar_producto' producto.id %}" class="btn btn-delete">
-                            🗑️ Eliminar
-                        </a>
+                        <a href="{% url 'eliminar_producto' producto.id %}" class="btn btn-delete">Eliminar</a>
                     </div>
                 </div>
             {% endfor %}
