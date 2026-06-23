@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aprobar Vendedores</title>
+</head>
+<body>
+<h1>Vendedores pendientes de aprobación</h1>
+
+{% if pending_vendedores %}
+    <form method="post">
+        {% csrf_token %}
+        <ul>
+            {% for perfil in pending_vendedores %}
+                <li>
+                    {{ perfil.usuario.username }}
+                    <button type="submit" name="perfil_id" value="{{ perfil.id }}">Aprobar</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </form>
+{% else %}
+    <p>No hay vendedores pendientes de aprobación.</p>
+{% endif %}
+
+<p>
+    <a href="{% url 'inicio' %}">Volver al inicio</a>
+</p>
+</body>
+</html>

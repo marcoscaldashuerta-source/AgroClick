@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login AgroClick</title>
+</head>
+<body>
+
+<h1>Iniciar Sesión</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit">
+        Entrar
+    </button>
+</form>
+
+<p>
+    ¿Aún no tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a> como comprador o vendedor.
+</p>
+
+</body>
+</html>
