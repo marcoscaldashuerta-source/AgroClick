@@ -90,18 +90,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
 
-Buenas prácticas y recomendaciones
----------------------------------
-- Añade y mantiene `requirements.txt` con `pip freeze`.
-- No uses el servidor de desarrollo en producción.
-- Hacer respaldo de la base de datos antes de operaciones destructivas.
-- Proteger las credenciales: no subir contraseñas al repositorio.
 
-Si quieres, puedo:
-- Generar un `requirements.txt` con dependencias actuales.
-- Cambiar o eliminar el usuario `admin` y crear otro con tus datos.
-- Crear un `README.md` en formato Markdown en lugar de `README.txt`.
--
 Cambios recientes (implementados)
 --------------------------------
 - Modelo de imágenes: se añadió el modelo `ProductImage` para permitir una galería normalizada de imágenes por producto (migración `0005_productimage` creada y aplicada).
@@ -151,14 +140,6 @@ Notas técnicas y ubicaciones clave
 - Plantillas principales modificadas: `marketplace/templates/publicar_producto.html`, `editar_producto.html`, `inicio.html`, `mis_productos.html`, `aprobar_vendedores.html`.
 - Estilos y scripts: `marketplace/static/marketplace/css/styles.css` y `marketplace/static/marketplace/js/app.js` (se añadieron validaciones JS simples en las plantillas para controlar el número de archivos seleccionados).
 
-Si quieres, puedo:
-- Eliminar los campos legados `imagen2..imagen5` de `Producto` y crear una migración para limpiar el esquema.
-- Añadir interfaz en `editar_producto` para eliminar imágenes de la galería.
-- Convertir este `README.txt` a `README.md` con capturas de pantalla y ejemplos de uso.
-
 Contacto
 --------
 - Proyecto local: carpeta `agroclick/` en tu workspace.
-
----
-Generado automáticamente — dime si quieres que lo transforme a `README.md` con formato Markdown y badge, o que incluya ejemplos de screenshots o pasos de despliegue en producción.
