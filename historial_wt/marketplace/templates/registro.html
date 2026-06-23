@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro AgroClick</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
+    <style>
+      .wrapper{width:min(100%,500px);margin:24px auto;padding:30px;border-radius:18px}
+      h1{color:var(--brand-green);margin:0 0 12px}
+      p.lead{color:var(--muted);margin:0 0 18px}
+    </style>
+</head>
+<body>
+    <main class="container">
+        <section class="register-hero card">
+            <div class="register-illustration">
+                <img src="/static/marketplace/img/hero-frutas.svg" alt="Frutas y verduras" />
+            </div>
+            <div class="register-form">
+                <h1>Crear cuenta</h1>
+                <p class="form-note">Regístrate como comprador o vendedor para empezar. Tus datos estarán seguros.</p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="form-group input-icon">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<small class="form-note">{{ field.help_text }}</small>{% endif %}
+                            {% if field.errors %}
+                                <div class="field-error">
+                                    {% for error in field.errors %}{{ error }} {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Registrarse</button>
+                        <a href="{% url 'login' %}" class="btn-ghost">Ya tengo cuenta</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script src="{% static 'marketplace/js/app.js' %}"></script>
+</body>
+</html>
