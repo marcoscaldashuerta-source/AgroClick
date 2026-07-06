@@ -698,8 +698,10 @@
                         <div class="badge-new">Nuevo</div>
                     {% endif %}
                     <div class="card-actions">
-                        <button type="button" class="btn btn-secondary btn-detail">Ver detalle</button>
-                        <button type="button" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">Añadir</button>
+                        {% if not is_vendedor %}
+                            <button type="button" class="btn btn-secondary btn-detail">Ver detalle</button>
+                            <button type="button" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">Añadir</button>
+                        {% endif %}
                     </div>
                     <div class="product-info">
                         <div class="product-category">{{ producto.categoria }}</div>

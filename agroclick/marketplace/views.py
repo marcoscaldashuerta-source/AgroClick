@@ -70,6 +70,7 @@ def inicio(request):
     is_admin = request.user.is_authenticated and request.user.is_staff
     pending_vendedores = []
 
+    is_comprador = False
     if request.user.is_authenticated:
         try:
             perfil = request.user.perfil
@@ -78,6 +79,7 @@ def inicio(request):
 
         if perfil:
             is_vendedor = perfil.rol == 'vendedor'
+            is_comprador = perfil.rol == 'comprador'
             is_aprobado = perfil.aprobado
 
         if is_admin:
@@ -97,6 +99,7 @@ def inicio(request):
     return render(request, 'inicio.html', {
         'productos': productos,
         'perfil': perfil,
+        'is_comprador': is_comprador,
         'is_vendedor': is_vendedor,
         'is_aprobado': is_aprobado,
         'is_admin': is_admin,
