@@ -341,6 +341,87 @@
             max-height: 60px;
             overflow: hidden;
         }
+        .product-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .buy-button,
+        .btn-detail {
+            flex: 1;
+            min-width: 140px;
+        }
+        .buy-button[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: fadeIn 0.25s ease;
+        }
+        .modal-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 22px;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-body p {
+            margin-bottom: 16px;
+            color: #444;
+            line-height: 1.6;
+        }
+        .modal-body .modal-label {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .modal-body .modal-value {
+            margin-bottom: 16px;
+            color: #555;
+        }
+        .modal-footer {
+            padding: 20px 24px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .modal-footer .btn {
+            min-width: 140px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .no-products {
             background-color: white;
             padding: 40px;
@@ -592,7 +673,14 @@
             </div>
             <div class="product-grid">
             {% for producto in productos %}
-                <div class="product-card">
+                <div class="product-card" 
+                     data-nombre="{{ producto.nombre|escapejs }}"
+                     data-precio="{{ producto.precio }}"
+                     data-unidad="{{ producto.unidad_venta|escapejs }}"
+                     data-stock="{{ producto.stock }}"
+                     data-descripcion="{{ producto.descripcion|escapejs }}"
+                     data-vendedor="{{ producto.vendedor.username|escapejs }}"
+                     data-categoria="{{ producto.categoria|escapejs }}">
                     {% if producto.imagenes.all %}
                         <div class="product-image">
                             <img src="{{ producto.imagenes.all.0.imagen.url }}" alt="{{ producto.nombre }}" />
@@ -610,7 +698,10 @@
                         <div class="badge-new">Nuevo</div>
                     {% endif %}
                     <div class="card-actions">
-                        <button class="btn-add" data-name="{{ producto.nombre }}">Añadir</button>
+                        {% if not is_vendedor %}
+                            <button type="button" class="btn btn-secondary btn-detail">Ver detalle</button>
+                            <button type="button" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">Añadir</button>
+                        {% endif %}
                     </div>
                     <div class="product-info">
                         <div class="product-category">{{ producto.categoria }}</div>
@@ -646,6 +737,92 @@
     </div>
 </div>
 
-    <script src="{% static 'marketplace/js/app.js' %}"></script>
-</body>
+    <div id="product-detail-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+            <div class="modal-header">
+                <h3 id="detail-title">Detalle del producto</h3>
+                <button id="close-modal" class="btn btn-secondary">Cerrar</button>
+            </div>
+            <div class="modal-body">
+                <p><span class="modal-label">Nombre:</span><span id="detail-name" class="modal-value"></span></p>
+                <p><span class="modal-label">Categoría:</span><span id="detail-category" class="modal-value"></span></p>
+                <p><span class="modal-label">Precio:</span><span id="detail-price" class="modal-value"></span></p>
+                <p><span class="modal-label">Stock disponible:</span><span id="detail-stock" class="modal-value"></span></p>
+                <p><span class="modal-label">Descripción:</span><span id="detail-description" class="modal-value"></span></p>
+                <p><span class="modal-label">Local vendedor:</span><span id="detail-vendedor" class="modal-value"></span></p>
+                <p id="stock-message" class="modal-value" style="font-weight: 700; color: #c62828; display: none;"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="detail-buy-btn" class="btn btn-primary buy-button">Comprar</button>
+                <button id="close-modal-footer" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalOverlay = document.getElementById('product-detail-modal');
+            const detailName = document.getElementById('detail-name');
+            const detailCategory = document.getElementById('detail-category');
+            const detailPrice = document.getElementById('detail-price');
+            const detailStock = document.getElementById('detail-stock');
+            const detailDescription = document.getElementById('detail-description');
+            const detailVendedor = document.getElementById('detail-vendedor');
+            const stockMessage = document.getElementById('stock-message');
+            const detailBuyBtn = document.getElementById('detail-buy-btn');
+            const closeButtons = [
+                document.getElementById('close-modal'),
+                document.getElementById('close-modal-footer')
+            ];
+
+            function openProductDetail(card) {
+                const stock = Number(card.dataset.stock || 0);
+                detailName.textContent = card.dataset.nombre || '';
+                detailCategory.textContent = card.dataset.categoria || 'Sin categoría';
+                detailPrice.textContent = `$${card.dataset.precio || '0'} / ${card.dataset.unidad || ''}`;
+                detailStock.textContent = stock > 0 ? `${stock} unidades disponibles` : '0 unidades disponibles';
+                detailDescription.textContent = card.dataset.descripcion || 'Sin descripción disponible.';
+                detailVendedor.textContent = card.dataset.vendedor || 'Desconocido';
+
+                if (stock > 0) {
+                    stockMessage.style.display = 'none';
+                    detailBuyBtn.removeAttribute('disabled');
+                    detailBuyBtn.textContent = 'Comprar';
+                } else {
+                    stockMessage.style.display = 'block';
+                    stockMessage.textContent = 'Producto sin stock disponible.';
+                    detailBuyBtn.setAttribute('disabled', 'disabled');
+                    detailBuyBtn.textContent = 'No disponible';
+                }
+
+                modalOverlay.classList.add('active');
+                modalOverlay.setAttribute('aria-hidden', 'false');
+            }
+
+            function closeModal() {
+                modalOverlay.classList.remove('active');
+                modalOverlay.setAttribute('aria-hidden', 'true');
+            }
+
+            document.querySelectorAll('.btn-detail').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    const card = event.currentTarget.closest('.product-card');
+                    if (card) {
+                        openProductDetail(card);
+                    }
+                });
+            });
+
+            closeButtons.forEach(button => {
+                button.addEventListener('click', closeModal);
+            });
+
+            modalOverlay.addEventListener('click', function(event) {
+                if (event.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
 </html>
