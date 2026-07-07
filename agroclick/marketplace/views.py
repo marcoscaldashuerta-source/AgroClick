@@ -3,8 +3,9 @@ from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.db.utils import OperationalError
 from .forms import RegistroForm, ProductoForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion
 from django.utils import timezone
 from datetime import timedelta
 
@@ -88,6 +89,13 @@ def inicio(request):
     # Determinar si hay filtros activos
     tiene_filtros = bool(busqueda or categoria or precio_min or precio_max)
 
+    notificaciones_count = 0
+    if request.user.is_authenticated:
+        try:
+            notificaciones_count = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+        except OperationalError:
+            notificaciones_count = 0
+
     # Marcar productos nuevos (creados en los últimos 14 días)
     now = timezone.now()
     for p in productos:
@@ -111,6 +119,7 @@ def inicio(request):
         'precio_max': precio_max,
         'orden': orden,
         'tiene_filtros': tiene_filtros,
+        'notificaciones_count': notificaciones_count,
     })
 
 def registro(request):
@@ -249,6 +258,84 @@ def aprobar_vendedores(request):
         'pending_vendedores': pending_vendedores,
         'is_vendedor': is_vendedor,
         'is_aprobado': is_aprobado,
+    })
+
+
+def supervisar_productos(request):
+    """Vista para que el administrador supervise todos los productos."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    productos = Producto.objects.all().order_by('-fecha_creacion')
+
+    vendedor = request.GET.get('vendedor', '').strip()
+    categoria = request.GET.get('categoria', '').strip()
+    estado = request.GET.get('estado', '').strip()
+
+    if vendedor:
+        productos = productos.filter(vendedor__username__iexact=vendedor)
+
+    if categoria:
+        productos = productos.filter(categoria__iexact=categoria)
+
+    if estado:
+        productos = productos.filter(estado__iexact=estado)
+
+    # Lista de vendedores y categorías para filtros
+    vendedores = User.objects.filter(is_active=True).order_by('username')
+    categorias = Producto.objects.values_list('categoria', flat=True).distinct().order_by('categoria')
+
+    return render(request, 'supervisar_productos.html', {
+        'productos': productos,
+        'vendedores': vendedores,
+        'categorias': categorias,
+        'filtro_vendedor': vendedor,
+        'filtro_categoria': categoria,
+        'filtro_estado': estado,
+    })
+
+
+def eliminar_producto_admin(request, producto_id):
+    """Elimina (marca como eliminado) un producto desde la vista de administrador y registra la acción."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    producto = get_object_or_404(Producto, id=producto_id)
+
+    if request.method == 'POST':
+        razon = request.POST.get('razon', '').strip()
+        # Marcar producto como eliminado
+        producto.estado = 'eliminado'
+        producto.save()
+
+        # Registrar la acción
+        ProductActionLog.objects.create(
+            producto=producto,
+            admin=request.user,
+            accion='eliminado',
+            razon=razon
+        )
+
+        # Crear notificación para el vendedor
+        mensaje = f"Tu producto '{producto.nombre}' fue eliminado por un administrador. Motivo: {razon}"
+        Notificacion.objects.create(usuario=producto.vendedor, mensaje=mensaje)
+
+        messages.success(request, 'Producto eliminado y vendedor notificado.')
+        return redirect('supervisar_productos')
+
+    return render(request, 'confirmar_eliminar_producto_admin.html', {'producto': producto})
+
+
+def ver_notificaciones(request):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    notificaciones = Notificacion.objects.filter(usuario=request.user).order_by('-fecha')
+    # Marcar como leídas todas las notificaciones vistas
+    notificaciones.update(leida=True)
+
+    return render(request, 'notificaciones.html', {
+        'notificaciones': notificaciones,
     })
 
 

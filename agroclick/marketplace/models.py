@@ -82,3 +82,26 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Imagen de {self.producto.nombre} ({self.id})"
+
+
+class ProductActionLog(models.Model):
+    """Registro de acciones administrativas sobre productos."""
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    admin = models.ForeignKey(User, on_delete=models.CASCADE)
+    accion = models.CharField(max_length=50)
+    razon = models.TextField(blank=True, null=True)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.accion} - {self.producto.nombre} por {self.admin.username}"
+
+
+class Notificacion(models.Model):
+    """Notificaciones enviadas a usuarios (vendedores)."""
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones')
+    mensaje = models.TextField()
+    leida = models.BooleanField(default=False)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Notificación a {self.usuario.username} - {self.fecha.isoformat()}"

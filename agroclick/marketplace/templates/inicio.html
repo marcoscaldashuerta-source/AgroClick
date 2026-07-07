@@ -500,8 +500,21 @@
     </div>
     <div class="nav-links">
         {% if user.is_authenticated %}
+            <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
             <span>{{ user.username }}</span>
-            <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+            {% if user.is_staff %}
+                <details class="admin-actions-menu">
+                    <summary>Acciones de administrador</summary>
+                    <div class="menu-items">
+                        <a href="{% url 'inicio' %}">Inicio</a>
+                        <a href="{% url 'supervisar_productos' %}">Supervisar productos</a>
+                        <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
+                        <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+                    </div>
+                </details>
+            {% else %}
+                <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+            {% endif %}
         {% else %}
             <a href="/accounts/login/">Iniciar sesión</a>
             <a href="/registro/">Registrarse</a>
@@ -530,6 +543,7 @@
                     </ul>
                     <div class="action-buttons">
                         <a href="{% url 'aprobar_vendedores' %}" class="btn btn-primary">Ir a aprobaciones</a>
+                        <a href="{% url 'supervisar_productos' %}" class="btn btn-primary">Supervisar productos</a>
                         <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-secondary">Deshabilitar usuarios</a>
                     </div>
                 </div>

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Notificaciones - AgroClick{% endblock %}
+{% block content %}
+<h1>Notificaciones</h1>
+{% if notificaciones %}
+    <div class="notification-list">
+        {% for notificacion in notificaciones %}
+            <div class="notification-card {% if notificacion.leida %}read{% endif %}">
+                <p>{{ notificacion.mensaje }}</p>
+                <small>{{ notificacion.fecha|date:'d M Y H:i' }}</small>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No tienes notificaciones nuevas.</p>
+{% endif %}
+{% endblock %}
