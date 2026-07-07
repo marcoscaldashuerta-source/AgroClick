@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .forms import RegistroForm, ProductoForm
-from .models import Perfil, Producto
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario
 from django.utils import timezone
 from datetime import timedelta
 
@@ -249,6 +249,41 @@ def aprobar_vendedores(request):
         'pending_vendedores': pending_vendedores,
         'is_vendedor': is_vendedor,
         'is_aprobado': is_aprobado,
+    })
+
+
+def deshabilitar_usuarios_admin(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    usuarios_por_rol = {
+        'Vendedores': [],
+        'Compradores': []
+    }
+
+    perfiles = Perfil.objects.select_related('usuario').all()
+    for perfil in perfiles:
+        if perfil.rol == 'vendedor':
+            usuarios_por_rol['Vendedores'].append(perfil.usuario)
+        elif perfil.rol == 'comprador':
+            usuarios_por_rol['Compradores'].append(perfil.usuario)
+
+    if request.method == 'POST':
+        usuario_id = request.POST.get('usuario_id')
+        usuario = get_object_or_404(User, id=usuario_id)
+        get_object_or_404(Perfil, usuario=usuario)
+        usuario.is_active = not usuario.is_active
+        usuario.save(update_fields=['is_active'])
+
+        if usuario.is_active:
+            messages.success(request, f"El usuario '{usuario.username}' ha sido habilitado.")
+        else:
+            messages.success(request, f"El usuario '{usuario.username}' ha sido deshabilitado.")
+
+        return redirect('deshabilitar_usuarios_admin')
+
+    return render(request, 'deshabilitar_usuarios.html', {
+        'usuarios_por_rol': usuarios_por_rol,
     })
 
 

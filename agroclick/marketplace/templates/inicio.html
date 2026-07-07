@@ -528,7 +528,10 @@
                             <li>{{ perfil.usuario.username }}</li>
                         {% endfor %}
                     </ul>
-                    <a href="{% url 'aprobar_vendedores' %}" class="btn btn-primary">Ir a aprobaciones</a>
+                    <div class="action-buttons">
+                        <a href="{% url 'aprobar_vendedores' %}" class="btn btn-primary">Ir a aprobaciones</a>
+                        <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-secondary">Deshabilitar usuarios</a>
+                    </div>
                 </div>
             {% else %}
                 <p>✓ No hay vendedores pendientes de aprobación</p>
