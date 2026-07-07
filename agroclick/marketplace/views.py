@@ -5,9 +5,11 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.utils import OperationalError
 from .forms import RegistroForm, ProductoForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito
 from django.utils import timezone
 from datetime import timedelta
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
@@ -523,3 +525,131 @@ def eliminar_producto(request, producto_id):
 
     # Si no es POST, mostrar página de confirmación
     return render(request, 'confirmar_eliminar_producto.html', {'producto': producto})
+
+
+# ==================== CARRITO DE COMPRAS ====================
+
+def agregar_al_carrito(request, producto_id):
+    """Agrega un producto al carrito."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'comprador':
+        messages.error(request, 'Solo los compradores pueden agregar productos al carrito.')
+        return redirect('inicio')
+
+    producto = get_object_or_404(Producto, id=producto_id, borrador=False, estado='activo')
+
+    # Obtener o crear el carrito del usuario
+    carrito, created = Carrito.objects.get_or_create(comprador=request.user)
+
+    # Obtener o crear el item en el carrito
+    item, created = ItemCarrito.objects.get_or_create(carrito=carrito, producto=producto)
+
+    if not created:
+        # Si ya existía, aumentar la cantidad
+        item.cantidad += 1
+        item.save()
+
+    return redirect('ver_carrito')
+
+
+def ver_carrito(request):
+    """Muestra el carrito de compras del usuario."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        carrito = Carrito.objects.get(comprador=request.user)
+    except Carrito.DoesNotExist:
+        carrito = None
+
+    total = 0
+    if carrito:
+        total = carrito.obtener_total()
+
+    return render(request, 'cart.html', {
+        'carrito': carrito,
+        'total': total,
+    })
+
+
+@require_POST
+def actualizar_cantidad_carrito(request, item_id):
+    """Actualiza la cantidad de un item en el carrito."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'No autenticado'})
+
+    try:
+        carrito = Carrito.objects.get(comprador=request.user)
+    except Carrito.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Carrito no encontrado'})
+
+    item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
+
+    cantidad = request.POST.get('cantidad', 0)
+    try:
+        cantidad = int(cantidad)
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Cantidad inválida'})
+
+    if cantidad < 0:
+        return JsonResponse({'success': False, 'error': 'La cantidad no puede ser negativa'})
+
+    if cantidad > item.producto.stock:
+        return JsonResponse({'success': False, 'error': f'Stock insuficiente. Disponible: {item.producto.stock}'})
+
+    if cantidad == 0:
+        item.delete()
+    else:
+        item.cantidad = cantidad
+        item.save()
+
+    # Calcular nuevos totales
+    carrito_total = carrito.obtener_total()
+    item_subtotal = item.obtener_subtotal() if cantidad > 0 else 0
+
+    return JsonResponse({
+        'success': True,
+        'carrito_total': carrito_total,
+        'item_subtotal': item_subtotal,
+        'items_count': carrito.obtener_cantidad_items()
+    })
+
+
+def eliminar_del_carrito(request, item_id):
+    """Elimina un item del carrito."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        carrito = Carrito.objects.get(comprador=request.user)
+    except Carrito.DoesNotExist:
+        return redirect('ver_carrito')
+
+    item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
+    producto_nombre = item.producto.nombre
+    item.delete()
+
+    messages.success(request, f'"{producto_nombre}" eliminado del carrito.')
+    return redirect('ver_carrito')
+
+
+def vaciar_carrito(request):
+    """Vacía completamente el carrito."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        carrito = Carrito.objects.get(comprador=request.user)
+        carrito.items.all().delete()
+        messages.success(request, 'Carrito vaciado.')
+    except Carrito.DoesNotExist:
+        pass
+
+    return redirect('ver_carrito')

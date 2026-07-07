@@ -105,3 +105,39 @@ class Notificacion(models.Model):
 
     def __str__(self):
         return f"Notificación a {self.usuario.username} - {self.fecha.isoformat()}"
+
+
+class Carrito(models.Model):
+    """Carrito de compras del comprador."""
+    comprador = models.OneToOneField(User, on_delete=models.CASCADE, related_name='carrito')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Carrito de {self.comprador.username}"
+
+    def obtener_total(self):
+        """Calcula el total del carrito."""
+        return sum(item.obtener_subtotal() for item in self.items.all())
+
+    def obtener_cantidad_items(self):
+        """Retorna la cantidad de items en el carrito."""
+        return sum(item.cantidad for item in self.items.all())
+
+
+class ItemCarrito(models.Model):
+    """Items individuales en el carrito."""
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)
+    fecha_agregado = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.cantidad}x {self.producto.nombre} en carrito de {self.carrito.comprador.username}"
+
+    def obtener_subtotal(self):
+        """Calcula el subtotal de este item."""
+        return self.producto.precio * self.cantidad
+
+    class Meta:
+        unique_together = ('carrito', 'producto')

@@ -717,7 +717,11 @@
                     <div class="card-actions">
                         {% if not is_vendedor %}
                             <button type="button" class="btn btn-secondary btn-detail">Ver detalle</button>
-                            <button type="button" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">Añadir</button>
+                            {% if is_comprador %}
+                                <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">🛒 Comprar</a>
+                            {% else %}
+                                <a href="/accounts/login/" class="btn btn-primary btn-add">Inicia sesión</a>
+                            {% endif %}
                         {% endif %}
                     </div>
                     <div class="product-info">

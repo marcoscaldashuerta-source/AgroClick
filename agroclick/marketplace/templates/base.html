@@ -17,6 +17,11 @@
             <a href="{% url 'inicio' %}">Inicio</a>
             {% if user.is_authenticated %}
                 <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count|default:0 > 0 %} ({{ notificaciones_count }}){% endif %}</a>
+                {% if user.perfil.rol == 'comprador' %}
+                    <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+                {% elif user.perfil.rol == 'vendedor' %}
+                    <a href="{% url 'mis_productos' %}">Mis Productos</a>
+                {% endif %}
                 <span style="color: white; font-weight: 700; padding: 8px 12px;">{{ user.username }}</span>
                 {% if user.is_staff %}
                     <details class="admin-actions-menu">
