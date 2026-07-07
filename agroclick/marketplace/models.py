@@ -1,6 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
+def deshabilitar_cuenta_usuario(usuario):
+    usuario.is_active = False
+    usuario.save(update_fields=['is_active'])
+    return usuario
+
+
+def habilitar_cuenta_usuario(usuario):
+    usuario.is_active = True
+    usuario.save(update_fields=['is_active'])
+    return usuario
+
+
 class Perfil(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
 
