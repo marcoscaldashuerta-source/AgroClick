@@ -252,6 +252,33 @@ def aprobar_vendedores(request):
     })
 
 
+def deshabilitar_usuarios_admin(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    usuarios_por_rol = {
+        'Vendedores': [],
+        'Compradores': [],
+        'Sin rol': []
+    }
+
+    perfiles = Perfil.objects.select_related('usuario').all()
+    perfil_ids = []
+    for perfil in perfiles:
+        perfil_ids.append(perfil.usuario.id)
+        if perfil.rol == 'vendedor':
+            usuarios_por_rol['Vendedores'].append(perfil.usuario)
+        elif perfil.rol == 'comprador':
+            usuarios_por_rol['Compradores'].append(perfil.usuario)
+
+    usuarios_sin_rol = User.objects.exclude(id__in=perfil_ids).order_by('username')
+    usuarios_por_rol['Sin rol'] = list(usuarios_sin_rol)
+
+    return render(request, 'deshabilitar_usuarios.html', {
+        'usuarios_por_rol': usuarios_por_rol,
+    })
+
+
 def mis_productos(request):
     """Vista que muestra todos los productos del vendedor autenticado"""
     if not request.user.is_authenticated:

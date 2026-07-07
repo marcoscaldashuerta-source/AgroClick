@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+<head>
+    <title>Deshabilitar Usuarios - AgroClick</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
+</head>
+<body>
+
+<div class="navbar page-bg">
+    <div class="brand">
+        <img src="/static/marketplace/img/asoagro-fb.jpg" alt="ASOAGRO logo" />
+        <div class="site-title">AgroClick</div>
+    </div>
+    <div class="nav-links">
+        <a href="{% url 'inicio' %}">Inicio</a>
+        {% if user.is_authenticated %}
+            <span style="color: white; font-weight: 700; padding: 8px 12px;">{{ user.username }}</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    <div class="welcome">
+        <p style="color: #666; font-size: 14px;">Administra usuarios y deshabilita cuentas cuando sea necesario.</p>
+        <h2>Usuarios por rol</h2>
+    </div>
+
+    <div class="user-roles-grid">
+        {% for rol, usuarios in usuarios_por_rol.items %}
+            <div class="role-card card">
+                <h3>{{ rol }} ({{ usuarios|length }})</h3>
+                {% if usuarios %}
+                    <ul class="user-list">
+                        {% for usuario in usuarios %}
+                            <li>
+                                <span>{{ usuario.username }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No hay usuarios en esta categoría.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons" style="margin-top: 24px;">
+        <a href="{% url 'inicio' %}" class="btn btn-secondary">Volver al inicio</a>
+    </div>
+</div>
+
+</body>
+</html>
