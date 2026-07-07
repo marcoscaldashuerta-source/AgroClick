@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .forms import RegistroForm, ProductoForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion
 from django.utils import timezone
 from datetime import timedelta
 
@@ -250,6 +250,71 @@ def aprobar_vendedores(request):
         'is_vendedor': is_vendedor,
         'is_aprobado': is_aprobado,
     })
+
+
+def supervisar_productos(request):
+    """Vista para que el administrador supervise todos los productos."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    productos = Producto.objects.all().order_by('-fecha_creacion')
+
+    vendedor = request.GET.get('vendedor', '').strip()
+    categoria = request.GET.get('categoria', '').strip()
+    estado = request.GET.get('estado', '').strip()
+
+    if vendedor:
+        productos = productos.filter(vendedor__username__iexact=vendedor)
+
+    if categoria:
+        productos = productos.filter(categoria__iexact=categoria)
+
+    if estado:
+        productos = productos.filter(estado__iexact=estado)
+
+    # Lista de vendedores y categorías para filtros
+    vendedores = User.objects.filter(is_active=True).order_by('username')
+    categorias = Producto.objects.values_list('categoria', flat=True).distinct().order_by('categoria')
+
+    return render(request, 'supervisar_productos.html', {
+        'productos': productos,
+        'vendedores': vendedores,
+        'categorias': categorias,
+        'filtro_vendedor': vendedor,
+        'filtro_categoria': categoria,
+        'filtro_estado': estado,
+    })
+
+
+def eliminar_producto_admin(request, producto_id):
+    """Elimina (marca como eliminado) un producto desde la vista de administrador y registra la acción."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    producto = get_object_or_404(Producto, id=producto_id)
+
+    if request.method == 'POST':
+        razon = request.POST.get('razon', '').strip()
+        # Marcar producto como eliminado
+        producto.estado = 'eliminado'
+        producto.save()
+
+        # Registrar la acción
+        ProductActionLog.objects.create(
+            producto=producto,
+            admin=request.user,
+            accion='eliminado',
+            razon=razon
+        )
+
+        # Crear notificación para el vendedor
+        mensaje = f"Tu producto '{producto.nombre}' fue eliminado por un administrador. Motivo: {razon}"
+        Notificacion.objects.create(usuario=producto.vendedor, mensaje=mensaje)
+
+        messages.success(request, 'Producto eliminado y vendedor notificado.')
+        return redirect('supervisar_productos')
+
+    return render(request, 'confirmar_eliminar_producto_admin.html', {'producto': producto})
 
 
 def deshabilitar_usuarios_admin(request):

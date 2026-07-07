@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Supervisar productos</h1>
+<form method="get" class="filters">
+    Vendedor: <input type="text" name="vendedor" value="{{ filtro_vendedor }}" />
+    Categoría: <select name="categoria">
+        <option value="">-- Todas --</option>
+        {% for c in categorias %}
+            <option value="{{ c }}" {% if filtro_categoria==c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select>
+    Estado: <select name="estado">
+        <option value="">-- Todos --</option>
+        <option value="activo" {% if filtro_estado=='activo' %}selected{% endif %}>Activo</option>
+        <option value="pausado" {% if filtro_estado=='pausado' %}selected{% endif %}>Pausado</option>
+        <option value="eliminado" {% if filtro_estado=='eliminado' %}selected{% endif %}>Eliminado</option>
+    </select>
+    <button type="submit">Filtrar</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Vendedor</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in productos %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.vendedor.username }}</td>
+            <td>{{ p.categoria }}</td>
+            <td>{{ p.precio }}</td>
+            <td>{{ p.estado }}</td>
+            <td>
+                <a href="{% url 'editar_producto' p.id %}">Editar</a>
+                {% if p.estado != 'eliminado' %}
+                <a href="{% url 'eliminar_producto_admin' p.id %}">Eliminar</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
