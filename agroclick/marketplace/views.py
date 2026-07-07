@@ -258,27 +258,28 @@ def deshabilitar_usuarios_admin(request):
 
     usuarios_por_rol = {
         'Vendedores': [],
-        'Compradores': [],
-        'Sin rol': []
+        'Compradores': []
     }
 
     perfiles = Perfil.objects.select_related('usuario').all()
-    perfil_ids = []
     for perfil in perfiles:
-        perfil_ids.append(perfil.usuario.id)
         if perfil.rol == 'vendedor':
             usuarios_por_rol['Vendedores'].append(perfil.usuario)
         elif perfil.rol == 'comprador':
             usuarios_por_rol['Compradores'].append(perfil.usuario)
 
-    usuarios_sin_rol = User.objects.exclude(id__in=perfil_ids).order_by('username')
-    usuarios_por_rol['Sin rol'] = list(usuarios_sin_rol)
-
     if request.method == 'POST':
         usuario_id = request.POST.get('usuario_id')
         usuario = get_object_or_404(User, id=usuario_id)
-        deshabilitar_cuenta_usuario(usuario)
-        messages.success(request, f"El usuario '{usuario.username}' ha sido deshabilitado.")
+        get_object_or_404(Perfil, usuario=usuario)
+        usuario.is_active = not usuario.is_active
+        usuario.save(update_fields=['is_active'])
+
+        if usuario.is_active:
+            messages.success(request, f"El usuario '{usuario.username}' ha sido habilitado.")
+        else:
+            messages.success(request, f"El usuario '{usuario.username}' ha sido deshabilitado.")
+
         return redirect('deshabilitar_usuarios_admin')
 
     return render(request, 'deshabilitar_usuarios.html', {

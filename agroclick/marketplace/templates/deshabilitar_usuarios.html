@@ -46,7 +46,13 @@
                                 <form method="post" class="inline-form">
                                     {% csrf_token %}
                                     <input type="hidden" name="usuario_id" value="{{ usuario.id }}">
-                                    <button type="submit" class="btn btn-secondary">Deshabilitar</button>
+                                    <button type="submit" class="btn btn-secondary">
+                                        {% if usuario.is_active %}
+                                            Deshabilitar
+                                        {% else %}
+                                            Habilitar
+                                        {% endif %}
+                                    </button>
                                 </form>
                             </li>
                         {% endfor %}

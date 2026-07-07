@@ -44,22 +44,32 @@ class DeshabilitarUsuariosAdminViewTests(TestCase):
         Perfil.objects.create(usuario=self.vendedor, rol='vendedor', aprobado=True)
         Perfil.objects.create(usuario=self.comprador, rol='comprador', aprobado=True)
 
-    def test_vista_muestra_usuarios_por_rol_y_puede_deshabilitar(self):
+    def test_vista_muestra_usuarios_por_rol_y_puede_deshabilitar_y_habilitar(self):
         self.client.force_login(self.admin)
         response = self.client.get('/deshabilitar-usuarios/')
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Vendedores')
         self.assertContains(response, 'Compradores')
-        self.assertContains(response, 'Sin rol')
+        self.assertNotContains(response, 'Sin rol')
         self.assertContains(response, 'usuario_vendedor')
         self.assertContains(response, 'usuario_comprador')
+        self.assertContains(response, 'Deshabilitar')
 
         response = self.client.post('/deshabilitar-usuarios/', {'usuario_id': self.comprador.id}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'El usuario')
         self.assertContains(response, 'ha sido deshabilitado')
         self.assertContains(response, 'usuario_comprador')
-
         self.comprador.refresh_from_db()
         self.assertFalse(self.comprador.is_active)
+
+        response = self.client.get('/deshabilitar-usuarios/')
+        self.assertContains(response, 'Habilitar')
+
+        response = self.client.post('/deshabilitar-usuarios/', {'usuario_id': self.comprador.id}, follow=True)
+        self.assertContains(response, 'El usuario')
+        self.assertContains(response, 'ha sido habilitado')
+        self.assertContains(response, 'usuario_comprador')
+        self.comprador.refresh_from_db()
+        self.assertTrue(self.comprador.is_active)
