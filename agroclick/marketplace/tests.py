@@ -54,3 +54,12 @@ class DeshabilitarUsuariosAdminViewTests(TestCase):
         self.assertContains(response, 'Sin rol')
         self.assertContains(response, 'usuario_vendedor')
         self.assertContains(response, 'usuario_comprador')
+
+        response = self.client.post('/deshabilitar-usuarios/', {'usuario_id': self.comprador.id}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'El usuario')
+        self.assertContains(response, 'ha sido deshabilitado')
+        self.assertContains(response, 'usuario_comprador')
+
+        self.comprador.refresh_from_db()
+        self.assertFalse(self.comprador.is_active)

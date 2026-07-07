@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .forms import RegistroForm, ProductoForm
-from .models import Perfil, Producto
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario
 from django.utils import timezone
 from datetime import timedelta
 
@@ -273,6 +273,13 @@ def deshabilitar_usuarios_admin(request):
 
     usuarios_sin_rol = User.objects.exclude(id__in=perfil_ids).order_by('username')
     usuarios_por_rol['Sin rol'] = list(usuarios_sin_rol)
+
+    if request.method == 'POST':
+        usuario_id = request.POST.get('usuario_id')
+        usuario = get_object_or_404(User, id=usuario_id)
+        deshabilitar_cuenta_usuario(usuario)
+        messages.success(request, f"El usuario '{usuario.username}' ha sido deshabilitado.")
+        return redirect('deshabilitar_usuarios_admin')
 
     return render(request, 'deshabilitar_usuarios.html', {
         'usuarios_por_rol': usuarios_por_rol,

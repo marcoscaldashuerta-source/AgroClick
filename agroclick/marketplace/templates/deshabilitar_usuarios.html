@@ -26,6 +26,14 @@
         <h2>Usuarios por rol</h2>
     </div>
 
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="user-roles-grid">
         {% for rol, usuarios in usuarios_por_rol.items %}
             <div class="role-card card">
@@ -35,6 +43,11 @@
                         {% for usuario in usuarios %}
                             <li>
                                 <span>{{ usuario.username }}</span>
+                                <form method="post" class="inline-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="usuario_id" value="{{ usuario.id }}">
+                                    <button type="submit" class="btn btn-secondary">Deshabilitar</button>
+                                </form>
                             </li>
                         {% endfor %}
                     </ul>
