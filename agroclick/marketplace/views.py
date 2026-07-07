@@ -3,6 +3,7 @@ from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.db.utils import OperationalError
 from .forms import RegistroForm, ProductoForm
 from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion
 from django.utils import timezone
@@ -88,6 +89,13 @@ def inicio(request):
     # Determinar si hay filtros activos
     tiene_filtros = bool(busqueda or categoria or precio_min or precio_max)
 
+    notificaciones_count = 0
+    if request.user.is_authenticated:
+        try:
+            notificaciones_count = Notificacion.objects.filter(usuario=request.user, leida=False).count()
+        except OperationalError:
+            notificaciones_count = 0
+
     # Marcar productos nuevos (creados en los últimos 14 días)
     now = timezone.now()
     for p in productos:
@@ -111,6 +119,7 @@ def inicio(request):
         'precio_max': precio_max,
         'orden': orden,
         'tiene_filtros': tiene_filtros,
+        'notificaciones_count': notificaciones_count,
     })
 
 def registro(request):
@@ -315,6 +324,19 @@ def eliminar_producto_admin(request, producto_id):
         return redirect('supervisar_productos')
 
     return render(request, 'confirmar_eliminar_producto_admin.html', {'producto': producto})
+
+
+def ver_notificaciones(request):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    notificaciones = Notificacion.objects.filter(usuario=request.user).order_by('-fecha')
+    # Marcar como leídas todas las notificaciones vistas
+    notificaciones.update(leida=True)
+
+    return render(request, 'notificaciones.html', {
+        'notificaciones': notificaciones,
+    })
 
 
 def deshabilitar_usuarios_admin(request):
