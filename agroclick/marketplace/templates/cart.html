@@ -97,7 +97,7 @@
 
                     <div class="cart-actions">
                         <a href="{% url 'inicio' %}" class="btn btn-secondary">Seguir Comprando</a>
-                        <button class="btn btn-primary" id="checkout-btn">Proceder al Pago</button>
+                        <a href="{% url 'checkout' %}" class="btn btn-primary" id="checkout-btn">Proceder al Pago</a>
                     </div>
 
                     <a href="{% url 'vaciar_carrito' %}" class="btn-clear-cart">Vaciar carrito</a>
@@ -210,10 +210,6 @@
                 return cookieValue;
             }
 
-            // Botón de checkout
-            document.getElementById('checkout-btn').addEventListener('click', function() {
-                alert('La funcionalidad de pago estará disponible próximamente.');
-            });
         </script>
 
     {% else %}

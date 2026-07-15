@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Método de entrega - AgroClick{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="checkout-title-card">
+        <h1 style=" margin: 0; text-align: center;">📦 Método de entrega</h1>
+    </div>
+
+    <div class="checkout-container">
+        <div class="checkout-form-section">
+            <div class="summary-card">
+                <h2>¿Cómo quieres recibir tu pedido?</h2>
+
+                <form method="post" id="entrega-form">
+                    {% csrf_token %}
+
+                    <div class="delivery-options">
+                        <label class="delivery-option">
+                            <input type="radio" name="tipo_entrega" value="delivery"
+                                {% if form.tipo_entrega.value == 'delivery' %}checked{% endif %}>
+                            <div>
+                                <strong>🚚 Delivery</strong>
+                                <p>Recibe tu pedido en la dirección que indiques.</p>
+                            </div>
+                        </label>
+
+                        <label class="delivery-option">
+                            <input type="radio" name="tipo_entrega" value="tienda"
+                                {% if form.tipo_entrega.value == 'tienda' %}checked{% endif %}>
+                            <div>
+                                <strong>🏬 Retiro en tienda</strong>
+                                <p>Pasa a buscar tu pedido directamente en el local.</p>
+                            </div>
+                        </label>
+                    </div>
+                    {% if form.tipo_entrega.errors %}
+                        <div class="field-error">{{ form.tipo_entrega.errors.0 }}</div>
+                    {% endif %}
+
+                    <div id="direccion-fields" class="direccion-fields">
+                        <div class="form-group">
+                            <label for="id_direccion_entrega">{{ form.direccion_entrega.label }}</label>
+                            {{ form.direccion_entrega }}
+                            {% if form.direccion_entrega.errors %}
+                                <div class="field-error">{{ form.direccion_entrega.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="id_referencia">{{ form.referencia.label }}</label>
+                            {{ form.referencia }}
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{% url 'ver_carrito' %}" class="btn-ghost">Volver al carrito</a>
+                        <button type="submit" class="btn btn-primary">Guardar información de entrega</button>
+                    </div>
+                </form>
+            </div>
+
+            {% if ultima_solicitud %}
+                <div class="summary-card" style="margin-top: 20px;">
+                    <h2>Última información guardada</h2>
+                    <p><strong>Método:</strong> {{ ultima_solicitud.get_tipo_entrega_display }}</p>
+                    {% if ultima_solicitud.tipo_entrega == 'delivery' %}
+                        <p><strong>Dirección:</strong> {{ ultima_solicitud.direccion_entrega }}</p>
+                        {% if ultima_solicitud.referencia %}
+                            <p><strong>Referencia:</strong> {{ ultima_solicitud.referencia }}</p>
+                        {% endif %}
+                    {% endif %}
+                    <p style="color: #6b7280; font-size: 12px;">Guardado el {{ ultima_solicitud.fecha_creacion|date:'d M Y H:i' }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="checkout-summary-section">
+            <div class="summary-card">
+                <h2>Resumen del pedido</h2>
+                {% for item in carrito.items.all %}
+                    <div class="summary-row">
+                        <span>{{ item.cantidad }}x {{ item.producto.nombre }}</span>
+                        <strong>${{ item.obtener_subtotal }}</strong>
+                    </div>
+                {% endfor %}
+                <hr class="divider">
+                <div class="summary-row total-row">
+                    <span>Total:</span>
+                    <strong>${{ total }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const radios = document.querySelectorAll('input[name="tipo_entrega"]');
+    const direccionFields = document.getElementById('direccion-fields');
+
+    function actualizarVisibilidad() {
+        const seleccionado = document.querySelector('input[name="tipo_entrega"]:checked');
+        if (seleccionado && seleccionado.value === 'delivery') {
+            direccionFields.style.display = 'block';
+        } else {
+            direccionFields.style.display = 'none';
+        }
+    }
+
+    radios.forEach(radio => radio.addEventListener('change', actualizarVisibilidad));
+    actualizarVisibilidad();
+</script>
+
+<style>
+    .checkout-title-card {
+        background: white;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-top: 24px;
+        margin-bottom: 24px;
+    }
+
+    .checkout-container {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 24px;
+        margin-top: 24px;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .summary-card h2 {
+        margin: 0 0 16px;
+        font-size: 18px;
+        color: var(--brand-green);
+    }
+
+    .delivery-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .delivery-option {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .delivery-option:hover {
+        border-color: var(--brand-green);
+        background-color: #f8faf7;
+    }
+
+    .delivery-option input[type="radio"] {
+        width: auto;
+        margin-top: 4px;
+    }
+
+    .delivery-option strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #111827;
+    }
+
+    .delivery-option p {
+        margin: 0;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .direccion-fields {
+        display: none;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 16px;
+        margin-bottom: 8px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .divider {
+        border: none;
+        border-top: 1px solid #e5e7eb;
+        margin: 16px 0;
+    }
+
+    .total-row {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--brand-green);
+    }
+
+    @media (max-width: 768px) {
+        .checkout-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

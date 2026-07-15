@@ -1,5 +1,5 @@
 from django import forms
-from .models import Producto, Perfil, TicketSoporte
+from .models import Producto, Perfil, TicketSoporte, SolicitudEntrega
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -112,3 +112,42 @@ class TicketSoporteForm(forms.ModelForm):
     class Meta:
         model = TicketSoporte
         fields = ['razon', 'descripcion']
+
+
+class EntregaForm(forms.ModelForm):
+    """Formulario para elegir el método de entrega al proceder al pago."""
+
+    tipo_entrega = forms.ChoiceField(
+        choices=SolicitudEntrega.TIPO_ENTREGA_CHOICES,
+        widget=forms.RadioSelect,
+        label='Método de entrega',
+        error_messages={'required': 'Selecciona un método de entrega.'}
+    )
+
+    direccion_entrega = forms.CharField(
+        required=False,
+        max_length=255,
+        label='Dirección de entrega',
+        widget=forms.TextInput(attrs={'placeholder': 'Calle, número, comuna...'})
+    )
+
+    referencia = forms.CharField(
+        required=False,
+        max_length=255,
+        label='Referencia adicional (opcional)',
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: casa color azul, depto 302...'})
+    )
+
+    class Meta:
+        model = SolicitudEntrega
+        fields = ['tipo_entrega', 'direccion_entrega', 'referencia']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_entrega = cleaned_data.get('tipo_entrega')
+        direccion_entrega = cleaned_data.get('direccion_entrega')
+
+        if tipo_entrega == 'delivery' and not direccion_entrega:
+            self.add_error('direccion_entrega', 'Indica la dirección de entrega para el Delivery.')
+
+        return cleaned_data

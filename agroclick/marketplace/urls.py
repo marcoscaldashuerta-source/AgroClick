@@ -21,6 +21,7 @@ urlpatterns = [
     path('carrito/actualizar/<int:item_id>/', views.actualizar_cantidad_carrito, name='actualizar_cantidad_carrito'),
     path('carrito/eliminar/<int:item_id>/', views.eliminar_del_carrito, name='eliminar_del_carrito'),
     path('carrito/vaciar/', views.vaciar_carrito, name='vaciar_carrito'),
+    path('carrito/checkout/', views.checkout, name='checkout'),
     # Rutas de soporte
     path('soporte/', views.enviar_soporte, name='enviar_soporte'),
     path('admin-soporte/', views.panel_soporte, name='panel_soporte'),

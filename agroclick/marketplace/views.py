@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.utils import OperationalError
-from .forms import RegistroForm, ProductoForm, TicketSoporteForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte
+from .forms import RegistroForm, ProductoForm, TicketSoporteForm, EntregaForm
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
@@ -653,6 +653,47 @@ def vaciar_carrito(request):
         pass
 
     return redirect('ver_carrito')
+
+
+# ==================== CHECKOUT ====================
+
+def checkout(request):
+    """Paso previo al pago: el comprador elige Delivery o retiro en tienda."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        carrito = Carrito.objects.get(comprador=request.user)
+    except Carrito.DoesNotExist:
+        carrito = None
+
+    if not carrito or not carrito.items.exists():
+        messages.error(request, 'Tu carrito está vacío.')
+        return redirect('ver_carrito')
+
+    if request.method == 'POST':
+        form = EntregaForm(request.POST)
+
+        if form.is_valid():
+            solicitud = form.save(commit=False)
+            solicitud.comprador = request.user
+
+            if solicitud.tipo_entrega != 'delivery':
+                solicitud.direccion_entrega = None
+                solicitud.referencia = None
+
+            solicitud.save()
+            messages.success(request, 'Información de entrega guardada correctamente.')
+            return redirect('checkout')
+    else:
+        form = EntregaForm()
+
+    return render(request, 'checkout.html', {
+        'form': form,
+        'carrito': carrito,
+        'total': carrito.obtener_total(),
+        'ultima_solicitud': SolicitudEntrega.objects.filter(comprador=request.user).first(),
+    })
 
 
 # ==================== SOPORTE ====================

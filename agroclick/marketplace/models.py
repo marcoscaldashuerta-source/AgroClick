@@ -160,6 +160,27 @@ class TicketSoporte(models.Model):
         return f"Ticket #{self.id} - {self.usuario.username} ({self.get_razon_display()})"
 
 
+class SolicitudEntrega(models.Model):
+    """Guarda la preferencia de entrega elegida por el comprador al iniciar el pago."""
+
+    TIPO_ENTREGA_CHOICES = [
+        ('delivery', 'Delivery'),
+        ('tienda', 'Entrega en la tienda'),
+    ]
+
+    comprador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes_entrega')
+    tipo_entrega = models.CharField(max_length=20, choices=TIPO_ENTREGA_CHOICES)
+    direccion_entrega = models.CharField(max_length=255, blank=True, null=True)
+    referencia = models.CharField(max_length=255, blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Entrega de {self.comprador.username} - {self.get_tipo_entrega_display()}"
+
+
 class ItemCarrito(models.Model):
     """Items individuales en el carrito."""
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')

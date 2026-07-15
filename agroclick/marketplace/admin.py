@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 
-from .models import Perfil, deshabilitar_cuenta_usuario, Carrito, ItemCarrito, TicketSoporte
+from .models import Perfil, deshabilitar_cuenta_usuario, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega
 
 
 def deshabilitar_cuentas_seleccionadas(modeladmin, request, queryset):
@@ -58,3 +58,10 @@ class TicketSoporteAdmin(admin.ModelAdmin):
     list_filter = ('estado', 'razon', 'fecha_creacion')
     search_fields = ('usuario__username', 'descripcion')
     readonly_fields = ('usuario', 'fecha_creacion', 'fecha_actualizacion')
+
+
+@admin.register(SolicitudEntrega)
+class SolicitudEntregaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'comprador', 'tipo_entrega', 'direccion_entrega', 'fecha_creacion')
+    list_filter = ('tipo_entrega', 'fecha_creacion')
+    search_fields = ('comprador__username', 'direccion_entrega')
