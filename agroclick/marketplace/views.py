@@ -683,7 +683,7 @@ def checkout(request):
                 solicitud.referencia = None
 
             solicitud.save()
-            messages.success(request, 'Información de entrega guardada correctamente.')
+            messages.success(request, 'Compra confirmada correctamente.')
             return redirect('checkout')
     else:
         form = EntregaForm()
@@ -692,7 +692,6 @@ def checkout(request):
         'form': form,
         'carrito': carrito,
         'total': carrito.obtener_total(),
-        'ultima_solicitud': SolicitudEntrega.objects.filter(comprador=request.user).first(),
     })
 
 

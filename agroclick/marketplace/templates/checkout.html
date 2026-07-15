@@ -4,7 +4,7 @@
 {% block content %}
 <div class="container">
     <div class="checkout-title-card">
-        <h1 style=" margin: 0; text-align: center;">📦 Método de entrega</h1>
+        <h1 style="color: var(--brand-green); margin: 0; text-align: center;">📦 Método de entrega</h1>
     </div>
 
     <div class="checkout-container">
@@ -15,8 +15,8 @@
                 <form method="post" id="entrega-form">
                     {% csrf_token %}
 
-                    <div class="delivery-options">
-                        <label class="delivery-option">
+                    <div class="selection-options">
+                        <label class="selection-option">
                             <input type="radio" name="tipo_entrega" value="delivery"
                                 {% if form.tipo_entrega.value == 'delivery' %}checked{% endif %}>
                             <div>
@@ -25,7 +25,7 @@
                             </div>
                         </label>
 
-                        <label class="delivery-option">
+                        <label class="selection-option">
                             <input type="radio" name="tipo_entrega" value="tienda"
                                 {% if form.tipo_entrega.value == 'tienda' %}checked{% endif %}>
                             <div>
@@ -53,26 +53,37 @@
                         </div>
                     </div>
 
+                    <h2 style="margin-top: 24px;">¿Cómo quieres pagar?</h2>
+
+                    <div class="selection-options">
+                        <label class="selection-option">
+                            <input type="radio" name="tipo_pago" value="transferencia"
+                                {% if form.tipo_pago.value == 'transferencia' %}checked{% endif %}>
+                            <div>
+                                <strong>🏦 Transferencia</strong>
+                                <p>Realiza el pago por transferencia bancaria.</p>
+                            </div>
+                        </label>
+
+                        <label class="selection-option">
+                            <input type="radio" name="tipo_pago" value="efectivo"
+                                {% if form.tipo_pago.value == 'efectivo' %}checked{% endif %}>
+                            <div>
+                                <strong>💵 Efectivo</strong>
+                                <p>Paga en efectivo al recibir o retirar tu pedido.</p>
+                            </div>
+                        </label>
+                    </div>
+                    {% if form.tipo_pago.errors %}
+                        <div class="field-error">{{ form.tipo_pago.errors.0 }}</div>
+                    {% endif %}
+
                     <div class="form-actions">
                         <a href="{% url 'ver_carrito' %}" class="btn-ghost">Volver al carrito</a>
-                        <button type="submit" class="btn btn-primary">Guardar información de entrega</button>
+                        <button type="submit" class="btn btn-primary">Confirmar compra</button>
                     </div>
                 </form>
             </div>
-
-            {% if ultima_solicitud %}
-                <div class="summary-card" style="margin-top: 20px;">
-                    <h2>Última información guardada</h2>
-                    <p><strong>Método:</strong> {{ ultima_solicitud.get_tipo_entrega_display }}</p>
-                    {% if ultima_solicitud.tipo_entrega == 'delivery' %}
-                        <p><strong>Dirección:</strong> {{ ultima_solicitud.direccion_entrega }}</p>
-                        {% if ultima_solicitud.referencia %}
-                            <p><strong>Referencia:</strong> {{ ultima_solicitud.referencia }}</p>
-                        {% endif %}
-                    {% endif %}
-                    <p style="color: #6b7280; font-size: 12px;">Guardado el {{ ultima_solicitud.fecha_creacion|date:'d M Y H:i' }}</p>
-                </div>
-            {% endif %}
         </div>
 
         <div class="checkout-summary-section">
@@ -141,14 +152,14 @@
         color: var(--brand-green);
     }
 
-    .delivery-options {
+    .selection-options {
         display: flex;
         flex-direction: column;
         gap: 12px;
         margin-bottom: 16px;
     }
 
-    .delivery-option {
+    .selection-option {
         display: flex;
         gap: 12px;
         align-items: flex-start;
@@ -159,23 +170,23 @@
         transition: all 0.2s;
     }
 
-    .delivery-option:hover {
+    .selection-option:hover {
         border-color: var(--brand-green);
         background-color: #f8faf7;
     }
 
-    .delivery-option input[type="radio"] {
+    .selection-option input[type="radio"] {
         width: auto;
         margin-top: 4px;
     }
 
-    .delivery-option strong {
+    .selection-option strong {
         display: block;
         margin-bottom: 4px;
         color: #111827;
     }
 
-    .delivery-option p {
+    .selection-option p {
         margin: 0;
         font-size: 13px;
         color: #6b7280;

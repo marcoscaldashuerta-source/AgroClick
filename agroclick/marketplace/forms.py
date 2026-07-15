@@ -138,9 +138,16 @@ class EntregaForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'placeholder': 'Ej: casa color azul, depto 302...'})
     )
 
+    tipo_pago = forms.ChoiceField(
+        choices=SolicitudEntrega.TIPO_PAGO_CHOICES,
+        widget=forms.RadioSelect,
+        label='Método de pago',
+        error_messages={'required': 'Selecciona un método de pago.'}
+    )
+
     class Meta:
         model = SolicitudEntrega
-        fields = ['tipo_entrega', 'direccion_entrega', 'referencia']
+        fields = ['tipo_entrega', 'direccion_entrega', 'referencia', 'tipo_pago']
 
     def clean(self):
         cleaned_data = super().clean()

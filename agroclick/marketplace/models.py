@@ -161,17 +161,23 @@ class TicketSoporte(models.Model):
 
 
 class SolicitudEntrega(models.Model):
-    """Guarda la preferencia de entrega elegida por el comprador al iniciar el pago."""
+    """Guarda la preferencia de entrega y pago elegida por el comprador al confirmar la compra."""
 
     TIPO_ENTREGA_CHOICES = [
         ('delivery', 'Delivery'),
         ('tienda', 'Entrega en la tienda'),
     ]
 
+    TIPO_PAGO_CHOICES = [
+        ('transferencia', 'Transferencia'),
+        ('efectivo', 'Efectivo'),
+    ]
+
     comprador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes_entrega')
     tipo_entrega = models.CharField(max_length=20, choices=TIPO_ENTREGA_CHOICES)
     direccion_entrega = models.CharField(max_length=255, blank=True, null=True)
     referencia = models.CharField(max_length=255, blank=True, null=True)
+    tipo_pago = models.CharField(max_length=20, choices=TIPO_PAGO_CHOICES)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
