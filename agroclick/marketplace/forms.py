@@ -1,5 +1,5 @@
 from django import forms
-from .models import Producto, Perfil
+from .models import Producto, Perfil, TicketSoporte
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -91,3 +91,24 @@ class ProductoForm(forms.ModelForm):
             'imagen4',
             'imagen5'
         ]
+
+
+class TicketSoporteForm(forms.ModelForm):
+    """Formulario dinámico de soporte: el usuario se toma de la sesión,
+    la persona solo completa razón y descripción."""
+
+    razon = forms.ChoiceField(
+        choices=TicketSoporte.RAZON_CHOICES,
+        label='Razón',
+        error_messages={'required': 'Selecciona una razón para tu solicitud.'}
+    )
+
+    descripcion = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 5, 'placeholder': 'Cuéntanos con detalle qué sucede...'}),
+        label='Descripción',
+        error_messages={'required': 'Describe brevemente tu solicitud.'}
+    )
+
+    class Meta:
+        model = TicketSoporte
+        fields = ['razon', 'descripcion']

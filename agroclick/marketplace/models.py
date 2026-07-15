@@ -125,6 +125,41 @@ class Carrito(models.Model):
         return sum(item.cantidad for item in self.items.all())
 
 
+class TicketSoporte(models.Model):
+    """Solicitud de soporte enviada por un comprador o vendedor desde su perfil."""
+
+    RAZON_CHOICES = [
+        ('problema_tecnico', 'Problema técnico'),
+        ('pedido_producto', 'Consulta sobre pedido o producto'),
+        ('cuenta_perfil', 'Problema con mi cuenta o perfil'),
+        ('reclamo', 'Reclamo'),
+        ('otro', 'Otro'),
+    ]
+
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('en_proceso', 'En proceso'),
+        ('resuelto', 'Resuelto'),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets_soporte')
+    razon = models.CharField(max_length=30, choices=RAZON_CHOICES)
+    descripcion = models.TextField()
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    respuesta_admin = models.TextField(blank=True, null=True)
+    atendido_por = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_atendidos'
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.usuario.username} ({self.get_razon_display()})"
+
+
 class ItemCarrito(models.Model):
     """Items individuales en el carrito."""
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')

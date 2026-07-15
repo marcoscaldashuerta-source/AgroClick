@@ -22,6 +22,9 @@
                 {% elif user.perfil.rol == 'vendedor' %}
                     <a href="{% url 'mis_productos' %}">Mis Productos</a>
                 {% endif %}
+                {% if not user.is_staff %}
+                    <a href="{% url 'enviar_soporte' %}">Soporte</a>
+                {% endif %}
                 <span style="color: white; font-weight: 700; padding: 8px 12px;">{{ user.username }}</span>
                 {% if user.is_staff %}
                     <details class="admin-actions-menu">
@@ -29,6 +32,7 @@
                         <div class="menu-items">
                             <a href="{% url 'inicio' %}">Inicio</a>
                             <a href="{% url 'supervisar_productos' %}">Supervisar productos</a>
+                            <a href="{% url 'panel_soporte' %}">Panel de soporte{% if total_pendientes_soporte|default:0 > 0 %} ({{ total_pendientes_soporte }}){% endif %}</a>
                             <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count|default:0 > 0 %} ({{ notificaciones_count }}){% endif %}</a>
                             <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
                         </div>

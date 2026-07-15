@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.utils import OperationalError
-from .forms import RegistroForm, ProductoForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito
+from .forms import RegistroForm, ProductoForm, TicketSoporteForm
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
@@ -653,3 +653,91 @@ def vaciar_carrito(request):
         pass
 
     return redirect('ver_carrito')
+
+
+# ==================== SOPORTE ====================
+
+def enviar_soporte(request):
+    """Formulario de soporte para compradores y vendedores desde su perfil."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    if request.method == 'POST':
+        form = TicketSoporteForm(request.POST)
+
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.usuario = request.user
+            ticket.save()
+            messages.success(request, 'Tu solicitud de soporte fue enviada correctamente. Te responderemos pronto.')
+            return redirect('enviar_soporte')
+    else:
+        form = TicketSoporteForm()
+
+    mis_tickets = TicketSoporte.objects.filter(usuario=request.user)
+
+    return render(request, 'soporte.html', {
+        'form': form,
+        'mis_tickets': mis_tickets,
+    })
+
+
+def panel_soporte(request):
+    """Panel de administración: lista y gestiona todas las solicitudes de soporte."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    tickets = TicketSoporte.objects.select_related('usuario').all()
+
+    estado = request.GET.get('estado', '').strip()
+    razon = request.GET.get('razon', '').strip()
+    usuario = request.GET.get('usuario', '').strip()
+
+    if estado:
+        tickets = tickets.filter(estado=estado)
+
+    if razon:
+        tickets = tickets.filter(razon=razon)
+
+    if usuario:
+        tickets = tickets.filter(usuario__username__icontains=usuario)
+
+    total_pendientes = TicketSoporte.objects.filter(estado='pendiente').count()
+
+    return render(request, 'panel_soporte.html', {
+        'tickets': tickets,
+        'filtro_estado': estado,
+        'filtro_razon': razon,
+        'filtro_usuario': usuario,
+        'total_pendientes': total_pendientes,
+        'razon_choices': TicketSoporte.RAZON_CHOICES,
+        'estado_choices': TicketSoporte.ESTADO_CHOICES,
+    })
+
+
+def responder_ticket(request, ticket_id):
+    """Permite al administrador responder y actualizar el estado de un ticket."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('/')
+
+    ticket = get_object_or_404(TicketSoporte, id=ticket_id)
+
+    if request.method == 'POST':
+        respuesta = request.POST.get('respuesta_admin', '').strip()
+        nuevo_estado = request.POST.get('estado', ticket.estado)
+
+        ticket.respuesta_admin = respuesta
+        ticket.estado = nuevo_estado
+        ticket.atendido_por = request.user
+        ticket.save()
+
+        # Notificar al usuario que su ticket fue actualizado
+        mensaje = f"Tu solicitud de soporte #{ticket.id} fue actualizada a '{ticket.get_estado_display()}'."
+        if respuesta:
+            mensaje += f" Respuesta: {respuesta}"
+        Notificacion.objects.create(usuario=ticket.usuario, mensaje=mensaje)
+
+        messages.success(request, f'Ticket #{ticket.id} actualizado y usuario notificado.')
+        return redirect('panel_soporte')
+
+    return render(request, 'responder_ticket.html', {'ticket': ticket})
