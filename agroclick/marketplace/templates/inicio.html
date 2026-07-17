@@ -409,6 +409,8 @@
             margin: 0;
             font-size: 20px;
             font-weight: 700;
+            width: 100%;
+            text-align: center;
         }
         .modal-body {
             padding: 22px 24px 24px;
@@ -471,6 +473,27 @@
             line-height: 1.6;
             color: #374151;
             margin: 0;
+        }
+        .cancel-modal-content {
+            max-width: 480px;
+            width: min(92vw, 480px);
+        }
+        .cancel-modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .cancel-modal-textarea {
+            width: 100%;
+            min-height: 110px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 12px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-top: 2px;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(12px); }
@@ -847,11 +870,27 @@
             padding: 7px 12px;
             font-size: 0.9rem;
         }
-        .order-detail-btn {
+        .order-detail-btn,
+        .view-cancel-reason-btn {
             background: #f1f5f9;
             color: #0f172a;
             border: 1px solid #e2e8f0;
             box-shadow: none;
+        }
+        .order-detail-btn:hover,
+        .view-cancel-reason-btn:hover {
+            background: #e2e8f0;
+        }
+        .cancel-reason-view-content {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            color: #374151;
+            font-size: 15px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px 16px;
+            min-height: 90px;
         }
         .order-detail-btn:hover {
             background: #e2e8f0;
@@ -1017,7 +1056,7 @@
                                                         {% csrf_token %}
                                                         <input type="hidden" name="accion" value="confirmar">
                                                         <button type="button" class="btn btn-primary accept-order-btn">Aceptar</button>
-                                                        <button type="submit" name="accion" value="cancelar" class="btn btn-secondary">Cancelar</button>
+                                                        <button type="button" class="btn btn-secondary cancel-order-btn">Cancelar</button>
                                                     </form>
                                                 {% endif %}
                                             </div>
@@ -1245,6 +1284,23 @@
         </div>
     </div>
 
+    <div id="cancel-action-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content cancel-modal-content" role="dialog" aria-modal="true" aria-labelledby="cancel-action-title">
+            <div class="modal-header">
+                <h3 id="cancel-action-title">Motivo de cancelación</h3>
+            </div>
+            <div class="modal-body">
+                <form class="cancel-modal-form" id="cancel-reason-form">
+                    <textarea id="cancel-reason-textarea" class="cancel-modal-textarea" placeholder="Escribe el motivo..."></textarea>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-cancel-modal">Cancelar</button>
+                <button type="button" id="cancel-action-submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="product-detail-modal" class="modal-overlay" aria-hidden="true">
         <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <div class="modal-header">
@@ -1284,8 +1340,12 @@
             ];
             const MODAL_CONFIRMACION_ACCION = document.getElementById('confirm-action-modal');
             const BOTON_CONFIRMAR_ACCION = document.getElementById('confirm-action-submit');
+            const MODAL_CANCELACION_ACCION = document.getElementById('cancel-action-modal');
+            const BOTON_CONFIRMAR_CANCELACION = document.getElementById('cancel-action-submit');
             const botones_cerrar_accion = document.querySelectorAll('.close-confirm-modal');
+            const botones_cerrar_cancelacion = document.querySelectorAll('.close-cancel-modal');
             let formulario_pendiente = null;
+            let accion_pendiente = 'confirmar';
 
             function abrir_detalle_pedido(boton) {
                 DETALLE_PRODUCTO.textContent = boton.dataset.producto || '';
@@ -1293,8 +1353,19 @@
                 DETALLE_CANTIDAD.textContent = boton.dataset.cantidad || '';
                 DETALLE_TOTAL.textContent = `$${boton.dataset.total || '0'}`;
                 DETALLE_ENTREGA.textContent = boton.dataset.entrega || 'No registrada';
-                DETALLE_DIRECCION.textContent = boton.dataset.direccion || 'No registrada';
-                DETALLE_REFERENCIA.textContent = boton.dataset.referencia || 'No registrada';
+                const entrega = (boton.dataset.entrega || '').toLowerCase();
+                const filaDireccion = document.querySelector('#product-detail-modal .modal-row:nth-child(6)');
+                const filaReferencia = document.querySelector('#product-detail-modal .modal-row:nth-child(7)');
+
+                if (entrega.includes('retiro') || entrega.includes('tienda')) {
+                    filaDireccion.style.display = 'none';
+                    filaReferencia.style.display = 'none';
+                } else {
+                    filaDireccion.style.display = 'flex';
+                    filaReferencia.style.display = 'flex';
+                    DETALLE_DIRECCION.textContent = boton.dataset.direccion || 'No registrada';
+                    DETALLE_REFERENCIA.textContent = boton.dataset.referencia || 'No registrada';
+                }
                 DETALLE_PAGO.textContent = boton.dataset.pago || 'No registrada';
                 DETALLE_ESTADO.textContent = boton.dataset.estado || 'Pendiente';
                 DETALLE_FECHA.textContent = boton.dataset.fecha || '';
@@ -1319,10 +1390,38 @@
                 MODAL_CONFIRMACION_ACCION.setAttribute('aria-hidden', 'false');
             }
 
+            function abrir_modal_cancelacion(boton) {
+                formulario_pendiente = boton.closest('form');
+                accion_pendiente = 'cancelar';
+                const campoMotivo = document.getElementById('cancel-reason-textarea');
+                if (campoMotivo) {
+                    campoMotivo.value = '';
+                }
+                if (formulario_pendiente) {
+                    const inputAccion = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (inputAccion) {
+                        inputAccion.value = 'cancelar';
+                    }
+                    const inputMotivoAnterior = formulario_pendiente.querySelector('input[name="motivo_cancelacion"]');
+                    if (inputMotivoAnterior) {
+                        inputMotivoAnterior.remove();
+                    }
+                }
+                MODAL_CANCELACION_ACCION.classList.add('active');
+                MODAL_CANCELACION_ACCION.setAttribute('aria-hidden', 'false');
+            }
+
             function cerrar_modal_accion() {
                 MODAL_CONFIRMACION_ACCION.classList.remove('active');
                 MODAL_CONFIRMACION_ACCION.setAttribute('aria-hidden', 'true');
                 formulario_pendiente = null;
+            }
+
+            function cerrar_modal_cancelacion() {
+                MODAL_CANCELACION_ACCION.classList.remove('active');
+                MODAL_CANCELACION_ACCION.setAttribute('aria-hidden', 'true');
+                formulario_pendiente = null;
+                accion_pendiente = 'confirmar';
             }
 
             document.querySelectorAll('.order-detail-btn').forEach(boton => {
@@ -1340,12 +1439,24 @@
                 });
             });
 
+            document.querySelectorAll('.cancel-order-btn').forEach(boton => {
+                boton.addEventListener('click', function(evento) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    abrir_modal_cancelacion(this);
+                });
+            });
+
             botones_cerrar.forEach(boton => {
                 boton.addEventListener('click', cerrar_modal);
             });
 
             botones_cerrar_accion.forEach(boton => {
                 boton.addEventListener('click', cerrar_modal_accion);
+            });
+
+            botones_cerrar_cancelacion.forEach(boton => {
+                boton.addEventListener('click', cerrar_modal_cancelacion);
             });
 
             BOTON_CONFIRMAR_ACCION.addEventListener('click', function() {
@@ -1359,6 +1470,29 @@
                 cerrar_modal_accion();
             });
 
+            BOTON_CONFIRMAR_CANCELACION.addEventListener('click', function() {
+                if (formulario_pendiente) {
+                    const accionInput = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (accionInput) {
+                        accionInput.value = 'cancelar';
+                    }
+                    const motivoInput = document.getElementById('cancel-reason-textarea');
+                    const motivoAnterior = formulario_pendiente.querySelector('input[name="motivo_cancelacion"]');
+                    if (motivoAnterior) {
+                        motivoAnterior.remove();
+                    }
+                    if (motivoInput) {
+                        const motivoHidden = document.createElement('input');
+                        motivoHidden.type = 'hidden';
+                        motivoHidden.name = 'motivo_cancelacion';
+                        motivoHidden.value = motivoInput.value.trim();
+                        formulario_pendiente.appendChild(motivoHidden);
+                    }
+                    formulario_pendiente.submit();
+                }
+                cerrar_modal_cancelacion();
+            });
+
             MODAL_DETALLE_PEDIDO.addEventListener('click', function(evento) {
                 if (evento.target === MODAL_DETALLE_PEDIDO) {
                     cerrar_modal();
@@ -1370,6 +1504,7 @@
                     cerrar_modal_accion();
                 }
             });
+
         });
     </script>
 </html>

@@ -159,3 +159,4 @@ class ActualizarEstadoPedidoTests(TestCase):
         producto.refresh_from_db()
         self.assertEqual(pedido.estado, 'confirmado')
         self.assertEqual(producto.stock, 5)
+
