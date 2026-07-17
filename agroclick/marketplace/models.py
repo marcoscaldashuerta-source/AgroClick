@@ -208,6 +208,7 @@ class Pedido(models.Model):
     referencia = models.CharField(max_length=255, blank=True, null=True)
     tipo_pago = models.CharField(max_length=20, choices=SolicitudEntrega.TIPO_PAGO_CHOICES)
     estado = models.CharField(max_length=20, choices=ESTADO_PEDIDO_CHOICES, default='pendiente')
+    motivo_cancelacion = models.TextField(blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:

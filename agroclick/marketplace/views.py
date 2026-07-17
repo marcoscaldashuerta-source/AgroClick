@@ -745,15 +745,24 @@ def actualizar_estado_pedido(request, pedido_id):
         pedido.producto.stock -= pedido.cantidad
         pedido.producto.save(update_fields=['stock'])
         pedido.estado = 'confirmado'
+        pedido.motivo_cancelacion = ''
         messages.success(request, f'Pedido #{pedido.id} confirmado.')
     elif accion == 'cancelar':
+        motivo_cancelacion = request.POST.get('motivo_cancelacion', '').strip()
+        if motivo_cancelacion:
+            mensaje = f"Tu pedido #{pedido.id} fue cancelado por el vendedor. Motivo: {motivo_cancelacion}"
+        else:
+            mensaje = f"Tu pedido #{pedido.id} fue cancelado por el vendedor."
+
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=mensaje)
         pedido.estado = 'cancelado'
+        pedido.motivo_cancelacion = motivo_cancelacion
         messages.success(request, f'Pedido #{pedido.id} cancelado.')
     else:
         messages.error(request, 'Acción inválida.')
         return redirect('inicio')
 
-    pedido.save(update_fields=['estado'])
+    pedido.save(update_fields=['estado', 'motivo_cancelacion'])
     return redirect('inicio')
 
 
