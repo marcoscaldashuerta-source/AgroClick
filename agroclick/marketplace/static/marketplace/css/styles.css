@@ -13,15 +13,22 @@ body{
 	font-family:Inter, Arial, sans-serif;
 	color:#111827;
 	-webkit-font-smoothing:antialiased;
-	/* produce-themed background: prefer external SVG file for richer art */
-	background-color:var(--bg);
-	background-image: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.45)), url('/static/marketplace/img/bg-frutas.svg');
-	background-repeat: repeat;
-	background-size: 480px 480px;
-	background-attachment: fixed;
+	background-color:#f7faf4 !important;
+	background-image:none !important;
+	background-repeat:no-repeat !important;
+	background-size:auto !important;
+	background-attachment:scroll !important;
+}
+
+.page-bg::before,
+.page-bg::after{
+	background:none !important;
+	background-image:none !important;
+	content:none !important;
+	display:none !important;
 }
 .container{max-width:1200px;margin:0 auto;padding:24px}
-.navbar{background:var(--brand-green);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.navbar{background:var(--brand-green);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
 .navbar h1{font-size:20px;margin:0}
 .nav-links{display:flex;gap:12px;align-items:center;position:relative}
 .nav-links a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:10px;font-weight:600}
@@ -41,9 +48,6 @@ body{
 .brand img{width:44px;height:44px;border-radius:8px;object-fit:cover;box-shadow:0 2px 6px rgba(15,23,42,0.2)}
 .brand .site-title{font-size:20px;font-weight:800;color:#fff}
 
-/* Background photo (user-provided) overlay for subtle blur */
-.page-bg::before{content:'';position:fixed;inset:0;z-index:-1;background-image:url('/static/marketplace/img/mercado.jpg');background-size:cover;background-position:center;filter:blur(2px) brightness(0.9) saturate(1.05);opacity:0.85}
-.page-bg::after{content:'';position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.45));}
 
 .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
 

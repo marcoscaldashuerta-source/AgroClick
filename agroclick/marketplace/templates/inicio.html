@@ -4,7 +4,7 @@
 {% load static %}
 <head>
     <title>AgroClick - Marketplace Agrícola</title>
-    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}?v=20260717">
     <style>
         * {
             margin: 0;
@@ -109,14 +109,17 @@
             color: #333;
             margin-bottom: 10px;
         }
-        .seller-actions {
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
+        .seller-actions,
+        .seller-orders {
+            background-color: #ffffff;
+            padding: 18px 20px;
+            border-radius: 14px;
             margin: 15px 0;
-            border-left: 4px solid #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.16);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.06);
         }
-        .seller-actions h3 {
+        .seller-actions h3,
+        .seller-orders h3 {
             color: #2e7d32;
             margin-bottom: 10px;
         }
@@ -385,52 +388,66 @@
             display: flex;
         }
         .modal-content {
-            background: white;
-            border-radius: 12px;
-            max-width: 720px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fdf8 100%);
+            border-radius: 20px;
+            max-width: 780px;
             width: 100%;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.2);
             overflow: hidden;
             animation: fadeIn 0.25s ease;
+            border: 1px solid rgba(76, 175, 80, 0.16);
         }
         .modal-header {
-            background-color: #4CAF50;
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
             color: white;
-            padding: 20px 24px;
+            padding: 18px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .modal-header h3 {
             margin: 0;
-            font-size: 22px;
+            font-size: 20px;
+            font-weight: 700;
         }
         .modal-body {
-            padding: 24px;
+            padding: 22px 24px 24px;
+            background: #fcfffc;
         }
-        .modal-body p {
-            margin-bottom: 16px;
+        .modal-body .modal-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: baseline;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #eef3ee;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
             color: #444;
             line-height: 1.6;
         }
+        .modal-body .modal-row:last-child {
+            margin-bottom: 0;
+        }
         .modal-body .modal-label {
             font-weight: 700;
-            color: #333;
-            margin-bottom: 6px;
-            display: block;
+            color: #1f2937;
+            min-width: 170px;
         }
         .modal-body .modal-value {
-            margin-bottom: 16px;
-            color: #555;
+            color: #4b5563;
+            flex: 1;
         }
         .modal-footer {
-            padding: 20px 24px 24px;
+            padding: 0 24px 24px;
             display: flex;
             justify-content: flex-end;
             gap: 12px;
         }
         .modal-footer .btn {
-            min-width: 140px;
+            min-width: 120px;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(12px); }
@@ -729,24 +746,82 @@
             padding: 8px 14px;
             font-size: 0.9rem;
         }
-        .order-card {
+        .orders-table-wrapper {
+            background-color: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 10px;
-            background: #fbfdff;
+            border-radius: 18px;
+            overflow: auto;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.06);
+            max-height: 480px;
         }
-        .order-card-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 6px;
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255,255,255,0.95);
         }
-        .order-actions {
-            margin-top: 10px;
+        .orders-table th {
+            background: linear-gradient(135deg, #e8f5e9 0%, #d8f0dc 100%);
+            color: #2f5f3b;
+            text-align: center;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 800;
+        }
+        .orders-table td {
+            padding: 12px 14px;
+            border-top: 1px solid #eef2f7;
+            color: #334155;
+            vertical-align: middle;
+            text-align: center;
+            background-color: rgba(255,255,255,0.55);
+        }
+        .orders-table td:first-child,
+        .orders-table th:first-child {
+            text-align: center;
+        }
+        .orders-table td:last-child,
+        .orders-table th:last-child {
+            text-align: center;
+        }
+        .orders-table th:last-child {
+            justify-content: center;
+        }
+        .orders-table tr:first-child td {
+            border-top: none;
+        }
+        .orders-table .order-product {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .orders-table .status-badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #ecfdf3;
+            color: #166534;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .orders-table .order-actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .orders-table .order-actions .btn {
+            padding: 7px 12px;
+            font-size: 0.9rem;
+        }
+        .order-detail-btn {
+            background: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            box-shadow: none;
+        }
+        .order-detail-btn:hover {
+            background: #e2e8f0;
         }
         .join-card {
             text-align: center;
@@ -875,30 +950,44 @@
             <div class="seller-orders">
                 <h3>Pedidos recibidos</h3>
                 {% if pedidos_vendedor %}
-                    <div class="orders-list">
-                        {% for pedido in pedidos_vendedor %}
-                            <div class="order-card" style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
-                                <p><strong>Producto:</strong> {{ pedido.producto.nombre }}</p>
-                                <p><strong>Comprador:</strong> {{ pedido.comprador.username }}</p>
-                                <p><strong>Cantidad:</strong> {{ pedido.cantidad }}</p>
-                                <p><strong>Total:</strong> ${{ pedido.total }}</p>
-                                <p><strong>Entrega:</strong> {{ pedido.get_tipo_entrega_display }}</p>
-                                {% if pedido.direccion_entrega %}
-                                    <p><strong>Dirección:</strong> {{ pedido.direccion_entrega }}</p>
-                                {% endif %}
-                                {% if pedido.referencia %}
-                                    <p><strong>Referencia:</strong> {{ pedido.referencia }}</p>
-                                {% endif %}
-                                <p><strong>Pago:</strong> {{ pedido.get_tipo_pago_display }}</p>
-                                <p><strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
-                                <p><strong>Fecha:</strong> {{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</p>
-                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="margin-top: 8px;">
-                                    {% csrf_token %}
-                                    <button type="submit" name="accion" value="confirmar" class="btn btn-primary">Confirmar pedido</button>
-                                    <button type="submit" name="accion" value="cancelar" class="btn btn-secondary">Cancelar pedido</button>
-                                </form>
-                            </div>
-                        {% endfor %}
+                    <div class="orders-table-wrapper">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Comprador</th>
+                                    <th>Cantidad</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pedido in pedidos_vendedor %}
+                                    <tr>
+                                        <td class="order-product">{{ pedido.producto.nombre }}</td>
+                                        <td>{{ pedido.comprador.username }}</td>
+                                        <td>{{ pedido.cantidad }}</td>
+                                        <td>${{ pedido.total }}</td>
+                                        <td><span class="status-badge">{{ pedido.get_estado_display }}</span></td>
+                                        <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
+                                        <td>
+                                            <div class="order-actions">
+                                                <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{{ pedido.producto.nombre|escapejs }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
+                                                    Ver detalles
+                                                </button>
+                                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" name="accion" value="confirmar" class="btn btn-primary">Confirmar</button>
+                                                    <button type="submit" name="accion" value="cancelar" class="btn btn-secondary">Cancelar</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 {% else %}
                     <p>No tienes pedidos recibidos aún.</p>
@@ -1109,21 +1198,20 @@
     <div id="product-detail-modal" class="modal-overlay" aria-hidden="true">
         <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <div class="modal-header">
-                <h3 id="detail-title">Detalle del producto</h3>
+                <h3 id="detail-title">Detalle del pedido</h3>
                 <button id="close-modal" class="btn btn-secondary">Cerrar</button>
             </div>
             <div class="modal-body">
-                <p><span class="modal-label">Nombre:</span><span id="detail-name" class="modal-value"></span></p>
-                <p><span class="modal-label">Categoría:</span><span id="detail-category" class="modal-value"></span></p>
-                <p><span class="modal-label">Precio:</span><span id="detail-price" class="modal-value"></span></p>
-                <p><span class="modal-label">Stock disponible:</span><span id="detail-stock" class="modal-value"></span></p>
-                <p><span class="modal-label">Descripción:</span><span id="detail-description" class="modal-value"></span></p>
-                <p><span class="modal-label">Local vendedor:</span><span id="detail-vendedor" class="modal-value"></span></p>
-                <p id="stock-message" class="modal-value" style="font-weight: 700; color: #c62828; display: none;"></p>
-            </div>
-            <div class="modal-footer">
-                <button id="detail-buy-btn" class="btn btn-primary buy-button">Comprar</button>
-                <button id="close-modal-footer" class="btn btn-secondary">Cerrar</button>
+                <div class="modal-row"><span class="modal-label">Producto:</span><span id="detail-producto" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Comprador:</span><span id="detail-comprador" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Cantidad:</span><span id="detail-cantidad" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Total:</span><span id="detail-total" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Método de entrega:</span><span id="detail-entrega" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Dirección de entrega:</span><span id="detail-direccion" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Referencia:</span><span id="detail-referencia" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Método de pago:</span><span id="detail-pago" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Estado:</span><span id="detail-estado" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Fecha y hora:</span><span id="detail-fecha" class="modal-value"></span></div>
             </div>
         </div>
     </div>
@@ -1131,39 +1219,31 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const modalOverlay = document.getElementById('product-detail-modal');
-            const detailName = document.getElementById('detail-name');
-            const detailCategory = document.getElementById('detail-category');
-            const detailPrice = document.getElementById('detail-price');
-            const detailStock = document.getElementById('detail-stock');
-            const detailDescription = document.getElementById('detail-description');
-            const detailVendedor = document.getElementById('detail-vendedor');
-            const stockMessage = document.getElementById('stock-message');
-            const detailBuyBtn = document.getElementById('detail-buy-btn');
+            const detailProducto = document.getElementById('detail-producto');
+            const detailComprador = document.getElementById('detail-comprador');
+            const detailCantidad = document.getElementById('detail-cantidad');
+            const detailTotal = document.getElementById('detail-total');
+            const detailEntrega = document.getElementById('detail-entrega');
+            const detailDireccion = document.getElementById('detail-direccion');
+            const detailReferencia = document.getElementById('detail-referencia');
+            const detailPago = document.getElementById('detail-pago');
+            const detailEstado = document.getElementById('detail-estado');
+            const detailFecha = document.getElementById('detail-fecha');
             const closeButtons = [
-                document.getElementById('close-modal'),
-                document.getElementById('close-modal-footer')
+                document.getElementById('close-modal')
             ];
 
-            function openProductDetail(card) {
-                const stock = Number(card.dataset.stock || 0);
-                detailName.textContent = card.dataset.nombre || '';
-                detailCategory.textContent = card.dataset.categoria || 'Sin categoría';
-                detailPrice.textContent = `$${card.dataset.precio || '0'} / ${card.dataset.unidad || ''}`;
-                detailStock.textContent = stock > 0 ? `${stock} unidades disponibles` : '0 unidades disponibles';
-                detailDescription.textContent = card.dataset.descripcion || 'Sin descripción disponible.';
-                detailVendedor.textContent = card.dataset.vendedor || 'Desconocido';
-
-                if (stock > 0) {
-                    stockMessage.style.display = 'none';
-                    detailBuyBtn.removeAttribute('disabled');
-                    detailBuyBtn.textContent = 'Comprar';
-                } else {
-                    stockMessage.style.display = 'block';
-                    stockMessage.textContent = 'Producto sin stock disponible.';
-                    detailBuyBtn.setAttribute('disabled', 'disabled');
-                    detailBuyBtn.textContent = 'No disponible';
-                }
-
+            function openOrderDetail(button) {
+                detailProducto.textContent = button.dataset.producto || '';
+                detailComprador.textContent = button.dataset.comprador || '';
+                detailCantidad.textContent = button.dataset.cantidad || '';
+                detailTotal.textContent = `$${button.dataset.total || '0'}`;
+                detailEntrega.textContent = button.dataset.entrega || 'No registrada';
+                detailDireccion.textContent = button.dataset.direccion || 'No registrada';
+                detailReferencia.textContent = button.dataset.referencia || 'No registrada';
+                detailPago.textContent = button.dataset.pago || 'No registrada';
+                detailEstado.textContent = button.dataset.estado || 'Pendiente';
+                detailFecha.textContent = button.dataset.fecha || '';
                 modalOverlay.classList.add('active');
                 modalOverlay.setAttribute('aria-hidden', 'false');
             }
@@ -1173,13 +1253,10 @@
                 modalOverlay.setAttribute('aria-hidden', 'true');
             }
 
-            document.querySelectorAll('.btn-detail').forEach(button => {
+            document.querySelectorAll('.order-detail-btn').forEach(button => {
                 button.addEventListener('click', function(event) {
                     event.stopPropagation();
-                    const card = event.currentTarget.closest('.product-card');
-                    if (card) {
-                        openProductDetail(card);
-                    }
+                    openOrderDetail(event.currentTarget);
                 });
             });
 
