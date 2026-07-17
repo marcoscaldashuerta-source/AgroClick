@@ -117,3 +117,45 @@ class CheckoutOrdersTests(TestCase):
         response = self.client.get('/')
         self.assertContains(response, 'Tomate')
         self.assertContains(response, 'Calle 123')
+
+
+class ActualizarEstadoPedidoTests(TestCase):
+    def test_confirmar_pedido_descuenta_stock_y_cambia_estado(self):
+        comprador = User.objects.create_user(username='comprador_prueba', email='comprador@prueba.com', password='pass1234')
+        vendedor = User.objects.create_user(username='vendedor_prueba', email='vendedor@prueba.com', password='pass1234')
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Zanahoria',
+            categoria='Verdura',
+            descripcion='Zanahoria fresca',
+            precio=3000,
+            unidad_venta='kg',
+            stock=8,
+            borrador=False,
+            estado='activo',
+        )
+        pedido = Pedido.objects.create(
+            comprador=comprador,
+            vendedor=vendedor,
+            producto=producto,
+            cantidad=3,
+            precio_unitario=producto.precio,
+            total=producto.precio * 3,
+            tipo_entrega='delivery',
+            direccion_entrega='Calle 456',
+            referencia='Portón negro',
+            tipo_pago='transferencia',
+            estado='pendiente',
+        )
+
+        self.client.force_login(vendedor)
+        response = self.client.post(f'/pedido/estado/{pedido.id}/', {'accion': 'confirmar'}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        pedido.refresh_from_db()
+        producto.refresh_from_db()
+        self.assertEqual(pedido.estado, 'confirmado')
+        self.assertEqual(producto.stock, 5)

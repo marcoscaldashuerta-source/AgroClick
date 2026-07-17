@@ -441,13 +441,36 @@
             flex: 1;
         }
         .modal-footer {
-            padding: 0 24px 24px;
+            padding: 16px 24px 24px;
             display: flex;
-            justify-content: flex-end;
+            justify-content: center;
             gap: 12px;
         }
         .modal-footer .btn {
             min-width: 120px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+        .confirm-modal-content {
+            max-width: 520px;
+            width: min(92vw, 520px);
+        }
+        .confirm-modal-content .modal-header {
+            justify-content: center;
+            text-align: center;
+        }
+        .confirm-modal-content .modal-header h3 {
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .confirm-modal-message {
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(12px); }
@@ -799,10 +822,20 @@
             display: inline-block;
             padding: 6px 10px;
             border-radius: 999px;
-            background: #ecfdf3;
-            color: #166534;
             font-size: 0.82rem;
             font-weight: 700;
+        }
+        .orders-table .status-badge.estado-pendiente {
+            background: #fff7e6;
+            color: #b45309;
+        }
+        .orders-table .status-badge.estado-confirmado {
+            background: #ecfdf3;
+            color: #166534;
+        }
+        .orders-table .status-badge.estado-cancelado {
+            background: #fee2e2;
+            color: #b91c1c;
         }
         .orders-table .order-actions {
             display: flex;
@@ -970,18 +1003,23 @@
                                         <td>{{ pedido.comprador.username }}</td>
                                         <td>{{ pedido.cantidad }}</td>
                                         <td>${{ pedido.total }}</td>
-                                        <td><span class="status-badge">{{ pedido.get_estado_display }}</span></td>
+                                        <td>
+                                            <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                                        </td>
                                         <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
                                         <td>
-                                            <div class="order-actions">
+                                            <div class="order-actions" style="justify-content: center;">
                                                 <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{{ pedido.producto.nombre|escapejs }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
                                                     Ver detalles
                                                 </button>
-                                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
-                                                    {% csrf_token %}
-                                                    <button type="submit" name="accion" value="confirmar" class="btn btn-primary">Confirmar</button>
-                                                    <button type="submit" name="accion" value="cancelar" class="btn btn-secondary">Cancelar</button>
-                                                </form>
+                                                {% if pedido.estado != 'confirmado' and pedido.estado != 'cancelado' %}
+                                                    <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="accion" value="confirmar">
+                                                        <button type="button" class="btn btn-primary accept-order-btn">Aceptar</button>
+                                                        <button type="submit" name="accion" value="cancelar" class="btn btn-secondary">Cancelar</button>
+                                                    </form>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -1195,6 +1233,18 @@
     {% endif %}
 </div>
 
+    <div id="confirm-action-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content confirm-modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-action-title">
+            <div class="modal-header">
+                <h3 id="confirm-action-title">¿Seguro que quieres realizar esta acción?</h3>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-confirm-modal">Cerrar</button>
+                <button type="button" id="confirm-action-submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="product-detail-modal" class="modal-overlay" aria-hidden="true">
         <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="detail-title">
             <div class="modal-header">
@@ -1218,55 +1268,106 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const modalOverlay = document.getElementById('product-detail-modal');
-            const detailProducto = document.getElementById('detail-producto');
-            const detailComprador = document.getElementById('detail-comprador');
-            const detailCantidad = document.getElementById('detail-cantidad');
-            const detailTotal = document.getElementById('detail-total');
-            const detailEntrega = document.getElementById('detail-entrega');
-            const detailDireccion = document.getElementById('detail-direccion');
-            const detailReferencia = document.getElementById('detail-referencia');
-            const detailPago = document.getElementById('detail-pago');
-            const detailEstado = document.getElementById('detail-estado');
-            const detailFecha = document.getElementById('detail-fecha');
-            const closeButtons = [
+            const MODAL_DETALLE_PEDIDO = document.getElementById('product-detail-modal');
+            const DETALLE_PRODUCTO = document.getElementById('detail-producto');
+            const DETALLE_COMPRADOR = document.getElementById('detail-comprador');
+            const DETALLE_CANTIDAD = document.getElementById('detail-cantidad');
+            const DETALLE_TOTAL = document.getElementById('detail-total');
+            const DETALLE_ENTREGA = document.getElementById('detail-entrega');
+            const DETALLE_DIRECCION = document.getElementById('detail-direccion');
+            const DETALLE_REFERENCIA = document.getElementById('detail-referencia');
+            const DETALLE_PAGO = document.getElementById('detail-pago');
+            const DETALLE_ESTADO = document.getElementById('detail-estado');
+            const DETALLE_FECHA = document.getElementById('detail-fecha');
+            const botones_cerrar = [
                 document.getElementById('close-modal')
             ];
+            const MODAL_CONFIRMACION_ACCION = document.getElementById('confirm-action-modal');
+            const BOTON_CONFIRMAR_ACCION = document.getElementById('confirm-action-submit');
+            const botones_cerrar_accion = document.querySelectorAll('.close-confirm-modal');
+            let formulario_pendiente = null;
 
-            function openOrderDetail(button) {
-                detailProducto.textContent = button.dataset.producto || '';
-                detailComprador.textContent = button.dataset.comprador || '';
-                detailCantidad.textContent = button.dataset.cantidad || '';
-                detailTotal.textContent = `$${button.dataset.total || '0'}`;
-                detailEntrega.textContent = button.dataset.entrega || 'No registrada';
-                detailDireccion.textContent = button.dataset.direccion || 'No registrada';
-                detailReferencia.textContent = button.dataset.referencia || 'No registrada';
-                detailPago.textContent = button.dataset.pago || 'No registrada';
-                detailEstado.textContent = button.dataset.estado || 'Pendiente';
-                detailFecha.textContent = button.dataset.fecha || '';
-                modalOverlay.classList.add('active');
-                modalOverlay.setAttribute('aria-hidden', 'false');
+            function abrir_detalle_pedido(boton) {
+                DETALLE_PRODUCTO.textContent = boton.dataset.producto || '';
+                DETALLE_COMPRADOR.textContent = boton.dataset.comprador || '';
+                DETALLE_CANTIDAD.textContent = boton.dataset.cantidad || '';
+                DETALLE_TOTAL.textContent = `$${boton.dataset.total || '0'}`;
+                DETALLE_ENTREGA.textContent = boton.dataset.entrega || 'No registrada';
+                DETALLE_DIRECCION.textContent = boton.dataset.direccion || 'No registrada';
+                DETALLE_REFERENCIA.textContent = boton.dataset.referencia || 'No registrada';
+                DETALLE_PAGO.textContent = boton.dataset.pago || 'No registrada';
+                DETALLE_ESTADO.textContent = boton.dataset.estado || 'Pendiente';
+                DETALLE_FECHA.textContent = boton.dataset.fecha || '';
+                MODAL_DETALLE_PEDIDO.classList.add('active');
+                MODAL_DETALLE_PEDIDO.setAttribute('aria-hidden', 'false');
             }
 
-            function closeModal() {
-                modalOverlay.classList.remove('active');
-                modalOverlay.setAttribute('aria-hidden', 'true');
+            function cerrar_modal() {
+                MODAL_DETALLE_PEDIDO.classList.remove('active');
+                MODAL_DETALLE_PEDIDO.setAttribute('aria-hidden', 'true');
             }
 
-            document.querySelectorAll('.order-detail-btn').forEach(button => {
-                button.addEventListener('click', function(event) {
-                    event.stopPropagation();
-                    openOrderDetail(event.currentTarget);
+            function abrir_modal_accion(boton) {
+                formulario_pendiente = boton.closest('form');
+                if (formulario_pendiente) {
+                    const inputAccion = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (inputAccion) {
+                        inputAccion.value = 'confirmar';
+                    }
+                }
+                MODAL_CONFIRMACION_ACCION.classList.add('active');
+                MODAL_CONFIRMACION_ACCION.setAttribute('aria-hidden', 'false');
+            }
+
+            function cerrar_modal_accion() {
+                MODAL_CONFIRMACION_ACCION.classList.remove('active');
+                MODAL_CONFIRMACION_ACCION.setAttribute('aria-hidden', 'true');
+                formulario_pendiente = null;
+            }
+
+            document.querySelectorAll('.order-detail-btn').forEach(boton => {
+                boton.addEventListener('click', function(evento) {
+                    evento.stopPropagation();
+                    abrir_detalle_pedido(evento.currentTarget);
                 });
             });
 
-            closeButtons.forEach(button => {
-                button.addEventListener('click', closeModal);
+            document.querySelectorAll('.accept-order-btn').forEach(boton => {
+                boton.addEventListener('click', function(evento) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    abrir_modal_accion(this);
+                });
             });
 
-            modalOverlay.addEventListener('click', function(event) {
-                if (event.target === modalOverlay) {
-                    closeModal();
+            botones_cerrar.forEach(boton => {
+                boton.addEventListener('click', cerrar_modal);
+            });
+
+            botones_cerrar_accion.forEach(boton => {
+                boton.addEventListener('click', cerrar_modal_accion);
+            });
+
+            BOTON_CONFIRMAR_ACCION.addEventListener('click', function() {
+                if (formulario_pendiente) {
+                    const accionInput = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (accionInput) {
+                        accionInput.value = 'confirmar';
+                    }
+                    formulario_pendiente.submit();
+                }
+                cerrar_modal_accion();
+            });
+
+            MODAL_DETALLE_PEDIDO.addEventListener('click', function(evento) {
+                if (evento.target === MODAL_DETALLE_PEDIDO) {
+                    cerrar_modal();
+                }
+            });
+
+            MODAL_CONFIRMACION_ACCION.addEventListener('click', function(evento) {
+                if (evento.target === MODAL_CONFIRMACION_ACCION) {
+                    cerrar_modal_accion();
                 }
             });
         });
