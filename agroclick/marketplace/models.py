@@ -187,6 +187,36 @@ class SolicitudEntrega(models.Model):
         return f"Entrega de {self.comprador.username} - {self.get_tipo_entrega_display()}"
 
 
+class Pedido(models.Model):
+    """Registro de un pedido confirmado por un comprador para un vendedor."""
+
+    ESTADO_PEDIDO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('confirmado', 'Confirmado'),
+        ('cancelado', 'Cancelado'),
+    ]
+
+    comprador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pedidos_realizados')
+    vendedor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pedidos_recibidos')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='pedidos')
+    solicitud = models.ForeignKey(SolicitudEntrega, on_delete=models.CASCADE, related_name='pedidos', null=True, blank=True)
+    cantidad = models.PositiveIntegerField(default=1)
+    precio_unitario = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+    tipo_entrega = models.CharField(max_length=20, choices=SolicitudEntrega.TIPO_ENTREGA_CHOICES)
+    direccion_entrega = models.CharField(max_length=255, blank=True, null=True)
+    referencia = models.CharField(max_length=255, blank=True, null=True)
+    tipo_pago = models.CharField(max_length=20, choices=SolicitudEntrega.TIPO_PAGO_CHOICES)
+    estado = models.CharField(max_length=20, choices=ESTADO_PEDIDO_CHOICES, default='pendiente')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"Pedido #{self.id} - {self.producto.nombre} ({self.cantidad} unidades)"
+
+
 class ItemCarrito(models.Model):
     """Items individuales en el carrito."""
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')

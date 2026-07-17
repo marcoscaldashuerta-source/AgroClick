@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from .models import Perfil, deshabilitar_cuenta_usuario
+from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, deshabilitar_cuenta_usuario
 
 
 class DeshabilitarCuentaUsuarioTests(TestCase):
@@ -73,3 +73,47 @@ class DeshabilitarUsuariosAdminViewTests(TestCase):
         self.assertContains(response, 'usuario_comprador')
         self.comprador.refresh_from_db()
         self.assertTrue(self.comprador.is_active)
+
+
+class CheckoutOrdersTests(TestCase):
+    def test_checkout_crea_pedido_y_lo_muestra_en_pagina_del_vendedor(self):
+        comprador = User.objects.create_user(username='comprador_test', email='comprador@test.com', password='pass1234')
+        vendedor = User.objects.create_user(username='vendedor_test', email='vendedor@test.com', password='pass1234')
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Tomate',
+            categoria='Fruta',
+            descripcion='Tomate rojo',
+            precio=5000,
+            unidad_venta='kg',
+            stock=10,
+            borrador=False,
+            estado='activo',
+        )
+        carrito = Carrito.objects.create(comprador=comprador)
+        ItemCarrito.objects.create(carrito=carrito, producto=producto, cantidad=2)
+
+        self.client.force_login(comprador)
+        response = self.client.post('/carrito/checkout/', {
+            'tipo_entrega': 'delivery',
+            'direccion_entrega': 'Calle 123',
+            'referencia': 'Casa azul',
+            'tipo_pago': 'transferencia',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Pedido.objects.filter(comprador=comprador, vendedor=vendedor).count(), 1)
+        self.assertEqual(carrito.items.count(), 0)
+
+        pedido = Pedido.objects.get(comprador=comprador, vendedor=vendedor)
+        self.assertEqual(pedido.cantidad, 2)
+        self.assertEqual(pedido.precio_unitario, 5000)
+        self.assertEqual(pedido.direccion_entrega, 'Calle 123')
+
+        self.client.force_login(vendedor)
+        response = self.client.get('/')
+        self.assertContains(response, 'Tomate')
+        self.assertContains(response, 'Calle 123')

@@ -567,6 +567,39 @@
                     <a href="{% url 'mis_productos' %}" class="btn btn-secondary">Ver mis productos</a>
                 </div>
             </div>
+
+            <div class="seller-orders">
+                <h3>Pedidos recibidos</h3>
+                {% if pedidos_vendedor %}
+                    <div class="orders-list">
+                        {% for pedido in pedidos_vendedor %}
+                            <div class="order-card" style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; margin-bottom: 10px;">
+                                <p><strong>Producto:</strong> {{ pedido.producto.nombre }}</p>
+                                <p><strong>Comprador:</strong> {{ pedido.comprador.username }}</p>
+                                <p><strong>Cantidad:</strong> {{ pedido.cantidad }}</p>
+                                <p><strong>Total:</strong> ${{ pedido.total }}</p>
+                                <p><strong>Entrega:</strong> {{ pedido.get_tipo_entrega_display }}</p>
+                                {% if pedido.direccion_entrega %}
+                                    <p><strong>Dirección:</strong> {{ pedido.direccion_entrega }}</p>
+                                {% endif %}
+                                {% if pedido.referencia %}
+                                    <p><strong>Referencia:</strong> {{ pedido.referencia }}</p>
+                                {% endif %}
+                                <p><strong>Pago:</strong> {{ pedido.get_tipo_pago_display }}</p>
+                                <p><strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
+                                <p><strong>Fecha:</strong> {{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</p>
+                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="margin-top: 8px;">
+                                    {% csrf_token %}
+                                    <button type="submit" name="accion" value="confirmar" class="btn btn-primary">Confirmar pedido</button>
+                                    <button type="submit" name="accion" value="cancelar" class="btn btn-secondary">Cancelar pedido</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No tienes pedidos recibidos aún.</p>
+                {% endif %}
+            </div>
         {% else %}
             <div class="not-approved">
                 <h3>Tu cuenta está en proceso de revisión</h3>
