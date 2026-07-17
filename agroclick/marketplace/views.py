@@ -738,6 +738,12 @@ def actualizar_estado_pedido(request, pedido_id):
     accion = request.POST.get('accion', '').strip().lower()
 
     if accion == 'confirmar':
+        if pedido.producto.stock < pedido.cantidad:
+            messages.error(request, 'No hay suficiente stock para confirmar este pedido.')
+            return redirect('inicio')
+
+        pedido.producto.stock -= pedido.cantidad
+        pedido.producto.save(update_fields=['stock'])
         pedido.estado = 'confirmado'
         messages.success(request, f'Pedido #{pedido.id} confirmado.')
     elif accion == 'cancelar':
