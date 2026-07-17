@@ -5,11 +5,12 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.utils import OperationalError
 from .forms import RegistroForm, ProductoForm, TicketSoporteForm, EntregaForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega, Pedido
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods
 
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
@@ -72,6 +73,7 @@ def inicio(request):
     is_aprobado = False
     is_admin = request.user.is_authenticated and request.user.is_staff
     pending_vendedores = []
+    pedidos_vendedor = []
 
     is_comprador = False
     if request.user.is_authenticated:
@@ -84,6 +86,9 @@ def inicio(request):
             is_vendedor = perfil.rol == 'vendedor'
             is_comprador = perfil.rol == 'comprador'
             is_aprobado = perfil.aprobado
+
+            if is_vendedor and is_aprobado:
+                pedidos_vendedor = Pedido.objects.filter(vendedor=request.user).select_related('comprador', 'producto').order_by('-fecha_creacion')[:10]
 
         if is_admin:
             pending_vendedores = Perfil.objects.filter(rol='vendedor', aprobado=False)
@@ -114,6 +119,7 @@ def inicio(request):
         'is_aprobado': is_aprobado,
         'is_admin': is_admin,
         'pending_vendedores': pending_vendedores,
+        'pedidos_vendedor': pedidos_vendedor,
         'categorias': categorias,
         'busqueda': busqueda,
         'categoria': categoria,
@@ -683,6 +689,25 @@ def checkout(request):
                 solicitud.referencia = None
 
             solicitud.save()
+
+            for item in carrito.items.select_related('producto').all():
+                producto = item.producto
+                Pedido.objects.create(
+                    comprador=request.user,
+                    vendedor=producto.vendedor,
+                    producto=producto,
+                    solicitud=solicitud,
+                    cantidad=item.cantidad,
+                    precio_unitario=producto.precio,
+                    total=producto.precio * item.cantidad,
+                    tipo_entrega=solicitud.tipo_entrega,
+                    direccion_entrega=solicitud.direccion_entrega,
+                    referencia=solicitud.referencia,
+                    tipo_pago=solicitud.tipo_pago,
+                    estado='pendiente',
+                )
+
+            carrito.items.all().delete()
             messages.success(request, 'Compra confirmada correctamente.')
             return redirect('checkout')
     else:
@@ -693,6 +718,37 @@ def checkout(request):
         'carrito': carrito,
         'total': carrito.obtener_total(),
     })
+
+
+@require_http_methods(['POST'])
+def actualizar_estado_pedido(request, pedido_id):
+    """Permite al vendedor confirmar o cancelar un pedido desde su panel."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'vendedor' or not perfil.aprobado:
+        return redirect('/')
+
+    pedido = get_object_or_404(Pedido, id=pedido_id, vendedor=request.user)
+    accion = request.POST.get('accion', '').strip().lower()
+
+    if accion == 'confirmar':
+        pedido.estado = 'confirmado'
+        messages.success(request, f'Pedido #{pedido.id} confirmado.')
+    elif accion == 'cancelar':
+        pedido.estado = 'cancelado'
+        messages.success(request, f'Pedido #{pedido.id} cancelado.')
+    else:
+        messages.error(request, 'Acción inválida.')
+        return redirect('inicio')
+
+    pedido.save(update_fields=['estado'])
+    return redirect('inicio')
 
 
 # ==================== SOPORTE ====================

@@ -26,4 +26,5 @@ urlpatterns = [
     path('soporte/', views.enviar_soporte, name='enviar_soporte'),
     path('admin-soporte/', views.panel_soporte, name='panel_soporte'),
     path('admin-soporte/<int:ticket_id>/', views.responder_ticket, name='responder_ticket'),
+    path('pedido/estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
 ]
