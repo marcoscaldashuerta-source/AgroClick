@@ -74,7 +74,10 @@ class ProductoForm(forms.ModelForm):
         ('Verdura', 'Verdura'),
     ]
 
-    categoria = forms.ChoiceField(choices=CATEGORIA_CHOICES)
+    categoria = forms.ChoiceField(
+        choices=CATEGORIA_CHOICES,
+        error_messages={'required': 'Selecciona una categoría.'}
+    )
 
     class Meta:
         model = Producto
@@ -92,6 +95,27 @@ class ProductoForm(forms.ModelForm):
             'imagen4',
             'imagen5'
         ]
+        error_messages = {
+            'nombre': {
+                'required': 'El nombre del producto es obligatorio.',
+                'max_length': 'El nombre del producto no puede superar los 100 caracteres.'
+            },
+            'descripcion': {'required': 'La descripción del producto es obligatoria.'},
+            'precio': {
+                'required': 'El precio es obligatorio.',
+                'invalid': 'Ingresa un precio válido.'
+            },
+            'unidad_venta': {'required': 'La unidad de venta es obligatoria.'},
+            'stock': {
+                'required': 'El stock es obligatorio.',
+                'invalid': 'Ingresa una cantidad válida.'
+            },
+            'imagen': {'invalid': 'La imagen principal no es válida.'},
+            'imagen2': {'invalid': 'La segunda imagen no es válida.'},
+            'imagen3': {'invalid': 'La tercera imagen no es válida.'},
+            'imagen4': {'invalid': 'La cuarta imagen no es válida.'},
+            'imagen5': {'invalid': 'La quinta imagen no es válida.'},
+        }
 
 
 class TicketSoporteForm(forms.ModelForm):

@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		// small click animation
 		btn.classList.add('clicked');
 		setTimeout(function(){ btn.classList.remove('clicked'); },220);
-		showToast(name + ' agregado (demo)');
+		showToast(name + ' agregado');
 	});
 
 	// Password toggle for login
