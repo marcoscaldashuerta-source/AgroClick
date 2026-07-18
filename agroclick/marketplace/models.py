@@ -234,6 +234,26 @@ class Pedido(models.Model):
         return f"Pedido #{self.id} - {self.producto.nombre} ({self.cantidad} unidades)"
 
 
+class PaymentProof(models.Model):
+    """Comprobante de pago subido por el comprador para un pedido."""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aprobado', 'Aprobado'),
+        ('rechazado', 'Rechazado'),
+    ]
+
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='comprobantes')
+    imagen = models.ImageField(upload_to='comprobantes/', null=False, blank=False)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    subido_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comprobantes_subidos')
+    revisado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='comprobantes_revisados')
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+    fecha_revision = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Comprobante #{self.id} - Pedido #{self.pedido.id} ({self.estado})"
+
+
 class ItemCarrito(models.Model):
     """Items individuales en el carrito."""
     carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')

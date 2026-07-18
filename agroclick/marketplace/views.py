@@ -6,6 +6,8 @@ from django.db.models import Q
 from django.db.utils import OperationalError
 from .forms import RegistroForm, ProductoForm, TicketSoporteForm, EntregaForm
 from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega, Pedido
+from .models import PaymentProof
+from .forms import PaymentProofForm
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
@@ -833,6 +835,107 @@ def actualizar_estado_pedido(request, pedido_id):
 
     pedido.save(update_fields=['estado', 'motivo_cancelacion'])
     return redirect('inicio')
+
+
+def subir_comprobante(request, pedido_id):
+    """Permite al comprador subir el comprobante de pago para un pedido."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    pedido = get_object_or_404(Pedido, id=pedido_id, comprador=request.user)
+
+    if request.method == 'POST':
+        form = PaymentProofForm(request.POST, request.FILES)
+        if form.is_valid():
+            comprobante = form.save(commit=False)
+            comprobante.pedido = pedido
+            comprobante.subido_por = request.user
+            comprobante.estado = 'pendiente'
+            comprobante.save()
+
+            # Notificar al vendedor
+            mensaje = f"Se ha subido un comprobante de pago para el pedido #{pedido.id}. Revisa y valida el comprobante."
+            Notificacion.objects.create(usuario=pedido.vendedor, mensaje=mensaje)
+
+            messages.success(request, 'Comprobante subido correctamente. El vendedor será notificado.')
+            return redirect('ver_notificaciones')
+    else:
+        form = PaymentProofForm()
+
+    return render(request, 'subir_comprobante.html', {'form': form, 'pedido': pedido})
+
+
+def ver_comprobantes_vendedor(request):
+    """Lista comprobantes pendientes para el vendedor autenticado."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'vendedor' or not perfil.aprobado:
+        return redirect('/')
+
+    comprobantes = PaymentProof.objects.filter(pedido__vendedor=request.user).select_related('pedido', 'subido_por').order_by('-fecha_subida')
+
+    return render(request, 'ver_comprobantes_vendedor.html', {'comprobantes': comprobantes})
+
+
+@require_http_methods(['POST'])
+def revisar_comprobante(request, proof_id):
+    """Permite al vendedor aprobar o rechazar un comprobante."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'vendedor' or not perfil.aprobado:
+        return redirect('/')
+
+    comprobante = get_object_or_404(PaymentProof, id=proof_id, pedido__vendedor=request.user)
+    accion = request.POST.get('accion', '').strip().lower()
+
+    if accion == 'aprobar':
+        comprobante.estado = 'aprobado'
+        comprobante.revisado_por = request.user
+        comprobante.fecha_revision = timezone.now()
+        comprobante.save()
+
+        pedido = comprobante.pedido
+        pedido.estado = 'confirmado'
+        pedido.save(update_fields=['estado'])
+
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pago_aprobado', razon=f'Pedido #{pedido.id}')
+
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f"Tu pago para el pedido #{pedido.id} ha sido aprobado. El vendedor procederá al despacho.")
+
+        messages.success(request, f'Comprobante #{comprobante.id} aprobado y comprador notificado.')
+
+    elif accion == 'rechazar':
+        motivo = request.POST.get('motivo', '').strip()
+        comprobante.estado = 'rechazado'
+        comprobante.revisado_por = request.user
+        comprobante.fecha_revision = timezone.now()
+        comprobante.save()
+
+        # Notificar al comprador con instrucciones
+        texto = f"Tu comprobante para el pedido #{comprobante.pedido.id} fue rechazado."
+        if motivo:
+            texto += f" Motivo: {motivo}"
+        texto += " Por favor sube nuevamente un comprobante correcto."
+
+        Notificacion.objects.create(usuario=comprobante.pedido.comprador, mensaje=texto)
+        messages.success(request, f'Comprobante #{comprobante.id} rechazado y comprador notificado.')
+
+    else:
+        messages.error(request, 'Acción inválida.')
+
+    return redirect('ver_comprobantes_vendedor')
 
 
 # ==================== SOPORTE ====================
