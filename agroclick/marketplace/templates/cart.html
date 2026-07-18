@@ -4,19 +4,16 @@
 {% block title %}Mi Carrito - AgroClick{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>🛒 Mi Carrito de Compras</h1>
-
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">{{ message }}</div>
-            {% endfor %}
+<div class="page-shell">
+    <div class="page-card">
+        <div class="page-top">
+            <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
         </div>
-    {% endif %}
 
-    {% if carrito and carrito.items.all %}
-        <div class="cart-container">
+        <h1 class="page-title">Mi Carrito de Compras</h1>
+
+        {% if carrito and carrito.items.all %}
+            <div class="cart-container">
             <div class="cart-items-section">
                 <table class="cart-table">
                     <thead>
@@ -212,15 +209,15 @@
 
         </script>
 
-    {% else %}
-        <div class="empty-cart">
-            <div class="empty-cart-icon">🛒</div>
-            <h2>Tu carrito está vacío</h2>
-            <p>No tienes productos en tu carrito de compras.</p>
-            <a href="{% url 'inicio' %}" class="btn btn-primary">Ir a comprar productos</a>
+        {% else %}
+            <div class="empty-cart">
+                <div class="empty-cart-icon">🛒</div>
+                <h2>Tu carrito está vacío</h2>
+                <p>No tienes productos en tu carrito de compras.</p>
+                <a href="{% url 'inicio' %}" class="btn btn-primary">Ir a comprar productos</a>
         </div>
-    {% endif %}
-
+        {% endif %}
+    </div>
 </div>
 
 <style>

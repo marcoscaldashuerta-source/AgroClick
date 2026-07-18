@@ -392,7 +392,6 @@ def eliminar_producto_admin(request, producto_id):
         mensaje = f"Tu producto '{producto.nombre}' fue eliminado por un administrador. Motivo: {razon}"
         Notificacion.objects.create(usuario=producto.vendedor, mensaje=mensaje)
 
-        messages.success(request, 'Producto eliminado y vendedor notificado.')
         return redirect('supervisar_productos')
 
     return render(request, 'confirmar_eliminar_producto_admin.html', {'producto': producto})
@@ -706,10 +705,8 @@ def eliminar_del_carrito(request, item_id):
         return redirect('ver_carrito')
 
     item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
-    producto_nombre = item.producto.nombre
     item.delete()
 
-    messages.success(request, f'"{producto_nombre}" eliminado del carrito.')
     return redirect('ver_carrito')
 
 

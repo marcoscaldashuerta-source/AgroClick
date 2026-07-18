@@ -68,9 +68,9 @@ body{
 .nav-links details.user-actions-menu .menu-items a:hover{background:#f3f4f6}
 
 /* Brand area */
-.brand{display:flex;align-items:center;gap:12px;min-height:40px}
-.brand img{width:44px;height:44px;border-radius:8px;object-fit:cover;box-shadow:0 2px 6px rgba(15,23,42,0.2)}
-.brand .site-title{font-size:20px;font-weight:800;color:#fff;line-height:1.2}
+.brand{display:flex;align-items:center;gap:12px;min-height:52px}
+.brand img{width:84px!important;height:84px!important;border-radius:12px;object-fit:cover;box-shadow:0 2px 8px rgba(15,23,42,0.2)}
+.brand .site-title{font-size:24px;font-weight:800;color:#fff;line-height:1.2}
 
 
 .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}

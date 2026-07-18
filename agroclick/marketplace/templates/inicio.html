@@ -49,6 +49,10 @@
         .nav-links a:hover {
             background-color: rgba(255,255,255,0.12);
         }
+        .brand img {
+            width: 84px !important;
+            height: 84px !important;
+        }
         .nav-links span {
             color: white;
             font-weight: 600;
@@ -953,12 +957,17 @@
 
 <div class="navbar page-bg">
     <div class="brand">
-        <img src="/static/marketplace/img/asoagro-fb.jpg" alt="ASOAGRO logo" />
+        <img src="/static/marketplace/img/Logo-AgroClick.png" alt="AgroClick logo" />
         <div class="site-title">AgroClick</div>
     </div>
     <div class="nav-links">
         {% if user.is_authenticated %}
-            <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
+            {% if request.resolver_match.url_name != 'ver_notificaciones' %}
+                <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
+            {% endif %}
+            {% if user.perfil.rol == 'comprador' %}
+                <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+            {% endif %}
             {% if user.is_staff %}
                 <details class="admin-actions-menu">
                     <summary>Acciones de administrador</summary>
