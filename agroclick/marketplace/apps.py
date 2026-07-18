@@ -71,4 +71,4 @@ class MarketplaceConfig(AppConfig):
                 perfil.aprobado = data['aprobado']
                 perfil.save()
 
-        post_migrate.connect(create_demo_users, sender=sender)
+        post_migrate.connect(create_demo_users)

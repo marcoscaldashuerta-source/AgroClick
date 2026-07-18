@@ -142,7 +142,8 @@
             padding: 0;
             margin: 6px 0 0 0;
         }
-        .errorlist li {
+        .errorlist li,
+        .errorlist > div {
             margin: 4px 0;
             font-size: 13px;
         }
@@ -464,6 +465,13 @@
                     <div class="field-card full-span">
                         <div class="form-group">
                             <label for="images">Imágenes del producto</label>
+                            {% if form.non_field_errors %}
+                                <div class="errorlist" style="margin-bottom: 10px;">
+                                    {% for error in form.non_field_errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                             <div id="image-dropzone" class="image-dropzone" tabindex="0" role="button" aria-label="Seleccionar imágenes para el producto">
                                 <input type="file" name="images" id="images" multiple accept="image/*" hidden>
                                 <div class="dropzone-inner">

@@ -136,6 +136,27 @@ class PublicarProductoDraftTests(TestCase):
         self.assertFalse(Producto.objects.exists())
 
 
+class PublicarProductoSinImagenTests(TestCase):
+    def test_publicar_sin_imagen_muestra_error_y_no_crea_producto(self):
+        vendedor = User.objects.create_user(username='vendedor_sin_imagen', email='vendedor_sin_imagen@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        self.client.force_login(vendedor)
+        response = self.client.post('/publicar/', {
+            'nombre': 'Pepino',
+            'categoria': 'Verdura',
+            'descripcion': 'Pepino fresco',
+            'precio': '1500',
+            'unidad_venta': 'kg',
+            'stock': '12',
+            'publicar': 'Publicar ahora',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Debes agregar al menos una imagen antes de publicar o guardar el producto.')
+        self.assertFalse(Producto.objects.exists())
+
+
 class ActualizarEstadoPedidoTests(TestCase):
     def test_confirmar_pedido_descuenta_stock_y_cambia_estado(self):
         comprador = User.objects.create_user(username='comprador_prueba', email='comprador@prueba.com', password='pass1234')
