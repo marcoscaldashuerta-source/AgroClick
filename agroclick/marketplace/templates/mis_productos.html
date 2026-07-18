@@ -326,13 +326,17 @@
                                 </div>
                             </div>
                             <div>
-                                {% if producto.imagenes.all %}
+                                {% if producto.imagenes.exists %}
                                     <div class="product-image">
-                                        <img src="{{ producto.imagenes.all.0.imagen.url }}" alt="{{ producto.nombre }}" />
+                                        <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}" />
                                     </div>
                                 {% elif producto.imagen %}
                                     <div class="product-image">
                                         <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+                                    </div>
+                                {% else %}
+                                    <div class="product-image" style="background-color: #e0e0e0;">
+                                        <span style="color: #999;">Sin imagen</span>
                                     </div>
                                 {% endif %}
                             </div>

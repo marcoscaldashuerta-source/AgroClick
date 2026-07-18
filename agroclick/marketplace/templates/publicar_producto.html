@@ -188,6 +188,252 @@
             color: white;
             flex: 1;
         }
+        .image-dropzone {
+            border: 2px dashed #8bc34a;
+            border-radius: 22px;
+            padding: 22px;
+            background: linear-gradient(135deg, #f8fff7 0%, #eef9ee 100%);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            min-height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+        .image-dropzone:hover,
+        .image-dropzone.dragover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+            box-shadow: 0 16px 36px rgba(76, 175, 80, 0.16);
+        }
+        .dropzone-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .dropzone-icon {
+            font-size: 44px;
+            line-height: 1;
+        }
+        .dropzone-content strong {
+            display: block;
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+        .dropzone-content p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+        .dropzone-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 10px 24px rgba(76, 175, 80, 0.16);
+        }
+        .selected-files-summary {
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #eef9ee 0%, #f4fcf4 100%);
+            border: 1px solid #cde9cf;
+            color: #2e7d32;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 6px 14px rgba(76, 175, 80, 0.10);
+        }
+        .selected-files-summary::before {
+            content: '✓';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #4CAF50;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .upload-warning-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .upload-warning-overlay.show {
+            display: flex;
+        }
+        .upload-warning-modal {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fdf8 100%);
+            border-radius: 20px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.2);
+            overflow: hidden;
+            animation: fadeIn 0.25s ease;
+            border: 1px solid rgba(76, 175, 80, 0.16);
+        }
+        .upload-warning-header {
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
+            color: white;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-warning-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .upload-warning-body {
+            padding: 22px 24px 24px;
+            background: #fcfffc;
+            color: #374151;
+            font-size: 15px;
+            line-height: 1.6;
+            text-align: center;
+        }
+        .upload-warning-body strong {
+            color: #1f2937;
+        }
+        .upload-warning-footer {
+            padding: 0 24px 24px;
+            display: flex;
+            justify-content: center;
+        }
+        .upload-warning-footer .btn {
+            min-width: 120px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.08);
+        }
+        .upload-warning-footer .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(15,23,42,0.14);
+        }
+        .selected-files-preview {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            align-items: flex-start;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+            justify-content: flex-start;
+        }
+        .selected-file-card {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #e4efe2;
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+            min-width: 148px;
+            flex: 0 0 auto;
+        }
+        .selected-file-card.is-main {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.18), 0 4px 12px rgba(15, 23, 42, 0.05);
+        }
+        .selected-file-card img {
+            width: 148px;
+            height: 126px;
+            object-fit: cover;
+            border-radius: 7px;
+            background: #f3f4f6;
+            display: block;
+            border: 1px solid #e5e7eb;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7);
+        }
+        .remove-file-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 999px;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.25);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        }
+        .selected-file-card:hover .remove-file-btn,
+        .selected-file-card:focus-within .remove-file-btn {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        .main-image-btn {
+            margin-top: 6px;
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            padding: 4px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            background: #f8fafc;
+            color: #4b5563;
+        }
+        .main-image-btn.is-main {
+            background: #4CAF50;
+            color: #ffffff;
+            border-color: #4CAF50;
+        }
+        .selected-file-name {
+            margin-top: 4px;
+            font-size: 10px;
+            color: #374151;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.2;
+            display: none;
+        }
+        .selected-file-meta {
+            margin-top: 1px;
+            font-size: 9px;
+            color: #6b7280;
+            display: none;
+        }
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -293,9 +539,31 @@
                     <div class="field-card full-span">
                         <div class="form-group">
                             <label for="images">Imágenes del producto</label>
-                            <input type="file" name="images" id="images" multiple accept="image/*">
-                            <div class="help-text">Selecciona hasta 5 imágenes. La primera puede usarse como imagen principal si no seleccionas una principal.</div>
-                            <div class="help-text">Espacios disponibles: <span id="remaining">{{ remaining_slots }}</span></div>
+                            <div id="image-dropzone" class="image-dropzone" tabindex="0" role="button" aria-label="Seleccionar imágenes para el producto">
+                                <input type="file" name="images" id="images" multiple accept="image/*" hidden>
+                                <div class="dropzone-inner">
+                                    <div class="dropzone-content">
+                                        <strong>Arrastra y suelta tus fotos aquí</strong>
+                                        <p>o haz clic para seleccionar imágenes desde tu dispositivo</p>
+                                    </div>
+                                    <span class="dropzone-button">Seleccionar imágenes</span>
+                                </div>
+                            </div>
+                            <div class="help-text" style="font-size: 13px; line-height: 1.5;">Sube hasta 5 imágenes. Marca una como principal usando el botón de cada miniatura.</div>
+                            <input type="hidden" name="main_image_index" id="main-image-index" value="0">
+                            <div id="selected-files-summary" class="selected-files-summary" aria-live="polite">Aún no has agregado imágenes.</div>
+                            <div id="selected-files-preview" class="selected-files-preview"></div>
+                            <div id="upload-warning-overlay" class="upload-warning-overlay" aria-hidden="true">
+                                <div class="upload-warning-modal" role="dialog" aria-modal="true" aria-labelledby="upload-warning-title">
+                                    <div class="upload-warning-header">
+                                        <h3 id="upload-warning-title">Aviso</h3>
+                                    </div>
+                                    <div class="upload-warning-body" id="upload-warning-body"></div>
+                                    <div class="upload-warning-footer">
+                                        <button type="button" class="btn" id="upload-warning-close">Entendido</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -311,15 +579,230 @@
     <script src="{% static 'marketplace/js/app.js' %}"></script>
     <script>
         (function(){
-            var input = document.getElementById('images');
-            var remaining = parseInt(document.getElementById('remaining').textContent || '5', 10);
-            if (input) {
-                input.addEventListener('change', function(e){
-                    if (this.files && this.files.length > remaining){
-                        alert('Solo puedes seleccionar hasta ' + remaining + ' imágenes. Se tomarán las primeras ' + remaining + '.');
+            const entradaArchivos = document.getElementById('images');
+            const zonaDescarga = document.getElementById('image-dropzone');
+            const etiquetaRestantes = document.getElementById('remaining');
+            const MAX_IMAGENES_PERMITIDAS = 5;
+            let maximoImagenesPermitidas = MAX_IMAGENES_PERMITIDAS;
+            let archivosSeleccionados = [];
+            let indiceImagenPrincipal = 0;
+            const inputImagenPrincipal = document.getElementById('main-image-index');
+            const resumenArchivos = document.getElementById('selected-files-summary');
+            const overlayAdvertencia = document.getElementById('upload-warning-overlay');
+            const cuerpoAdvertencia = document.getElementById('upload-warning-body');
+            const botonCerrarAdvertencia = document.getElementById('upload-warning-close');
+            const contenedorVistaPrevia = document.getElementById('selected-files-preview');
+
+            if (etiquetaRestantes) {
+                const archivosRestantes = parseInt(etiquetaRestantes.textContent || '5', 10);
+                if (!Number.isNaN(archivosRestantes) && archivosRestantes > 0) {
+                    maximoImagenesPermitidas = archivosRestantes;
+                }
+            }
+
+            function sincronizarIndiceImagenPrincipal(){
+                if (archivosSeleccionados.length === 0) {
+                    indiceImagenPrincipal = 0;
+                } else if (indiceImagenPrincipal < 0 || indiceImagenPrincipal >= archivosSeleccionados.length) {
+                    indiceImagenPrincipal = 0;
+                }
+                if (inputImagenPrincipal) {
+                    inputImagenPrincipal.value = indiceImagenPrincipal;
+                }
+            }
+
+            function actualizarAdvertencia(mensaje){
+                if (!overlayAdvertencia || !cuerpoAdvertencia) return;
+                if (mensaje) {
+                    cuerpoAdvertencia.innerHTML = '<strong>Atención:</strong> ' + mensaje;
+                    overlayAdvertencia.classList.add('show');
+                    overlayAdvertencia.setAttribute('aria-hidden', 'false');
+                } else {
+                    cuerpoAdvertencia.innerHTML = '';
+                    overlayAdvertencia.classList.remove('show');
+                    overlayAdvertencia.setAttribute('aria-hidden', 'true');
+                }
+            }
+
+            function actualizarConteoRestante(){
+                if (!etiquetaRestantes) return;
+                const restantes = Math.max(0, maximoImagenesPermitidas - archivosSeleccionados.length);
+                etiquetaRestantes.textContent = restantes;
+            }
+
+            function establecerImagenPrincipal(indice){
+                if (!archivosSeleccionados.length) return;
+                indiceImagenPrincipal = Math.max(0, Math.min(indice, archivosSeleccionados.length - 1));
+                sincronizarIndiceImagenPrincipal();
+                actualizarVistaPrevia(archivosSeleccionados);
+            }
+
+            function actualizarVistaPrevia(archivos){
+                const archivosArray = Array.isArray(archivos) ? archivos : Array.from(archivos || []);
+                if (resumenArchivos) {
+                    if (archivosArray.length === 0) {
+                        resumenArchivos.textContent = 'Aún no has agregado imágenes.';
+                    } else {
+                        resumenArchivos.textContent = archivosArray.length + (archivosArray.length === 1 ? ' imagen seleccionada' : ' imágenes seleccionadas');
+                    }
+                }
+                if (!contenedorVistaPrevia) return;
+                sincronizarIndiceImagenPrincipal();
+                contenedorVistaPrevia.innerHTML = '';
+                archivosArray.forEach(function(archivo, indice){
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = 'selected-file-card' + (indice === indiceImagenPrincipal ? ' is-main' : '');
+                    const miniatura = document.createElement('img');
+                    miniatura.alt = archivo.name;
+                    miniatura.src = URL.createObjectURL(archivo);
+                    const nombre = document.createElement('div');
+                    nombre.className = 'selected-file-name';
+                    nombre.textContent = archivo.name;
+                    const metadatos = document.createElement('div');
+                    metadatos.className = 'selected-file-meta';
+                    metadatos.textContent = Math.round(archivo.size / 1024) + ' KB';
+                    const botonPrincipal = document.createElement('button');
+                    botonPrincipal.type = 'button';
+                    botonPrincipal.className = 'main-image-btn' + (indice === indiceImagenPrincipal ? ' is-main' : '');
+                    botonPrincipal.textContent = indice === indiceImagenPrincipal ? 'Principal' : 'Marcar principal';
+                    botonPrincipal.addEventListener('click', function(evento){
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        establecerImagenPrincipal(indice);
+                    });
+                    const botonEliminar = document.createElement('button');
+                    botonEliminar.type = 'button';
+                    botonEliminar.className = 'remove-file-btn';
+                    botonEliminar.setAttribute('aria-label', 'Eliminar imagen ' + archivo.name);
+                    botonEliminar.textContent = '×';
+                    botonEliminar.addEventListener('click', function(evento){
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        eliminarArchivoEnIndice(indice);
+                    });
+                    tarjeta.appendChild(miniatura);
+                    tarjeta.appendChild(nombre);
+                    tarjeta.appendChild(metadatos);
+                    tarjeta.appendChild(botonPrincipal);
+                    tarjeta.appendChild(botonEliminar);
+                    contenedorVistaPrevia.appendChild(tarjeta);
+                });
+            }
+
+            function eliminarArchivoEnIndice(indice){
+                if (indice < 0 || indice >= archivosSeleccionados.length) return;
+                const eraPrincipal = indice === indiceImagenPrincipal;
+                archivosSeleccionados.splice(indice, 1);
+                if (archivosSeleccionados.length === 0) {
+                    indiceImagenPrincipal = 0;
+                } else if (eraPrincipal) {
+                    indiceImagenPrincipal = Math.min(indice, archivosSeleccionados.length - 1);
+                } else if (indice < indiceImagenPrincipal) {
+                    indiceImagenPrincipal -= 1;
+                }
+                const dataTransfer = new DataTransfer();
+                archivosSeleccionados.forEach(function(archivo){ dataTransfer.items.add(archivo); });
+                if (entradaArchivos) {
+                    entradaArchivos.files = dataTransfer.files;
+                }
+                sincronizarIndiceImagenPrincipal();
+                actualizarConteoRestante();
+                actualizarVistaPrevia(archivosSeleccionados);
+            }
+
+            function quitarDuplicados(archivos){
+                const archivosUnicos = [];
+                const vistos = {};
+                Array.from(archivos || []).forEach(function(archivo){
+                    const clave = [archivo.name, archivo.size, archivo.lastModified].join('::');
+                    if (!vistos[clave]) {
+                        vistos[clave] = true;
+                        archivosUnicos.push(archivo);
+                    }
+                });
+                return archivosUnicos;
+            }
+
+            function aplicarArchivos(archivos, modoAgregar){
+                let archivosEntrantes = Array.from(archivos || []);
+                let archivosCombinados = modoAgregar ? archivosSeleccionados.concat(archivosEntrantes) : archivosEntrantes;
+                archivosCombinados = quitarDuplicados(archivosCombinados);
+                if (archivosCombinados.length > maximoImagenesPermitidas) {
+                    archivosCombinados = archivosCombinados.slice(0, maximoImagenesPermitidas);
+                    actualizarAdvertencia('Solo puedes seleccionar hasta ' + maximoImagenesPermitidas + ' imágenes. Se tomaron las primeras ' + maximoImagenesPermitidas + '.');
+                } else {
+                    actualizarAdvertencia('');
+                }
+                archivosSeleccionados = archivosCombinados;
+                if (archivosSeleccionados.length === 0) {
+                    indiceImagenPrincipal = 0;
+                } else if (indiceImagenPrincipal >= archivosSeleccionados.length) {
+                    indiceImagenPrincipal = archivosSeleccionados.length - 1;
+                }
+                const dataTransfer = new DataTransfer();
+                archivosSeleccionados.forEach(function(archivo){ dataTransfer.items.add(archivo); });
+                if (entradaArchivos) {
+                    entradaArchivos.files = dataTransfer.files;
+                }
+                sincronizarIndiceImagenPrincipal();
+                actualizarConteoRestante();
+                actualizarVistaPrevia(archivosSeleccionados);
+            }
+
+            if (botonCerrarAdvertencia) {
+                botonCerrarAdvertencia.addEventListener('click', function(){
+                    actualizarAdvertencia('');
+                });
+            }
+
+            if (overlayAdvertencia) {
+                overlayAdvertencia.addEventListener('click', function(evento){
+                    if (evento.target === overlayAdvertencia) {
+                        actualizarAdvertencia('');
                     }
                 });
             }
+
+            if (entradaArchivos) {
+                entradaArchivos.addEventListener('change', function(){
+                    aplicarArchivos(this.files, true);
+                    this.value = '';
+                });
+            }
+
+            if (zonaDescarga) {
+                zonaDescarga.addEventListener('click', function(evento){
+                    if (evento.target === entradaArchivos) return;
+                    entradaArchivos.click();
+                });
+                zonaDescarga.addEventListener('keydown', function(evento){
+                    if (evento.key === 'Enter' || evento.key === ' '){
+                        evento.preventDefault();
+                        entradaArchivos.click();
+                    }
+                });
+                ['dragenter', 'dragover'].forEach(function(nombreEvento){
+                    zonaDescarga.addEventListener(nombreEvento, function(evento){
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        zonaDescarga.classList.add('dragover');
+                    });
+                });
+                ['dragleave', 'dragend', 'drop'].forEach(function(nombreEvento){
+                    zonaDescarga.addEventListener(nombreEvento, function(evento){
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        zonaDescarga.classList.remove('dragover');
+                    });
+                });
+                zonaDescarga.addEventListener('drop', function(evento){
+                    const archivosSoltados = evento.dataTransfer && evento.dataTransfer.files ? evento.dataTransfer.files : [];
+                    if (archivosSoltados.length) {
+                        aplicarArchivos(archivosSoltados, true);
+                    }
+                });
+            }
+
         })();
     </script>
 </body>
