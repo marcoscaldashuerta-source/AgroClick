@@ -7,56 +7,63 @@
     <title>Login AgroClick</title>
     <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
     <style>
-      /* small local overrides kept for card look */
-      .page{width:min(100%,440px);background:#fff;border-radius:16px;padding:28px;margin:24px auto}
-      .page h1{color:var(--brand-green);margin:0 0 12px}
-      .page p.intro{color:var(--muted);margin:0 0 18px}
+      body{margin:0;font-family:Inter, Arial, sans-serif;background:var(--bg);color:#111827;min-height:100vh}
+      .auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+      .auth-card{width:min(100%,500px);background:#fff;border-radius:18px;padding:30px;box-shadow:0 12px 30px rgba(15,23,42,0.06)}
+      .auth-card h1{color:var(--brand-green);margin:0 0 12px;font-size:28px}
+      .auth-card .auth-intro{color:var(--muted);margin:0 0 18px;line-height:1.5}
+      .auth-card form{margin-top:8px}
+      .auth-card .form-group{margin-bottom:16px}
+      .auth-card .btn-primary{width:100%}
+      .auth-card .signup-text{margin-top:16px;font-size:14px}
     </style>
     
 </head>
 <body>
-    <section class="page card">
-        <h1>Iniciar sesión</h1>
-        <p class="intro">Accede a tu cuenta para comprar frutas y verduras frescas, o para publicar tus productos en AgroClick.</p>
-        <form method="post" novalidate>
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="errorlist">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-
-            <div class="form-group">
-                <label for="id_username">Usuario</label>
-                <div class="input-with-icon">
-                    <input type="text" name="username" id="id_username" placeholder="usuario" required autofocus class="gc-input">
-                </div>
-                {% if form.username.errors %}
-                    <ul class="errorlist">
-                        {% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}
-                    </ul>
+    <div class="auth-page">
+        <section class="auth-card">
+            <h1>Iniciar sesión</h1>
+            <p class="auth-intro">Accede a tu cuenta para comprar frutas y verduras frescas, o para publicar tus productos en AgroClick.</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="errorlist">
+                        {{ form.non_field_errors }}
+                    </div>
                 {% endif %}
-            </div>
 
-            <div class="form-group">
-                <label for="id_password">Contraseña</label>
-                <div class="input-with-icon">
-                    <input type="password" name="password" id="id_password" placeholder="contraseña" required class="gc-input">
-                    <button type="button" class="password-toggle" aria-label="Mostrar contraseña">Mostrar</button>
+                <div class="form-group">
+                    <label for="id_username">Usuario</label>
+                    <div class="input-with-icon">
+                        <input type="text" name="username" id="id_username" placeholder="usuario" required autofocus class="gc-input">
+                    </div>
+                    {% if form.username.errors %}
+                        <ul class="errorlist">
+                            {% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
                 </div>
-                {% if form.password.errors %}
-                    <ul class="errorlist">
-                        {% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
 
-            <div class="form-group">
-                <button type="submit" class="btn-primary">Entrar</button>
-            </div>
-        </form>
-        <p class="signup-text">¿Aún no tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a> como comprador o vendedor.</p>
-    </section>
+                <div class="form-group">
+                    <label for="id_password">Contraseña</label>
+                    <div class="input-with-icon">
+                        <input type="password" name="password" id="id_password" placeholder="contraseña" required class="gc-input">
+                        <button type="button" class="password-toggle" aria-label="Mostrar contraseña">Mostrar</button>
+                    </div>
+                    {% if form.password.errors %}
+                        <ul class="errorlist">
+                            {% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn-primary">Entrar</button>
+                </div>
+            </form>
+            <p class="signup-text">¿Aún no tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a> como comprador o vendedor.</p>
+        </section>
+    </div>
 
     <script src="{% static 'marketplace/js/app.js' %}"></script>
 </body>

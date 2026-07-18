@@ -1,7 +1,7 @@
 /* Global styles for AgroClick - marketplace */
 :root{
-	--brand-green:#4f9a2d;
-	--brand-green-600:#3f7b24;
+	--brand-green:#4CAF50;
+	--brand-green-600:#43A047;
 	--muted:#6b7280;
 	--bg:#f7faf4;
 	--card:#ffffff;
@@ -27,11 +27,25 @@ body{
 	content:none !important;
 	display:none !important;
 }
-.container{max-width:1200px;margin:0 auto;padding:24px}
-.navbar{background:var(--brand-green);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.container{max-width:1180px;margin:24px auto 0;padding:0 20px 48px;box-sizing:border-box}
+.page-shell{max-width:1180px;margin:24px auto 0;padding:0 20px 48px;box-sizing:border-box}
+.page-card{background:linear-gradient(135deg,#ffffff 0%,#f8fbf5 100%);border:1px solid #e7efe0;border-radius:28px;box-shadow:0 24px 60px rgba(31,41,55,0.08);padding:30px;overflow:hidden}
+.page-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid #e5e7eb}
+.page-title{font-size:30px;font-weight:800;color:#1f2937;margin:0}
+.back-link{color:#4CAF50;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.back-link:hover{color:#45a049}
+.notification-list{display:grid;gap:14px}
+.notification-card{border:1px solid #e9efe4;border-radius:18px;padding:16px 18px;background:#ffffff;box-shadow:0 12px 28px rgba(15,23,42,0.05)}
+.notification-card.read{background:#f9fbf7;border-color:#e1ebdc}
+.notification-card p{margin:0 0 6px;line-height:1.5}
+.notification-card small{color:#6b7280}
+.empty-state{padding:24px 0}
+.empty-state h2{margin:0 0 8px;font-size:22px;color:#111827}
+.empty-state p{margin:0;color:#6b7280}
+.navbar{background:linear-gradient(135deg,var(--brand-green),var(--brand-green-600));color:#fff;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;min-height:64px}
 .navbar h1{font-size:20px;margin:0}
-.nav-links{display:flex;gap:12px;align-items:center;position:relative}
-.nav-links a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:10px;font-weight:600}
+.nav-links{display:flex;gap:10px;align-items:center;position:relative;min-height:40px}
+.nav-links a{color:#fff;text-decoration:none;padding:8px 12px;border-radius:10px;font-weight:600;display:inline-flex;align-items:center;min-height:40px}
 .nav-links a:hover{background:rgba(255,255,255,0.12)}
 
 .nav-links details.admin-actions-menu,
@@ -54,9 +68,9 @@ body{
 .nav-links details.user-actions-menu .menu-items a:hover{background:#f3f4f6}
 
 /* Brand area */
-.brand{display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;min-height:40px}
 .brand img{width:44px;height:44px;border-radius:8px;object-fit:cover;box-shadow:0 2px 6px rgba(15,23,42,0.2)}
-.brand .site-title{font-size:20px;font-weight:800;color:#fff}
+.brand .site-title{font-size:20px;font-weight:800;color:#fff;line-height:1.2}
 
 
 .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
