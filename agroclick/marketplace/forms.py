@@ -89,6 +89,29 @@ class ProductoForm(forms.ModelForm):
             if 'nombre' in self.fields:
                 self.fields['nombre'].required = False
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.saving_draft:
+            return cleaned_data
+
+        files = self.files.getlist('images')
+        has_uploaded_image = bool(files)
+
+        existing_instance = getattr(self, 'instance', None)
+        has_existing_image = False
+        if existing_instance is not None:
+            if getattr(existing_instance, 'pk', None) is not None:
+                has_existing_image = bool(getattr(existing_instance, 'imagen', None)) or existing_instance.imagenes.exists()
+            else:
+                has_existing_image = bool(getattr(existing_instance, 'imagen', None))
+        elif cleaned_data.get('imagen'):
+            has_existing_image = True
+
+        if has_uploaded_image or has_existing_image:
+            return cleaned_data
+
+        raise ValidationError('Debes agregar al menos una imagen antes de publicar o guardar el producto.')
+
     class Meta:
         model = Producto
 
