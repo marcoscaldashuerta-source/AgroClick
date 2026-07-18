@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Comprobantes recibidos</h2>
+
+{% for c in comprobantes %}
+  <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+    <p><strong>Pedido #{{ c.pedido.id }}</strong> - Subido por: {{ c.subido_por.username }} - Estado: {{ c.get_estado_display }}</p>
+    <p>Fecha: {{ c.fecha_subida }}</p>
+    <p><img src="{{ c.imagen.url }}" alt="comprobante" style="max-width:400px;"></p>
+    {% if c.estado == 'pendiente' %}
+      <form method="post" action="{% url 'revisar_comprobante' c.id %}">
+        {% csrf_token %}
+        <button name="accion" value="aprobar" type="submit">Aprobar</button>
+        <button name="accion" value="rechazar" type="submit">Rechazar</button>
+        <input type="text" name="motivo" placeholder="Opcional: motivo del rechazo">
+      </form>
+    {% else %}
+      <p>Revisado por: {{ c.revisado_por.username if c.revisado_por }}</p>
+    {% endif %}
+  </div>
+{% empty %}
+  <p>No hay comprobantes.</p>
+{% endfor %}
+
+{% endblock %}

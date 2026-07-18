@@ -1,5 +1,6 @@
 from django import forms
 from .models import Producto, Perfil, TicketSoporte, SolicitudEntrega
+from .models import PaymentProof
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
@@ -158,3 +159,9 @@ class EntregaForm(forms.ModelForm):
             self.add_error('direccion_entrega', 'Indica la dirección de entrega para el Delivery.')
 
         return cleaned_data
+
+
+class PaymentProofForm(forms.ModelForm):
+    class Meta:
+        model = PaymentProof
+        fields = ['imagen']
