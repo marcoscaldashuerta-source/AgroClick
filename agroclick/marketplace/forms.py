@@ -79,6 +79,16 @@ class ProductoForm(forms.ModelForm):
         error_messages={'required': 'Selecciona una categoría.'}
     )
 
+    def __init__(self, *args, **kwargs):
+        self.saving_draft = kwargs.pop('saving_draft', False)
+        super().__init__(*args, **kwargs)
+        if self.saving_draft:
+            for field_name in ['categoria', 'descripcion', 'precio', 'unidad_venta', 'stock', 'imagen', 'imagen2', 'imagen3', 'imagen4', 'imagen5']:
+                if field_name in self.fields:
+                    self.fields[field_name].required = False
+            if 'nombre' in self.fields:
+                self.fields['nombre'].required = False
+
     class Meta:
         model = Producto
 
@@ -98,7 +108,7 @@ class ProductoForm(forms.ModelForm):
         error_messages = {
             'nombre': {
                 'required': 'El nombre del producto es obligatorio.',
-                'max_length': 'El nombre del producto no puede superar los 100 caracteres.'
+                'max_length': 'El nombre del producto no puede superar los 60 caracteres.'
             },
             'descripcion': {'required': 'La descripción del producto es obligatoria.'},
             'precio': {

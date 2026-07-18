@@ -238,14 +238,25 @@ def publicar_producto(request):
 
     if request.method == 'POST':
 
-        form = ProductoForm(request.POST, request.FILES)
+        saving_draft = 'guardar_borrador' in request.POST
+        form = ProductoForm(request.POST, request.FILES, saving_draft=saving_draft)
+
+        if saving_draft:
+            nombre = (request.POST.get('nombre') or '').strip()
+            if not nombre:
+                form.add_error('nombre', 'El nombre del producto es obligatorio para guardar un borrador.')
+                return render(
+                    request,
+                    'publicar_producto.html',
+                    {'form': form, 'remaining_slots': MAX_IMAGES}
+                )
 
         if form.is_valid():
 
             producto = form.save(commit=False)
             producto.vendedor = request.user
 
-            if 'guardar_borrador' in request.POST:
+            if saving_draft:
                 producto.borrador = True
                 messages.success(request, 'Producto guardado como borrador correctamente.')
             else:
