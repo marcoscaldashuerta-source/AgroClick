@@ -10,7 +10,7 @@
 <body>
     <div class="navbar page-bg">
         <div class="brand">
-            <img src="{% static 'marketplace/img/asoagro-fb.jpg' %}" alt="ASOAGRO logo" />
+            <img src="{% static 'marketplace/img/Logo-AgroClick.png' %}" alt="AgroClick logo" />
             <div class="site-title">AgroClick</div>
         </div>
         <div class="nav-links">
@@ -18,9 +18,8 @@
                 {% if request.resolver_match.url_name != 'ver_notificaciones' %}
                     <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count|default:0 > 0 %} ({{ notificaciones_count }}){% endif %}</a>
                 {% endif %}
-                {% if user.perfil.rol == 'comprador' %}
+                {% if user.perfil.rol == 'comprador' and request.resolver_match.url_name != 'ver_carrito' %}
                     <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
-                {% elif user.perfil.rol == 'vendedor' %}
                 {% endif %}
                 {% if user.is_staff %}
                     <details class="admin-actions-menu">
