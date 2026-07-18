@@ -2,7 +2,17 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 
-from .models import Perfil, deshabilitar_cuenta_usuario, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega, Pedido
+from .models import (
+    Perfil,
+    deshabilitar_cuenta_usuario,
+    Carrito,
+    ItemCarrito,
+    TicketSoporte,
+    SolicitudEntrega,
+    Pedido,
+    Producto,
+    ProductActionLog,
+)
 
 
 def deshabilitar_cuentas_seleccionadas(modeladmin, request, queryset):
@@ -73,3 +83,31 @@ class PedidoAdmin(admin.ModelAdmin):
     list_filter = ('estado', 'tipo_entrega', 'tipo_pago', 'fecha_creacion')
     search_fields = ('comprador__username', 'vendedor__username', 'producto__nombre', 'direccion_entrega')
     readonly_fields = ('fecha_creacion',)
+
+
+@admin.register(Producto)
+class ProductoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'vendedor', 'precio', 'stock', 'estado', 'fecha_creacion')
+    list_filter = ('estado', 'categoria', 'fecha_creacion')
+    search_fields = ('nombre', 'vendedor__username', 'descripcion')
+    readonly_fields = ('fecha_creacion',)
+    change_list_template = 'admin/marketplace/product/change_list.html'
+
+
+@admin.register(ProductActionLog)
+class ProductActionLogAdmin(admin.ModelAdmin):
+    """Registro de actividad del sistema: solo lectura para administradores."""
+    list_display = ('id', 'producto', 'actor_role', 'accion', 'fecha')
+    list_filter = ('accion', 'fecha')
+    search_fields = ('producto__nombre', 'actor__username', 'accion')
+    readonly_fields = ('producto', 'actor', 'accion', 'fecha')
+    ordering = ('-fecha',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

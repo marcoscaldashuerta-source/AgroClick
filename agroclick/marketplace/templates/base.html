@@ -30,6 +30,7 @@
                             <a href="{% url 'supervisar_productos' %}">Supervisar productos</a>
                             <a href="{% url 'panel_soporte' %}">Panel de soporte{% if total_pendientes_soporte|default:0 > 0 %} ({{ total_pendientes_soporte }}){% endif %}</a>
                             <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count|default:0 > 0 %} ({{ notificaciones_count }}){% endif %}</a>
+                            <a href="{% url 'historial_registros' %}">Historial de registros</a>
                             <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
                         </div>
                     </details>

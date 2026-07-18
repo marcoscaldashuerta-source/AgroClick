@@ -11,6 +11,62 @@ from datetime import timedelta
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import user_passes_test
+from django.utils.dateparse import parse_date
+
+
+@user_passes_test(lambda u: u.is_authenticated and u.is_staff)
+def historial_registros(request):
+    """Vista para que el administrador vea el historial de acciones del sistema.
+
+    Filtros disponibles por: accion, usuario (admin que realizó la acción), fecha inicio y fecha fin.
+    """
+    qs = ProductActionLog.objects.select_related('producto', 'actor').all().order_by('-fecha')
+
+    accion = request.GET.get('accion', '').strip()
+    usuario = request.GET.get('usuario', '').strip()
+    actor_rol = request.GET.get('actor_rol', '').strip()
+    fecha_inicio = request.GET.get('fecha_inicio', '').strip()
+    fecha_fin = request.GET.get('fecha_fin', '').strip()
+
+    if accion:
+        qs = qs.filter(accion__iexact=accion)
+
+    if usuario:
+        qs = qs.filter(actor__username__icontains=usuario)
+
+    if actor_rol:
+        if actor_rol == 'admin':
+            qs = qs.filter(actor__is_staff=True)
+        else:
+            qs = qs.filter(actor__perfil__rol__iexact=actor_rol)
+
+    if fecha_inicio:
+        d = parse_date(fecha_inicio)
+        if d:
+            qs = qs.filter(fecha__date__gte=d)
+
+    if fecha_fin:
+        d = parse_date(fecha_fin)
+        if d:
+            qs = qs.filter(fecha__date__lte=d)
+
+    # Opciones para los selects
+    acciones_disponibles = ProductActionLog.objects.values_list('accion', flat=True).distinct()
+    actors_disponibles = User.objects.filter(id__in=ProductActionLog.objects.values_list('actor', flat=True)).order_by('username')
+    roles_disponibles = ['admin', 'vendedor', 'comprador']
+
+    return render(request, 'historial_registros.html', {
+        'registros': qs,
+        'acciones_disponibles': acciones_disponibles,
+        'actors_disponibles': actors_disponibles,
+        'roles_disponibles': roles_disponibles,
+        'f_actor_rol': actor_rol,
+        'f_accion': accion,
+        'f_usuario': usuario,
+        'f_fecha_inicio': fecha_inicio,
+        'f_fecha_fin': fecha_fin,
+    })
 
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
@@ -194,6 +250,12 @@ def publicar_producto(request):
 
             producto.save()
 
+            # Registrar publicación si no es borrador y no existe registro previo
+            if not producto.borrador:
+                exists = ProductActionLog.objects.filter(producto=producto, accion__iexact='publicado', actor=request.user).exists()
+                if not exists:
+                    ProductActionLog.objects.create(producto=producto, actor=request.user, accion='publicado')
+
             # Handle multiple uploaded images from single input 'images'
             images = request.FILES.getlist('images')
             if images:
@@ -319,7 +381,7 @@ def eliminar_producto_admin(request, producto_id):
         # Registrar la acción
         ProductActionLog.objects.create(
             producto=producto,
-            admin=request.user,
+            actor=request.user,
             accion='eliminado',
             razon=razon
         )
@@ -495,10 +557,12 @@ def pausar_producto(request, producto_id):
     if request.method == 'POST':
         if producto.estado == 'activo':
             producto.estado = 'pausado'
+            producto.save()
+            ProductActionLog.objects.create(producto=producto, actor=request.user, accion='pausado')
         else:
             producto.estado = 'activo'
-
-        producto.save()
+            producto.save()
+            ProductActionLog.objects.create(producto=producto, actor=request.user, accion='activado')
 
     return redirect('mis_productos')
 
@@ -525,6 +589,7 @@ def eliminar_producto(request, producto_id):
         if confirmacion == 'si':
             producto.estado = 'eliminado'
             producto.save()
+            ProductActionLog.objects.create(producto=producto, actor=request.user, accion='eliminado')
             return redirect('mis_productos')
         else:
             return redirect('mis_productos')
@@ -706,6 +771,8 @@ def checkout(request):
                     tipo_pago=solicitud.tipo_pago,
                     estado='pendiente',
                 )
+                # Registrar creación de pedido por el comprador
+                ProductActionLog.objects.create(producto=producto, actor=request.user, accion='pedido_creado')
 
             carrito.items.all().delete()
             messages.success(request, 'Compra confirmada correctamente.')
@@ -746,6 +813,7 @@ def actualizar_estado_pedido(request, pedido_id):
         pedido.producto.save(update_fields=['stock'])
         pedido.estado = 'confirmado'
         pedido.motivo_cancelacion = ''
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_confirmado', razon=f'Pedido #{pedido.id}')
         messages.success(request, f'Pedido #{pedido.id} confirmado.')
     elif accion == 'cancelar':
         motivo_cancelacion = request.POST.get('motivo_cancelacion', '').strip()
@@ -757,6 +825,7 @@ def actualizar_estado_pedido(request, pedido_id):
         Notificacion.objects.create(usuario=pedido.comprador, mensaje=mensaje)
         pedido.estado = 'cancelado'
         pedido.motivo_cancelacion = motivo_cancelacion
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_cancelado', razon=f'Pedido #{pedido.id} - {motivo_cancelacion}')
         messages.success(request, f'Pedido #{pedido.id} cancelado.')
     else:
         messages.error(request, 'Acción inválida.')

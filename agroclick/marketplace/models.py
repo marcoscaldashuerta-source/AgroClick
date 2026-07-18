@@ -87,13 +87,29 @@ class ProductImage(models.Model):
 class ProductActionLog(models.Model):
     """Registro de acciones administrativas sobre productos."""
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    admin = models.ForeignKey(User, on_delete=models.CASCADE)
+    actor = models.ForeignKey(User, on_delete=models.CASCADE)
     accion = models.CharField(max_length=50)
     razon = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.accion} - {self.producto.nombre} por {self.admin.username}"
+        return f"{self.accion} - {self.producto.nombre} por {self.actor.username}"
+
+    @property
+    def actor_role(self):
+        """Devuelve el rol legible del actor que realizó la acción."""
+        try:
+            if self.actor.is_staff:
+                return 'administrador'
+        except Exception:
+            pass
+        try:
+            perfil = getattr(self.actor, 'perfil', None)
+            if perfil and getattr(perfil, 'rol', None):
+                return perfil.rol
+        except Exception:
+            pass
+        return 'desconocido'
 
 
 class Notificacion(models.Model):
