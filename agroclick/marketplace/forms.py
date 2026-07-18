@@ -74,7 +74,20 @@ class ProductoForm(forms.ModelForm):
         ('Verdura', 'Verdura'),
     ]
 
-    categoria = forms.ChoiceField(choices=CATEGORIA_CHOICES)
+    categoria = forms.ChoiceField(
+        choices=CATEGORIA_CHOICES,
+        error_messages={'required': 'Selecciona una categoría.'}
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.saving_draft = kwargs.pop('saving_draft', False)
+        super().__init__(*args, **kwargs)
+        if self.saving_draft:
+            for field_name in ['categoria', 'descripcion', 'precio', 'unidad_venta', 'stock', 'imagen', 'imagen2', 'imagen3', 'imagen4', 'imagen5']:
+                if field_name in self.fields:
+                    self.fields[field_name].required = False
+            if 'nombre' in self.fields:
+                self.fields['nombre'].required = False
 
     class Meta:
         model = Producto
@@ -92,6 +105,27 @@ class ProductoForm(forms.ModelForm):
             'imagen4',
             'imagen5'
         ]
+        error_messages = {
+            'nombre': {
+                'required': 'El nombre del producto es obligatorio.',
+                'max_length': 'El nombre del producto no puede superar los 60 caracteres.'
+            },
+            'descripcion': {'required': 'La descripción del producto es obligatoria.'},
+            'precio': {
+                'required': 'El precio es obligatorio.',
+                'invalid': 'Ingresa un precio válido.'
+            },
+            'unidad_venta': {'required': 'La unidad de venta es obligatoria.'},
+            'stock': {
+                'required': 'El stock es obligatorio.',
+                'invalid': 'Ingresa una cantidad válida.'
+            },
+            'imagen': {'invalid': 'La imagen principal no es válida.'},
+            'imagen2': {'invalid': 'La segunda imagen no es válida.'},
+            'imagen3': {'invalid': 'La tercera imagen no es válida.'},
+            'imagen4': {'invalid': 'La cuarta imagen no es válida.'},
+            'imagen5': {'invalid': 'La quinta imagen no es válida.'},
+        }
 
 
 class TicketSoporteForm(forms.ModelForm):

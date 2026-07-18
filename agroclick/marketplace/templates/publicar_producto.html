@@ -2,44 +2,102 @@
 <html>
 {% load static %}
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publicar Producto - AgroClick</title>
     <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
+            font-family: Inter, Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #f4fbf3 0%, #f7faf4 100%);
+            color: #111827;
+            min-height: 100vh;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: white;
+        .page-shell {
+            max-width: 1000px;
+            margin: 32px auto 0;
+            padding: 0 20px 48px;
+        }
+        .page-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbf5 100%);
+            border: 1px solid #e7efe0;
+            border-radius: 28px;
+            box-shadow: 0 24px 60px rgba(31, 41, 55, 0.08);
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
-        h1 {
-            color: #333;
-            border-bottom: 3px solid #4CAF50;
-            padding-bottom: 10px;
+        .page-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .page-title {
+            font-size: 30px;
+            font-weight: 800;
+            color: #1f2937;
+            margin: 0;
         }
         .back-link {
             color: #4CAF50;
             text-decoration: none;
-            margin-bottom: 20px;
-            display: inline-block;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
         .back-link:hover {
-            text-decoration: underline;
+            color: #45a049;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #eef9ee 0%, #f9fdf9 100%);
+            padding: 16px 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #2e7d32;
+            font-size: 16px;
+        }
+        .info-box ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #4b5563;
+        }
+        .info-box li {
+            margin: 6px 0;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
         }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 0;
+        }
+        .field-card {
+            background: #fbfdfb;
+            border: 1px solid #e8efe8;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.03);
+        }
+        .field-card.full-span {
+            grid-column: 1 / -1;
         }
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #334155;
         }
         input[type="text"],
         input[type="number"],
@@ -47,11 +105,13 @@
         input[type="file"],
         select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 11px 12px;
+            border: 1px solid #dbe6dc;
+            border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
         input[type="text"]:focus,
         input[type="number"]:focus,
@@ -60,188 +120,206 @@
         select:focus {
             outline: none;
             border-color: #4CAF50;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.12);
         }
         textarea {
             resize: vertical;
             min-height: 120px;
-            font-family: Arial, sans-serif;
+            font-family: Inter, Arial, sans-serif;
+        }
+        .field-required {
+            color: #dc2626;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+            line-height: 1.45;
+        }
+        .errorlist {
+            color: #dc2626;
+            list-style: none;
+            padding: 0;
+            margin: 6px 0 0 0;
+        }
+        .errorlist li {
+            margin: 4px 0;
+            font-size: 13px;
         }
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 30px;
+            gap: 12px;
+            margin-top: 24px;
             flex-wrap: wrap;
         }
         button, .btn {
-            padding: 12px 30px;
+            padding: 12px 22px;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: 999px;
+            font-size: 15px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.08);
+        }
+        button:hover, .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(15,23,42,0.14);
+        }
+        button:active, .btn:active {
+            transform: scale(0.98) translateY(0);
         }
         .btn-publish {
-            background-color: #4CAF50;
+            background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
             color: white;
             flex: 1;
-        }
-        .btn-publish:hover {
-            background-color: #45a049;
         }
         .btn-draft {
-            background-color: #2196F3;
+            background: linear-gradient(135deg, #2196F3 0%, #1d4ed8 100%);
             color: white;
             flex: 1;
-        }
-        .btn-draft:hover {
-            background-color: #0b7dda;
         }
         .btn-cancel {
-            background-color: #f44336;
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
             color: white;
             flex: 1;
         }
-        .btn-cancel:hover {
-            background-color: #da190b;
-        }
-        .info-box {
-            background-color: #e8f5e9;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-            border-left: 4px solid #4CAF50;
-        }
-        .info-box h3 {
-            margin: 0 0 10px 0;
-            color: #2e7d32;
-        }
-        .info-box ul {
-            margin: 0;
-            padding-left: 20px;
-            color: #555;
-        }
-        .info-box li {
-            margin: 5px 0;
-        }
-        .field-required {
-            color: #f44336;
-        }
-        .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        .errorlist {
-            color: #f44336;
-            list-style: none;
-            padding: 0;
-            margin: 5px 0 0 0;
-        }
-        .errorlist li {
-            margin: 5px 0;
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .button-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
-        
-        <h1>Publicar nuevo producto</h1>
+    <div class="page-shell">
+        <div class="page-card">
+            <div class="page-top">
+                <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
+            </div>
 
-        <div class="info-box">
-            <h3>Consejos para una buena publicación:</h3>
-            <ul>
-                <li>Usa un nombre descriptivo y claro para el producto</li>
-                <li>Describe detalladamente características, uso y beneficios</li>
-                <li>Incluye una foto de buena calidad</li>
-                <li>Asegúrate que el precio y stock sean correctos</li>
-                <li>Puedes guardar como borrador y publicar después</li>
-            </ul>
+            <h1 class="page-title">Publicar nuevo producto</h1>
+            <p style="margin: 8px 0 18px; color: #4b5563;">Completa la información para mostrar tu producto en AgroClick.</p>
+
+            <div class="info-box">
+                <h3>Consejos para una buena publicación:</h3>
+                <ul>
+                    <li>Usa un nombre descriptivo y claro para el producto</li>
+                    <li>Describe detalladamente características, uso y beneficios</li>
+                    <li>Incluye una foto de buena calidad</li>
+                    <li>Asegúrate que el precio y stock sean correctos</li>
+                    <li>Puedes guardar como borrador y publicar después</li>
+                </ul>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="form-grid">
+                    <div class="field-card">
+                        <div class="form-group">
+                            <label for="{{ form.nombre.id_for_label }}">
+                                Nombre del producto <span class="field-required">*</span>
+                            </label>
+                            {{ form.nombre }}
+                            {{ form.nombre.errors }}
+                            <div class="help-text">Nombre breve y claro del producto (máx. 60 caracteres)</div>
+                        </div>
+                    </div>
+
+                    <div class="field-card">
+                        <div class="form-group">
+                            <label for="{{ form.categoria.id_for_label }}">
+                                Categoría <span class="field-required">*</span>
+                            </label>
+                            {{ form.categoria }}
+                            {{ form.categoria.errors }}
+                        </div>
+                    </div>
+
+                    <div class="field-card full-span">
+                        <div class="form-group">
+                            <label for="{{ form.descripcion.id_for_label }}">
+                                Descripción <span class="field-required">*</span>
+                            </label>
+                            {{ form.descripcion }}
+                            {{ form.descripcion.errors }}
+                            <div class="help-text">Describe detalladamente tu producto, características, uso, etc.</div>
+                        </div>
+                    </div>
+
+                    <div class="field-card">
+                        <div class="form-group">
+                            <label for="{{ form.precio.id_for_label }}">
+                                Precio ($) <span class="field-required">*</span>
+                            </label>
+                            {{ form.precio }}
+                            {{ form.precio.errors }}
+                        </div>
+                    </div>
+
+                    <div class="field-card">
+                        <div class="form-group">
+                            <label for="{{ form.unidad_venta.id_for_label }}">
+                                Unidad de venta <span class="field-required">*</span>
+                            </label>
+                            {{ form.unidad_venta }}
+                            {{ form.unidad_venta.errors }}
+                            <div class="help-text">Ej: kg, litro, unidad, docena, etc.</div>
+                        </div>
+                    </div>
+
+                    <div class="field-card">
+                        <div class="form-group">
+                            <label for="{{ form.stock.id_for_label }}">
+                                Cantidad en stock <span class="field-required">*</span>
+                            </label>
+                            {{ form.stock }}
+                            {{ form.stock.errors }}
+                        </div>
+                    </div>
+
+                    <div class="field-card full-span">
+                        <div class="form-group">
+                            <label for="images">Imágenes del producto</label>
+                            <input type="file" name="images" id="images" multiple accept="image/*">
+                            <div class="help-text">Selecciona hasta 5 imágenes. La primera puede usarse como imagen principal si no seleccionas una principal.</div>
+                            <div class="help-text">Espacios disponibles: <span id="remaining">{{ remaining_slots }}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" name="publicar" class="btn-publish">Publicar ahora</button>
+                    <button type="submit" name="guardar_borrador" class="btn-draft">Guardar borrador</button>
+                    <a href="{% url 'inicio' %}" class="btn btn-cancel">Cancelar</a>
+                </div>
+            </form>
         </div>
-
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-
-            <div class="form-group">
-                <label for="{{ form.nombre.id_for_label }}">
-                    Nombre del producto <span class="field-required">*</span>
-                </label>
-                {{ form.nombre }}
-                {{ form.nombre.errors }}
-                <div class="help-text">Nombre descriptivo del producto (máx. 100 caracteres)</div>
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.categoria.id_for_label }}">
-                    Categoría <span class="field-required">*</span>
-                </label>
-                {{ form.categoria }}
-                {{ form.categoria.errors }}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.descripcion.id_for_label }}">
-                    Descripción <span class="field-required">*</span>
-                </label>
-                {{ form.descripcion }}
-                {{ form.descripcion.errors }}
-                <div class="help-text">Describe detalladamente tu producto, características, uso, etc.</div>
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.precio.id_for_label }}">
-                    Precio ($) <span class="field-required">*</span>
-                </label>
-                {{ form.precio }}
-                {{ form.precio.errors }}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.unidad_venta.id_for_label }}">
-                    Unidad de venta <span class="field-required">*</span>
-                </label>
-                {{ form.unidad_venta }}
-                {{ form.unidad_venta.errors }}
-                <div class="help-text">Ej: kg, litro, unidad, docena, etc.</div>
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.stock.id_for_label }}">
-                    Cantidad en stock <span class="field-required">*</span>
-                </label>
-                {{ form.stock }}
-                {{ form.stock.errors }}
-            </div>
-
-            <div class="form-group">
-                <label for="images">Imágenes del producto</label>
-                <input type="file" name="images" id="images" multiple accept="image/*">
-                <div class="help-text">Selecciona hasta 5 imágenes. La primera puede usarse como imagen principal si no seleccionas una principal.</div>
-                <div class="help-text">Espacios disponibles: <span id="remaining">{{ remaining_slots }}</span></div>
-            </div>
-
-            <div class="button-group">
-                <button type="submit" name="publicar" class="btn-publish">Publicar ahora</button>
-                <button type="submit" name="guardar_borrador" class="btn-draft">Guardar borrador</button>
-                <a href="{% url 'inicio' %}" class="btn btn-cancel">Cancelar</a>
-            </div>
-        </form>
     </div>
     <script src="{% static 'marketplace/js/app.js' %}"></script>
     <script>
         (function(){
             var input = document.getElementById('images');
             var remaining = parseInt(document.getElementById('remaining').textContent || '5', 10);
-            input.addEventListener('change', function(e){
-                if (this.files && this.files.length > remaining){
-                    alert('Solo puedes seleccionar hasta ' + remaining + ' imágenes. Se tomarán las primeras ' + remaining + '.');
-                }
-            });
+            if (input) {
+                input.addEventListener('change', function(e){
+                    if (this.files && this.files.length > remaining){
+                        alert('Solo puedes seleccionar hasta ' + remaining + ' imágenes. Se tomarán las primeras ' + remaining + '.');
+                    }
+                });
+            }
         })();
     </script>
 </body>

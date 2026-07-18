@@ -1,25 +1,34 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Método de entrega - AgroClick{% endblock %}
+{% block title %}Comprar productos - AgroClick{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="checkout-title-card">
-        <h1 style="color: var(--brand-green); margin: 0; text-align: center;">📦 Método de entrega</h1>
+    <div class="checkout-hero">
+        <div>
+            <p class="eyebrow">Paso 2 de 2</p>
+            <h1>Finaliza tu compra</h1>
+            <p>Elige la forma de entrega y el método de pago para completar tu pedido.</p>
+        </div>
+        <div class="hero-badge">🛒 {{ carrito_usuario.items.count }} producto(s)</div>
     </div>
 
-    <div class="checkout-container">
-        <div class="checkout-form-section">
-            <div class="summary-card">
-                <h2>¿Cómo quieres recibir tu pedido?</h2>
+    <div class="checkout-layout">
+        <section class="checkout-card">
+            <div class="card-header">
+                <h2>Datos de entrega</h2>
+                <span class="step-pill">1</span>
+            </div>
 
-                <form method="post" id="entrega-form">
-                    {% csrf_token %}
+            <form method="post" id="entrega-form">
+                {% csrf_token %}
 
+                <div class="selection-group">
+                    <h3>¿Cómo quieres recibir tu pedido?</h3>
                     <div class="selection-options">
                         <label class="selection-option">
                             <input type="radio" name="tipo_entrega" value="delivery"
-                                {% if form.tipo_entrega.value == 'delivery' %}checked{% endif %}>
-                            <div>
+                                {% if formulario.tipo_entrega.value == 'delivery' %}checked{% endif %}>
+                            <div class="selection-content">
                                 <strong>🚚 Delivery</strong>
                                 <p>Recibe tu pedido en la dirección que indiques.</p>
                             </div>
@@ -27,39 +36,40 @@
 
                         <label class="selection-option">
                             <input type="radio" name="tipo_entrega" value="tienda"
-                                {% if form.tipo_entrega.value == 'tienda' %}checked{% endif %}>
-                            <div>
+                                {% if formulario.tipo_entrega.value == 'tienda' %}checked{% endif %}>
+                            <div class="selection-content">
                                 <strong>🏬 Retiro en tienda</strong>
                                 <p>Pasa a buscar tu pedido directamente en el local.</p>
                             </div>
                         </label>
                     </div>
-                    {% if form.tipo_entrega.errors %}
-                        <div class="field-error">{{ form.tipo_entrega.errors.0 }}</div>
+                    {% if formulario.tipo_entrega.errors %}
+                        <div class="field-error">{{ formulario.tipo_entrega.errors.0 }}</div>
                     {% endif %}
+                </div>
 
-                    <div id="direccion-fields" class="direccion-fields">
-                        <div class="form-group">
-                            <label for="id_direccion_entrega">{{ form.direccion_entrega.label }}</label>
-                            {{ form.direccion_entrega }}
-                            {% if form.direccion_entrega.errors %}
-                                <div class="field-error">{{ form.direccion_entrega.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <label for="id_referencia">{{ form.referencia.label }}</label>
-                            {{ form.referencia }}
-                        </div>
+                <div id="direccion-fields" class="direccion-fields">
+                    <div class="form-group">
+                        <label for="id_direccion_entrega">{{ formulario.direccion_entrega.label }}</label>
+                        {{ formulario.direccion_entrega }}
+                        {% if formulario.direccion_entrega.errors %}
+                            <div class="field-error">{{ formulario.direccion_entrega.errors.0 }}</div>
+                        {% endif %}
                     </div>
 
-                    <h2 style="margin-top: 24px;">¿Cómo quieres pagar?</h2>
+                    <div class="form-group">
+                        <label for="id_referencia">{{ formulario.referencia.label }}</label>
+                        {{ formulario.referencia }}
+                    </div>
+                </div>
 
+                <div class="selection-group">
+                    <h3>¿Cómo quieres pagar?</h3>
                     <div class="selection-options">
                         <label class="selection-option">
                             <input type="radio" name="tipo_pago" value="transferencia"
-                                {% if form.tipo_pago.value == 'transferencia' %}checked{% endif %}>
-                            <div>
+                                {% if formulario.tipo_pago.value == 'transferencia' %}checked{% endif %}>
+                            <div class="selection-content">
                                 <strong>🏦 Transferencia</strong>
                                 <p>Realiza el pago por transferencia bancaria.</p>
                             </div>
@@ -67,96 +77,160 @@
 
                         <label class="selection-option">
                             <input type="radio" name="tipo_pago" value="efectivo"
-                                {% if form.tipo_pago.value == 'efectivo' %}checked{% endif %}>
-                            <div>
+                                {% if formulario.tipo_pago.value == 'efectivo' %}checked{% endif %}>
+                            <div class="selection-content">
                                 <strong>💵 Efectivo</strong>
                                 <p>Paga en efectivo al recibir o retirar tu pedido.</p>
                             </div>
                         </label>
                     </div>
-                    {% if form.tipo_pago.errors %}
-                        <div class="field-error">{{ form.tipo_pago.errors.0 }}</div>
+                    {% if formulario.tipo_pago.errors %}
+                        <div class="field-error">{{ formulario.tipo_pago.errors.0 }}</div>
                     {% endif %}
-
-                    <div class="form-actions">
-                        <a href="{% url 'ver_carrito' %}" class="btn-ghost">Volver al carrito</a>
-                        <button type="submit" class="btn btn-primary">Confirmar compra</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="checkout-summary-section">
-            <div class="summary-card">
-                <h2>Resumen del pedido</h2>
-                {% for item in carrito.items.all %}
-                    <div class="summary-row">
-                        <span>{{ item.cantidad }}x {{ item.producto.nombre }}</span>
-                        <strong>${{ item.obtener_subtotal }}</strong>
-                    </div>
-                {% endfor %}
-                <hr class="divider">
-                <div class="summary-row total-row">
-                    <span>Total:</span>
-                    <strong>${{ total }}</strong>
                 </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'ver_carrito' %}" class="btn-ghost">Volver al carrito</a>
+                    <button type="submit" class="btn btn-primary">Confirmar compra</button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="checkout-summary-card">
+            <div class="card-header">
+                <h2>Resumen del pedido</h2>
+                <span class="summary-pill">Total</span>
             </div>
-        </div>
+            {% for item in carrito_usuario.items.all %}
+                <div class="summary-item">
+                    <div>
+                        <strong>{{ item.cantidad }} × {{ item.producto.nombre }}</strong>
+                        <p>{{ item.producto.vendedor.username }}</p>
+                    </div>
+                    <span>${{ item.obtener_subtotal }}</span>
+                </div>
+            {% empty %}
+                <p class="empty-summary">Tu carrito está vacío.</p>
+            {% endfor %}
+            <div class="summary-divider"></div>
+            <div class="summary-total">
+                <span>Total a pagar</span>
+                <strong>${{ total_carrito }}</strong>
+            </div>
+            <p class="summary-note">Tus datos se usan solo para confirmar la compra y el envío.</p>
+        </aside>
     </div>
 </div>
 
 <script>
-    const radios = document.querySelectorAll('input[name="tipo_entrega"]');
-    const direccionFields = document.getElementById('direccion-fields');
+    const opciones_entrega = document.querySelectorAll('input[name="tipo_entrega"]');
+    const campos_direccion = document.getElementById('direccion-fields');
 
     function actualizarVisibilidad() {
         const seleccionado = document.querySelector('input[name="tipo_entrega"]:checked');
         if (seleccionado && seleccionado.value === 'delivery') {
-            direccionFields.style.display = 'block';
+            campos_direccion.style.display = 'block';
         } else {
-            direccionFields.style.display = 'none';
+            campos_direccion.style.display = 'none';
         }
     }
 
-    radios.forEach(radio => radio.addEventListener('change', actualizarVisibilidad));
+    opciones_entrega.forEach(radio => radio.addEventListener('change', actualizarVisibilidad));
     actualizarVisibilidad();
 </script>
 
 <style>
-    .checkout-title-card {
-        background: white;
-        border-radius: 12px;
-        padding: 18px 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    .checkout-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(135deg, #f3fbf4 0%, #ffffff 100%);
+        border: 1px solid #e2f0e4;
+        border-radius: 18px;
+        padding: 24px 28px;
         margin-top: 24px;
-        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
     }
 
-    .checkout-container {
+    .eyebrow {
+        display: inline-block;
+        margin: 0 0 8px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--brand-green);
+    }
+
+    .checkout-hero h1 {
+        margin: 0 0 8px;
+        color: var(--brand-green);
+        font-size: 28px;
+    }
+
+    .checkout-hero p {
+        margin: 0;
+        color: #5b6b61;
+    }
+
+    .hero-badge,
+    .step-pill,
+    .summary-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--brand-green);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .checkout-layout {
         display: grid;
-        grid-template-columns: 1fr 320px;
+        grid-template-columns: minmax(0, 1.5fr) 340px;
         gap: 24px;
         margin-top: 24px;
     }
 
-    .summary-card {
+    .checkout-card,
+    .checkout-summary-card {
         background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+        border: 1px solid #edf4ee;
     }
 
-    .summary-card h2 {
-        margin: 0 0 16px;
-        font-size: 18px;
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .card-header h2 {
+        margin: 0;
         color: var(--brand-green);
+        font-size: 18px;
+    }
+
+    .selection-group {
+        margin-bottom: 20px;
+    }
+
+    .selection-group h3 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        color: #1f2937;
     }
 
     .selection-options {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        margin-bottom: 16px;
     }
 
     .selection-option {
@@ -164,15 +238,17 @@
         gap: 12px;
         align-items: flex-start;
         border: 1px solid #e5e7eb;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 14px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
+        background: #fbfdfb;
     }
 
     .selection-option:hover {
         border-color: var(--brand-green);
-        background-color: #f8faf7;
+        box-shadow: 0 6px 16px rgba(34, 139, 34, 0.1);
+        transform: translateY(-1px);
     }
 
     .selection-option input[type="radio"] {
@@ -180,13 +256,13 @@
         margin-top: 4px;
     }
 
-    .selection-option strong {
+    .selection-content strong {
         display: block;
         margin-bottom: 4px;
         color: #111827;
     }
 
-    .selection-option p {
+    .selection-content p {
         margin: 0;
         font-size: 13px;
         color: #6b7280;
@@ -194,33 +270,116 @@
 
     .direccion-fields {
         display: none;
-        border-top: 1px solid #e5e7eb;
-        padding-top: 16px;
-        margin-bottom: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 18px;
+        background: #fcfdfc;
     }
 
-    .summary-row {
+    .form-group {
+        margin-bottom: 12px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .field-error {
+        color: #dc2626;
+        margin-top: 6px;
+        font-size: 13px;
+    }
+
+    .form-actions {
         display: flex;
         justify-content: space-between;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .form-actions .btn,
+    .form-actions .btn-ghost {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .form-actions .btn:hover,
+    .form-actions .btn-ghost:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+    }
+
+    .form-actions .btn:active,
+    .form-actions .btn-ghost:active {
+        transform: scale(0.98) translateY(0);
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: flex-start;
         margin-bottom: 12px;
-        font-size: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eef2ee;
     }
 
-    .divider {
-        border: none;
+    .summary-item strong {
+        display: block;
+        color: #111827;
+    }
+
+    .summary-item p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .summary-divider {
         border-top: 1px solid #e5e7eb;
-        margin: 16px 0;
+        margin: 10px 0 14px;
     }
 
-    .total-row {
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-size: 16px;
         font-weight: 700;
         color: var(--brand-green);
     }
 
-    @media (max-width: 768px) {
-        .checkout-container {
+    .summary-note {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .empty-summary {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    @media (max-width: 900px) {
+        .checkout-layout {
             grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .checkout-hero {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .form-actions {
+            flex-direction: column;
         }
     }
 </style>

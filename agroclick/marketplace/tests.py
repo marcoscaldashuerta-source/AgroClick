@@ -119,6 +119,19 @@ class CheckoutOrdersTests(TestCase):
         self.assertContains(response, 'Calle 123')
 
 
+class PublicarProductoDraftTests(TestCase):
+    def test_guardar_borrador_sin_nombre_muestra_error_especifico(self):
+        vendedor = User.objects.create_user(username='vendedor_draft', email='vendedor_draft@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        self.client.force_login(vendedor)
+        response = self.client.post('/publicar/', {'guardar_borrador': 'Guardar borrador'}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'El nombre del producto es obligatorio para guardar un borrador.')
+        self.assertFalse(Producto.objects.exists())
+
+
 class ActualizarEstadoPedidoTests(TestCase):
     def test_confirmar_pedido_descuenta_stock_y_cambia_estado(self):
         comprador = User.objects.create_user(username='comprador_prueba', email='comprador@prueba.com', password='pass1234')

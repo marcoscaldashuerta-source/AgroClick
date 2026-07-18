@@ -238,17 +238,30 @@ def publicar_producto(request):
 
     if request.method == 'POST':
 
-        form = ProductoForm(request.POST, request.FILES)
+        saving_draft = 'guardar_borrador' in request.POST
+        form = ProductoForm(request.POST, request.FILES, saving_draft=saving_draft)
+
+        if saving_draft:
+            nombre = (request.POST.get('nombre') or '').strip()
+            if not nombre:
+                form.add_error('nombre', 'El nombre del producto es obligatorio para guardar un borrador.')
+                return render(
+                    request,
+                    'publicar_producto.html',
+                    {'form': form, 'remaining_slots': MAX_IMAGES}
+                )
 
         if form.is_valid():
 
             producto = form.save(commit=False)
             producto.vendedor = request.user
 
-            if 'guardar_borrador' in request.POST:
+            if saving_draft:
                 producto.borrador = True
+                messages.success(request, 'Producto guardado como borrador correctamente.')
             else:
                 producto.borrador = False
+                messages.success(request, 'Producto publicado correctamente.')
 
             producto.save()
 
@@ -655,12 +668,12 @@ def ver_carrito(request):
 def actualizar_cantidad_carrito(request, item_id):
     """Actualiza la cantidad de un item en el carrito."""
     if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'No autenticado'})
+        return JsonResponse({'success': False, 'error': 'No has iniciado sesión.'})
 
     try:
         carrito = Carrito.objects.get(comprador=request.user)
     except Carrito.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Carrito no encontrado'})
+        return JsonResponse({'success': False, 'error': 'No se encontró un carrito para este usuario.'})
 
     item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
 
@@ -668,13 +681,13 @@ def actualizar_cantidad_carrito(request, item_id):
     try:
         cantidad = int(cantidad)
     except ValueError:
-        return JsonResponse({'success': False, 'error': 'Cantidad inválida'})
+        return JsonResponse({'success': False, 'error': 'La cantidad ingresada no es válida.'})
 
     if cantidad < 0:
-        return JsonResponse({'success': False, 'error': 'La cantidad no puede ser negativa'})
+        return JsonResponse({'success': False, 'error': 'La cantidad no puede ser negativa.'})
 
     if cantidad > item.producto.stock:
-        return JsonResponse({'success': False, 'error': f'Stock insuficiente. Disponible: {item.producto.stock}'})
+        return JsonResponse({'success': False, 'error': f'Stock insuficiente. Disponible: {item.producto.stock} unidades.'})
 
     if cantidad == 0:
         item.delete()
@@ -733,52 +746,52 @@ def checkout(request):
         return redirect('/accounts/login/')
 
     try:
-        carrito = Carrito.objects.get(comprador=request.user)
+        carrito_usuario = Carrito.objects.get(comprador=request.user)
     except Carrito.DoesNotExist:
-        carrito = None
+        carrito_usuario = None
 
-    if not carrito or not carrito.items.exists():
+    if not carrito_usuario or not carrito_usuario.items.exists():
         messages.error(request, 'Tu carrito está vacío.')
         return redirect('ver_carrito')
 
     if request.method == 'POST':
-        form = EntregaForm(request.POST)
+        formulario = EntregaForm(request.POST)
 
-        if form.is_valid():
-            solicitud = form.save(commit=False)
-            solicitud.comprador = request.user
+        if formulario.is_valid():
+            solicitud_entrega = formulario.save(commit=False)
+            solicitud_entrega.comprador = request.user
 
-            if solicitud.tipo_entrega != 'delivery':
-                solicitud.direccion_entrega = None
-                solicitud.referencia = None
+            if solicitud_entrega.tipo_entrega != 'delivery':
+                solicitud_entrega.direccion_entrega = None
+                solicitud_entrega.referencia = None
 
-            solicitud.save()
-            created_pedidos = []
-            for item in carrito.items.select_related('producto').all():
+            solicitud_entrega.save()
+            pedidos_creados = []
+            for item in carrito_usuario.items.select_related('producto').all():
                 producto = item.producto
                 pedido = Pedido.objects.create(
                     comprador=request.user,
                     vendedor=producto.vendedor,
                     producto=producto,
-                    solicitud=solicitud,
+                    solicitud=solicitud_entrega,
                     cantidad=item.cantidad,
                     precio_unitario=producto.precio,
                     total=producto.precio * item.cantidad,
-                    tipo_entrega=solicitud.tipo_entrega,
-                    direccion_entrega=solicitud.direccion_entrega,
-                    referencia=solicitud.referencia,
-                    tipo_pago=solicitud.tipo_pago,
+                    tipo_entrega=solicitud_entrega.tipo_entrega,
+                    direccion_entrega=solicitud_entrega.direccion_entrega,
+                    referencia=solicitud_entrega.referencia,
+                    tipo_pago=solicitud_entrega.tipo_pago,
                     estado='pendiente',
                 )
-                created_pedidos.append(pedido)
+                pedidos_creados.append(pedido)
                 # Registrar creación de pedido por el comprador
                 ProductActionLog.objects.create(producto=producto, actor=request.user, accion='pedido_creado')
 
-            carrito.items.all().delete()
+            carrito_usuario.items.all().delete()
             messages.success(request, 'Compra confirmada correctamente.')
 
             # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
-            if solicitud.tipo_pago == 'transferencia' and created_pedidos:
+            if solicitud_entrega.tipo_pago == 'transferencia' and pedidos_creados:
                 # datos bancarios simples — personalízalos según necesidades
                 datos_banco = {
                     'banco': 'Banco Ejemplo',
@@ -788,18 +801,18 @@ def checkout(request):
                     'tipo': 'Cuenta corriente',
                 }
                 return render(request, 'checkout_success.html', {
-                    'pedidos': created_pedidos,
+                    'pedidos': pedidos_creados,
                     'datos_banco': datos_banco,
                 })
 
             return redirect('checkout')
     else:
-        form = EntregaForm()
+        formulario = EntregaForm()
 
     return render(request, 'checkout.html', {
-        'form': form,
-        'carrito': carrito,
-        'total': carrito.obtener_total(),
+        'formulario': formulario,
+        'carrito_usuario': carrito_usuario,
+        'total_carrito': carrito_usuario.obtener_total(),
     })
 
 
