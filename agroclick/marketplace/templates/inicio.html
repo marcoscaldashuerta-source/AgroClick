@@ -1050,6 +1050,14 @@
                                         <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
                                         <td>
                                             <div class="order-actions" style="justify-content: center;">
+                                                {% comment %}Attach last payment proof image if exists{% endcomment %}
+                                                {% with last_proof=pedido.comprobantes.last %}
+                                                    {% if last_proof %}
+                                                        <div style="display:inline-block; margin-right:8px;">
+                                                            <a href="{{ last_proof.imagen.url }}" target="_blank">Ver comprobante</a>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endwith %}
                                                 <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{{ pedido.producto.nombre|escapejs }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
                                                     Ver detalles
                                                 </button>

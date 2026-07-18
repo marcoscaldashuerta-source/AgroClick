@@ -756,10 +756,10 @@ def checkout(request):
                 solicitud.referencia = None
 
             solicitud.save()
-
+            created_pedidos = []
             for item in carrito.items.select_related('producto').all():
                 producto = item.producto
-                Pedido.objects.create(
+                pedido = Pedido.objects.create(
                     comprador=request.user,
                     vendedor=producto.vendedor,
                     producto=producto,
@@ -773,11 +773,28 @@ def checkout(request):
                     tipo_pago=solicitud.tipo_pago,
                     estado='pendiente',
                 )
+                created_pedidos.append(pedido)
                 # Registrar creación de pedido por el comprador
                 ProductActionLog.objects.create(producto=producto, actor=request.user, accion='pedido_creado')
 
             carrito.items.all().delete()
             messages.success(request, 'Compra confirmada correctamente.')
+
+            # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
+            if solicitud.tipo_pago == 'transferencia' and created_pedidos:
+                # datos bancarios simples — personalízalos según necesidades
+                datos_banco = {
+                    'banco': 'Banco Ejemplo',
+                    'titular': 'Asociación AgroClick',
+                    'rut': '12.345.678-9',
+                    'cuenta': '1234567890',
+                    'tipo': 'Cuenta corriente',
+                }
+                return render(request, 'checkout_success.html', {
+                    'pedidos': created_pedidos,
+                    'datos_banco': datos_banco,
+                })
+
             return redirect('checkout')
     else:
         form = EntregaForm()
@@ -853,7 +870,8 @@ def subir_comprobante(request, pedido_id):
             comprobante.estado = 'pendiente'
             comprobante.save()
 
-            # Notificar al vendedor
+            # Registrar acción en log y notificar al vendedor
+            ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='comprobante_subido', razon=f'Pedido #{pedido.id}')
             mensaje = f"Se ha subido un comprobante de pago para el pedido #{pedido.id}. Revisa y valida el comprobante."
             Notificacion.objects.create(usuario=pedido.vendedor, mensaje=mensaje)
 
