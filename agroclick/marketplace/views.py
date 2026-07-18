@@ -277,9 +277,7 @@ def publicar_producto(request):
                 from .models import ProductImage
                 imagenes_existentes = producto.imagenes.count() + (1 if producto.imagen else 0)
                 espacios_disponibles = MAX_IMAGENES_POR_PRODUCTO - imagenes_existentes
-                if espacios_disponibles <= 0:
-                    messages.warning(request, f'Se alcanzó el límite de {MAX_IMAGENES_POR_PRODUCTO} imágenes por producto. No se añadieron imágenes adicionales.')
-                else:
+                if espacios_disponibles > 0:
                     imagenes_agregadas = 0
                     indice_imagen_principal = request.POST.get('main_image_index')
                     try:
@@ -290,26 +288,18 @@ def publicar_producto(request):
                     for indice_imagen, archivo_imagen in enumerate(imagenes_subidas):
                         if imagenes_agregadas >= espacios_disponibles:
                             break
-                        if indice_imagen == indice_imagen_principal and not producto.imagen:
+                        if indice_imagen == indice_imagen_principal:
                             producto.imagen = archivo_imagen
-                            producto.save()
-                            imagenes_agregadas += 1
-                            continue
-                        if indice_imagen == indice_imagen_principal and producto.imagen:
-                            ProductImage.objects.create(producto=producto, imagen=archivo_imagen, orden=imagenes_agregadas)
+                            producto.save(update_fields=['imagen'])
                             imagenes_agregadas += 1
                             continue
                         if not producto.imagen and indice_imagen > indice_imagen_principal:
                             producto.imagen = archivo_imagen
-                            producto.save()
+                            producto.save(update_fields=['imagen'])
                             imagenes_agregadas += 1
                             continue
                         ProductImage.objects.create(producto=producto, imagen=archivo_imagen, orden=imagenes_agregadas)
                         imagenes_agregadas += 1
-                    if imagenes_agregadas < len(imagenes_subidas):
-                        messages.warning(request, f'Se subieron {imagenes_agregadas} imágenes; el resto fueron ignoradas para cumplir el límite de {MAX_IMAGENES_POR_PRODUCTO}.')
-                    else:
-                        messages.success(request, f'Se subieron {imagenes_agregadas} imágenes correctamente.')
 
             return redirect('/')
 
@@ -521,30 +511,116 @@ def editar_producto(request, producto_id):
             producto.vendedor = request.user
             producto.save()
 
+            from .models import ProductImage
+
+            deleted_image_ids_raw = request.POST.get('deleted_image_ids', '')
+            deleted_image_ids = []
+            for raw_id in deleted_image_ids_raw.split(','):
+                cleaned = str(raw_id).strip()
+                if cleaned.isdigit():
+                    deleted_image_ids.append(int(cleaned))
+
+            removed_main_image = request.POST.get('removed_main_image', '0') == '1'
+
+            for image_id in deleted_image_ids:
+                ProductImage.objects.filter(producto=producto, id=image_id).delete()
+
+            imagenes_actuales = []
+            if producto.imagen:
+                imagenes_actuales.append(('principal', producto.imagen, None))
+            for imagen_galeria in producto.imagenes.order_by('orden', 'id').all():
+                imagenes_actuales.append(('galeria', imagen_galeria.imagen, imagen_galeria))
+
+            main_image_index = request.POST.get('main_image_index')
+            try:
+                indice_imagen_principal = int(main_image_index)
+            except (TypeError, ValueError):
+                indice_imagen_principal = 0
+
+            if imagenes_actuales:
+                if removed_main_image and producto.imagen:
+                    siguiente_galeria = producto.imagenes.order_by('orden', 'id').first()
+                    if siguiente_galeria is not None:
+                        try:
+                            producto.imagen = siguiente_galeria.imagen
+                            producto.save(update_fields=['imagen'])
+                            siguiente_galeria.delete()
+                        except Exception:
+                            pass
+                    else:
+                        try:
+                            producto.imagen = None
+                            producto.save(update_fields=['imagen'])
+                        except Exception:
+                            pass
+                indice_normalizado = max(0, min(indice_imagen_principal, len(imagenes_actuales) - 1))
+                seleccionado = imagenes_actuales[indice_normalizado]
+                if seleccionado[0] == 'galeria':
+                    instancia_galeria = seleccionado[2]
+                    if instancia_galeria is not None:
+                        try:
+                            instancia_galeria.delete()
+                        except Exception:
+                            pass
+
+                    imagen_actual_principal = producto.imagen
+                    if imagen_actual_principal and imagen_actual_principal.name != seleccionado[1].name:
+                        try:
+                            ya_esta_en_galeria = producto.imagenes.filter(imagen__name=imagen_actual_principal.name).exists()
+                        except Exception:
+                            ya_esta_en_galeria = False
+                        if not ya_esta_en_galeria:
+                            try:
+                                ProductImage.objects.create(
+                                    producto=producto,
+                                    imagen=imagen_actual_principal,
+                                    orden=producto.imagenes.count(),
+                                )
+                            except Exception:
+                                pass
+                    try:
+                        producto.imagen = seleccionado[1]
+                        producto.save(update_fields=['imagen'])
+                    except Exception:
+                        pass
+
             # Manejar imágenes añadidas desde el campo 'images' al editar
             imagenes_subidas = request.FILES.getlist('images')
             if imagenes_subidas:
-                from .models import ProductImage
                 imagenes_existentes = producto.imagenes.count() + (1 if producto.imagen else 0)
                 espacios_disponibles = MAX_IMAGENES_POR_PRODUCTO - imagenes_existentes
-                if espacios_disponibles <= 0:
-                    messages.warning(request, f'Se alcanzó el límite de {MAX_IMAGENES_POR_PRODUCTO} imágenes por producto. No se añadieron imágenes adicionales.')
-                else:
+                if espacios_disponibles > 0:
                     imagenes_agregadas = 0
-                    for archivo_imagen in imagenes_subidas:
+                    indice_imagen_principal_nuevo = None
+                    indice_total_previa = len(imagenes_actuales) + len(imagenes_subidas)
+                    indice_imagen_principal = max(0, min(indice_imagen_principal, indice_total_previa - 1))
+                    if indice_imagen_principal >= len(imagenes_actuales):
+                        indice_imagen_principal_nuevo = indice_imagen_principal - len(imagenes_actuales)
+
+                    imagen_actual_principal = producto.imagen
+                    for indice_imagen, archivo_imagen in enumerate(imagenes_subidas):
                         if imagenes_agregadas >= espacios_disponibles:
                             break
-                        if not producto.imagen:
+                        if indice_imagen_principal_nuevo is not None and indice_imagen == indice_imagen_principal_nuevo:
+                            if imagen_actual_principal and imagen_actual_principal.name != archivo_imagen.name:
+                                ya_esta_en_galeria = producto.imagenes.filter(imagen__name=imagen_actual_principal.name).exists()
+                                if not ya_esta_en_galeria:
+                                    ProductImage.objects.create(
+                                        producto=producto,
+                                        imagen=imagen_actual_principal,
+                                        orden=producto.imagenes.count(),
+                                    )
                             producto.imagen = archivo_imagen
-                            producto.save()
+                            producto.save(update_fields=['imagen'])
+                            imagenes_agregadas += 1
+                            continue
+                        if not producto.imagen and indice_imagen == 0 and indice_imagen_principal_nuevo is None:
+                            producto.imagen = archivo_imagen
+                            producto.save(update_fields=['imagen'])
                             imagenes_agregadas += 1
                             continue
                         ProductImage.objects.create(producto=producto, imagen=archivo_imagen, orden=imagenes_agregadas)
                         imagenes_agregadas += 1
-                    if imagenes_agregadas < len(imagenes_subidas):
-                        messages.warning(request, f'Se subieron {imagenes_agregadas} imágenes; el resto fueron ignoradas para cumplir el límite de {MAX_IMAGENES_POR_PRODUCTO}.')
-                    else:
-                        messages.success(request, f'Se subieron {imagenes_agregadas} imágenes correctamente.')
 
             return redirect('mis_productos')
 
