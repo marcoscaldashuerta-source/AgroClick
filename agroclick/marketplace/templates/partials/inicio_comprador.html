@@ -1,0 +1,161 @@
+{% if is_comprador %}
+    <div class="search-section" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
+        <h3 style="margin-bottom: 14px;">Buscar productos</h3>
+        
+        <form method="GET" class="search-form">
+            <div class="form-group">
+                <label for="busqueda">Buscar por nombre o descripción:</label>
+                <input 
+                    type="text" 
+                    id="busqueda" 
+                    name="busqueda" 
+                    value="{{ busqueda }}"
+                    placeholder="Ej: Tomate, Lechuga, Cebolla..."
+                />
+            </div>
+
+            <div class="search-row">
+                <div class="form-group">
+                    <label for="categoria">Categoría:</label>
+                    <select id="categoria" name="categoria">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias %}
+                            <option value="{{ cat }}" {% if categoria == cat %}selected{% endif %}>
+                                {{ cat }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="precio_min">Precio mínimo ($):</label>
+                    <input 
+                        type="number" 
+                        id="precio_min" 
+                        name="precio_min" 
+                        value="{{ precio_min }}"
+                        placeholder="0"
+                        step="100"
+                        min="0"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="precio_max">Precio máximo ($):</label>
+                    <input 
+                        type="number" 
+                        id="precio_max" 
+                        name="precio_max" 
+                        value="{{ precio_max }}"
+                        placeholder="100000"
+                        step="100"
+                        min="0"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="orden">Ordenar por:</label>
+                    <select id="orden" name="orden">
+                        <option value="-fecha_creacion" {% if orden == '-fecha_creacion' %}selected{% endif %}>
+                            Más recientes primero
+                        </option>
+                        <option value="fecha_creacion" {% if orden == 'fecha_creacion' %}selected{% endif %}>
+                            Más antiguos primero
+                        </option>
+                        <option value="precio_asc" {% if orden == 'precio_asc' %}selected{% endif %}>
+                            Precio: Menor a Mayor
+                        </option>
+                        <option value="precio_desc" {% if orden == 'precio_desc' %}selected{% endif %}>
+                            Precio: Mayor a Menor
+                        </option>
+                        <option value="nombre_asc" {% if orden == 'nombre_asc' %}selected{% endif %}>
+                            Nombre: A-Z
+                        </option>
+                        <option value="nombre_desc" {% if orden == 'nombre_desc' %}selected{% endif %}>
+                            Nombre: Z-A
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="search-buttons" style="margin-top: 14px;">
+                <button type="submit" class="btn-search">Buscar</button>
+                <a href="{% url 'inicio' %}" class="btn-clear">Limpiar filtros</a>
+            </div>
+        </form>
+
+        {% if tiene_filtros %}
+            <div class="active-filters" style="margin-top: 14px;">
+                <p><strong>Filtros activos:</strong>
+                    {% if busqueda %}<span class="filter-tag">{{ busqueda }}</span>{% endif %}
+                    {% if categoria %}<span class="filter-tag">{{ categoria }}</span>{% endif %}
+                    {% if precio_min %}<span class="filter-tag">💰 Mín: ${{ precio_min }}</span>{% endif %}
+                    {% if precio_max %}<span class="filter-tag">💰 Máx: ${{ precio_max }}</span>{% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="products-section">
+        {% if productos %}
+            <div class="products-header">
+                <h2>Productos disponibles ({{ productos.count }})</h2>
+            </div>
+            <div class="product-grid">
+                {% for producto in productos %}
+                    <div class="product-card" 
+                         data-nombre="{{ producto.nombre|escapejs }}"
+                         data-precio="{{ producto.precio }}"
+                         data-unidad="{{ producto.unidad_venta|escapejs }}"
+                         data-stock="{{ producto.stock }}"
+                         data-descripcion="{{ producto.descripcion|escapejs }}"
+                         data-vendedor="{{ producto.vendedor.username|escapejs }}"
+                         data-categoria="{{ producto.categoria|escapejs }}">
+                        {% if producto.imagen %}
+                            <div class="product-image">
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+                            </div>
+                        {% elif producto.imagenes.exists %}
+                            <div class="product-image">
+                                <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}" />
+                            </div>
+                        {% else %}
+                            <div class="product-image" style="background-color: #e0e0e0;">
+                                <span style="color: #999;">Sin imagen</span>
+                            </div>
+                        {% endif %}
+                        {% if producto.is_new %}
+                            <div class="badge-new">Nuevo</div>
+                        {% endif %}
+                        <div class="card-actions">
+                            {% if not is_vendedor %}
+                                <button type="button" class="btn btn-secondary btn-detail">Ver detalle</button>
+                                {% if is_comprador %}
+                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">🛒 Comprar</a>
+                                {% else %}
+                                    <a href="/accounts/login/" class="btn btn-primary btn-add">Inicia sesión</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">{{ producto.categoria }}</div>
+                            <div class="product-name">{{ producto.nombre }}</div>
+                            <div class="product-price">${{ producto.precio }} / {{ producto.unidad_venta }}</div>
+                            <div class="product-details">
+                                <strong>Stock:</strong> {{ producto.stock }} disponibles
+                            </div>
+                            <div class="product-description">
+                                {{ producto.descripcion }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>No hay productos disponibles</h3>
+                <p>Intenta ajustar los filtros o vuelve más tarde.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}
