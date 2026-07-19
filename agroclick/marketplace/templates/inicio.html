@@ -174,14 +174,15 @@
             font-size: 14px;
         }
         .admin-section {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
+            background-color: #ffffff;
+            padding: 18px 20px;
+            border-radius: 14px;
             margin: 15px 0;
-            border-left: 4px solid #FF9800;
+            border: 1px solid rgba(76, 175, 80, 0.16);
+            box-shadow: 0 10px 24px rgba(15,23,42,0.06);
         }
         .admin-section h3 {
-            color: #856404;
+            color: #2e7d32;
             margin-bottom: 10px;
         }
         /* Estilos para búsqueda */
@@ -1003,25 +1004,52 @@
         </div>
 
     {% if is_admin %}
-            <div class="admin-section">
-            <h3>Panel de administrador</h3>
+        <div class="admin-section">
+            <h3>Acciones del Administrador</h3>
+            <div class="action-buttons">
+                <a href="{% url 'supervisar_productos' %}" class="btn btn-primary">Supervisar productos</a>
+                <a href="{% url 'panel_soporte' %}" class="btn btn-primary">Panel de soporte</a>
+                <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-secondary">Deshabilitar usuarios</a>
+            </div>
+        </div>
+
+        <div class="seller-actions">
+            <h3>Aprobar vendedores</h3>
             {% if pending_vendedores %}
                 <div class="pending-vendors">
-                    <p><strong>Vendedores pendientes de aprobación:</strong></p>
-                    <ul>
-                        {% for perfil in pending_vendedores %}
-                            <li>{{ perfil.usuario.username }}</li>
-                        {% endfor %}
-                    </ul>
-                    <div class="action-buttons">
-                        <a href="{% url 'aprobar_vendedores' %}" class="btn btn-primary">Ir a aprobaciones</a>
-                        <a href="{% url 'supervisar_productos' %}" class="btn btn-primary">Supervisar productos</a>
-                        <a href="{% url 'panel_soporte' %}" class="btn btn-primary">Panel de soporte</a>
-                        <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-secondary">Deshabilitar usuarios</a>
+                    <p style="margin-bottom: 12px;"><strong>Pendientes de aprobación:</strong></p>
+                    <div class="orders-table-wrapper">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Correo</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for perfil in pending_vendedores %}
+                                    <tr>
+                                        <td class="order-product">{{ perfil.usuario.username }}</td>
+                                        <td>{{ perfil.usuario.email }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'aprobar_vendedores' %}" style="display:inline-block; margin:0;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="perfil_id" value="{{ perfil.id }}">
+                                                <input type="hidden" name="next" value="{% url 'inicio' %}">
+                                                <button type="submit" class="btn btn-primary btn-small">Aprobar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             {% else %}
-                <p>✓ No hay vendedores pendientes de aprobación</p>
+                <div class="pending-vendors">
+                    <p><strong>No hay solicitudes pendientes.</strong></p>
+                </div>
             {% endif %}
         </div>
     {% endif %}
