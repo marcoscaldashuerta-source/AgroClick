@@ -538,7 +538,9 @@
         </div>
         <div class="nav-links">
             {% if user.is_authenticated %}
-                {% if request.resolver_match.url_name != 'ver_notificaciones' %}
+                {% if request.resolver_match.url_name == 'ver_notificaciones' %}
+                    <span class="nav-link-disabled">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</span>
+                {% else %}
                     <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
                 {% endif %}
                 {% if user.perfil.rol == 'comprador' %}
@@ -546,12 +548,8 @@
                 {% endif %}
                 {% if user.is_staff %}
                     <details class="admin-actions-menu">
-                        <summary>Acciones de administrador</summary>
+                        <summary>{{ user.username }}</summary>
                         <div class="menu-items">
-                            <a href="{% url 'inicio' %}">Inicio</a>
-                            <a href="{% url 'supervisar_productos' %}">Supervisar productos</a>
-                            <a href="{% url 'panel_soporte' %}">Panel de soporte</a>
-                            <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
                             <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
                         </div>
                     </details>

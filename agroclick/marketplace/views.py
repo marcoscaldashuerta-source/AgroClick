@@ -321,33 +321,21 @@ def cerrar_sesion(request):
 
 def aprobar_vendedores(request):
     if not request.user.is_authenticated or not request.user.is_staff:
-        return redirect('/')
-
-    perfil = None
-    is_vendedor = False
-    is_aprobado = False
-    try:
-        perfil = request.user.perfil
-    except Perfil.DoesNotExist:
-        perfil = None
-
-    if perfil:
-        is_vendedor = perfil.rol == 'vendedor'
-        is_aprobado = perfil.aprobado
+        return redirect('inicio')
 
     if request.method == 'POST':
         perfil_id = request.POST.get('perfil_id')
         perfil = get_object_or_404(Perfil, id=perfil_id, rol='vendedor')
         perfil.aprobado = True
         perfil.save()
-        return redirect('aprobar_vendedores')
+        messages.success(request, f'El vendedor {perfil.usuario.username} ha sido aprobado correctamente.')
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('inicio')
 
-    pending_vendedores = Perfil.objects.filter(rol='vendedor', aprobado=False)
-    return render(request, 'aprobar_vendedores.html', {
-        'pending_vendedores': pending_vendedores,
-        'is_vendedor': is_vendedor,
-        'is_aprobado': is_aprobado,
-    })
+    messages.info(request, 'Puedes aprobar vendedores directamente desde la pantalla de inicio.')
+    return redirect('inicio')
 
 
 def supervisar_productos(request):
