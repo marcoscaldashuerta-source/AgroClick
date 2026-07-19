@@ -75,6 +75,13 @@ class Producto(models.Model):
     def __str__(self):
         return self.nombre
 
+    def soft_delete(self):
+        """Marca el producto como eliminado sin borrar su registro ni sus datos asociados."""
+        if self.estado != 'eliminado':
+            self.estado = 'eliminado'
+            self.save(update_fields=['estado'])
+        return self
+
 
 class ProductImage(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='imagenes')
@@ -265,6 +272,16 @@ class Pedido(models.Model):
 
     def __str__(self):
         return f"Pedido N°{self.id} - {self.producto.nombre} ({self.cantidad} unidades)"
+
+    @property
+    def referencia_historica(self):
+        """Devuelve una referencia estable para mostrar en la UI aunque el producto haya sido eliminado lógicamente."""
+        if self.productos_detalle:
+            return self.productos_detalle
+        try:
+            return self.producto.nombre
+        except Exception:
+            return ''
 
 
 class PaymentProof(models.Model):
