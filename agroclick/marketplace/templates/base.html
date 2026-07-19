@@ -57,7 +57,7 @@
 
     <style>
         .nav-link-disabled {
-            color: #fff;
+            color: #9ca3af;
             text-decoration: none;
             cursor: default;
             pointer-events: none;
@@ -71,7 +71,7 @@
             opacity: 1;
         }
         .nav-carrito-disabled {
-            color: #fff;
+            color: #9ca3af;
             text-decoration: none;
             cursor: default;
             pointer-events: none;
@@ -87,13 +87,6 @@
     </style>
 
     <div class="container">
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="message {{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
         {% block content %}{% endblock %}
     </div>
 </body>

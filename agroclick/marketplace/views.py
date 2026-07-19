@@ -51,10 +51,7 @@ def historial_registros(request):
         d = parse_date(fecha_inicio)
         if d:
             qs = qs.filter(fecha__date__gte=d)
-            Notificacion.objects.create(
-                usuario=pedido.comprador,
-                mensaje=f"Tu pedido N°{pedido.id} fue confirmado por el vendedor.",
-            )
+
     if fecha_fin:
         d = parse_date(fecha_fin)
         if d:
@@ -66,6 +63,7 @@ def historial_registros(request):
     roles_disponibles = ['admin', 'vendedor', 'comprador']
 
     return render(request, 'historial_registros.html', {
+        'registros': qs,
         'acciones_disponibles': acciones_disponibles,
         'actors_disponibles': actors_disponibles,
         'roles_disponibles': roles_disponibles,
@@ -455,7 +453,7 @@ def deshabilitar_usuarios_admin(request):
 
     perfiles = Perfil.objects.select_related('usuario').all()
     for perfil in perfiles:
-        if perfil.rol == 'vendedor':
+        if perfil.rol == 'vendedor' and perfil.aprobado:
             usuarios_por_rol['Vendedores'].append(perfil.usuario)
         elif perfil.rol == 'comprador':
             usuarios_por_rol['Compradores'].append(perfil.usuario)
@@ -463,7 +461,12 @@ def deshabilitar_usuarios_admin(request):
     if request.method == 'POST':
         usuario_id = request.POST.get('usuario_id')
         usuario = get_object_or_404(User, id=usuario_id)
-        get_object_or_404(Perfil, usuario=usuario)
+        perfil_usuario = get_object_or_404(Perfil, usuario=usuario)
+
+        if perfil_usuario.rol == 'vendedor' and not perfil_usuario.aprobado:
+            messages.info(request, "No puedes deshabilitar vendedores pendientes de aprobación.")
+            return redirect('deshabilitar_usuarios_admin')
+
         usuario.is_active = not usuario.is_active
         usuario.save(update_fields=['is_active'])
 
@@ -476,6 +479,7 @@ def deshabilitar_usuarios_admin(request):
 
     return render(request, 'deshabilitar_usuarios.html', {
         'usuarios_por_rol': usuarios_por_rol,
+        'hide_global_messages': True,
     })
 
 

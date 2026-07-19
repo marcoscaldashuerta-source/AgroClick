@@ -48,7 +48,7 @@ body{
 .nav-links a,
 .nav-links .nav-link-disabled{color:#fff;text-decoration:none;padding:8px 12px;border-radius:10px;font-weight:600;display:inline-flex;align-items:center;min-height:40px;background:transparent}
 .nav-links a:hover{background:rgba(255,255,255,0.12)}
-.nav-links .nav-link-disabled{color:#fff;cursor:default;pointer-events:none;opacity:1}
+.nav-links .nav-link-disabled{color:#9ca3af;cursor:default;pointer-events:none;opacity:1}
 .nav-links .menu-items .nav-link-disabled{display:flex;align-items:center;padding:10px 12px;color:#9ca3af;border-radius:10px;font-size:0.95rem}
 
 .nav-links details.admin-actions-menu,

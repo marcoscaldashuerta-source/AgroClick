@@ -644,8 +644,16 @@
                 <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
             {% endif %}
             {% if user.perfil.rol == 'comprador' %}
-                <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
-                <a href="{% url 'mis_pedidos' %}" class="nav-carrito">Mis pedidos</a>
+                {% if request.resolver_match.url_name == 'ver_carrito' %}
+                    <span class="nav-link-disabled nav-carrito-disabled">🛒 Carrito</span>
+                {% else %}
+                    <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+                {% endif %}
+                {% if request.resolver_match.url_name == 'mis_pedidos' %}
+                    <span class="nav-link-disabled nav-carrito-disabled">Mis pedidos</span>
+                {% else %}
+                    <a href="{% url 'mis_pedidos' %}" class="nav-carrito">Mis pedidos</a>
+                {% endif %}
             {% endif %}
             {% if user.is_staff %}
                 <details class="admin-actions-menu">
