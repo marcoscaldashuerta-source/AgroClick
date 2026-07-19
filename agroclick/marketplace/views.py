@@ -51,7 +51,10 @@ def historial_registros(request):
         d = parse_date(fecha_inicio)
         if d:
             qs = qs.filter(fecha__date__gte=d)
-
+            Notificacion.objects.create(
+                usuario=pedido.comprador,
+                mensaje=f"Tu pedido N°{pedido.id} fue confirmado por el vendedor.",
+            )
     if fecha_fin:
         d = parse_date(fecha_fin)
         if d:
@@ -63,7 +66,6 @@ def historial_registros(request):
     roles_disponibles = ['admin', 'vendedor', 'comprador']
 
     return render(request, 'historial_registros.html', {
-        'registros': qs,
         'acciones_disponibles': acciones_disponibles,
         'actors_disponibles': actors_disponibles,
         'roles_disponibles': roles_disponibles,
@@ -73,6 +75,23 @@ def historial_registros(request):
         'f_fecha_inicio': fecha_inicio,
         'f_fecha_fin': fecha_fin,
     })
+
+def mis_pedidos(request):
+    """Muestra los pedidos realizados por el comprador autenticado."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'comprador':
+        return redirect('/')
+
+    pedidos = Pedido.objects.filter(comprador=request.user).select_related('vendedor', 'producto').order_by('-fecha_creacion')
+    return render(request, 'mis_pedidos.html', {'pedidos': pedidos})
+
 
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
@@ -853,7 +872,6 @@ def vaciar_carrito(request):
     try:
         carrito = Carrito.objects.get(comprador=request.user)
         carrito.items.all().delete()
-        messages.success(request, 'Carrito vaciado.')
     except Carrito.DoesNotExist:
         pass
 
@@ -873,7 +891,6 @@ def checkout(request):
         carrito_usuario = None
 
     if not carrito_usuario or not carrito_usuario.items.exists():
-        messages.error(request, 'Tu carrito está vacío.')
         return redirect('ver_carrito')
 
     if request.method == 'POST':
@@ -923,7 +940,6 @@ def checkout(request):
                     ProductActionLog.objects.create(producto=item.producto, actor=request.user, accion='pedido_creado')
 
             carrito_usuario.items.all().delete()
-            messages.success(request, 'Compra confirmada correctamente.')
 
             # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
             if solicitud_entrega.tipo_pago == 'transferencia' and pedidos_creados:
