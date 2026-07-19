@@ -211,6 +211,20 @@ class NavbarMisPedidosTests(TestCase):
         self.assertContains(response, 'Mis pedidos')
         self.assertContains(response, '/mis-pedidos/')
 
+    def test_mis_pedidos_permite_acceso_a_comprador_no_aprobado(self):
+        comprador = User.objects.create_user(
+            username='comprador_no_aprobado',
+            email='comprador_no_aprobado@example.com',
+            password='pass1234'
+        )
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=False)
+
+        self.client.force_login(comprador)
+        response = self.client.get('/mis-pedidos/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mis pedidos')
+
 
 class PublicarProductoDraftTests(TestCase):
     def test_guardar_borrador_sin_nombre_muestra_error_especifico(self):

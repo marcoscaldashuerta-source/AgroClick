@@ -3,27 +3,224 @@
 {% block title %}Mis pedidos - AgroClick{% endblock %}
 
 {% block content %}
+<style>
+    .order-id-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #eaf3ff 0%, #dbeafe 100%);
+        color: #1d4ed8;
+        font-weight: 700;
+        font-size: 0.95rem;
+        border: 1px solid #93c5fd;
+    }
+    .orders-table-wrapper {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        overflow: auto;
+        box-shadow: 0 10px 24px rgba(15,23,42,0.06);
+        max-height: 480px;
+    }
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: rgba(255,255,255,0.95);
+    }
+    .orders-table th {
+        background: linear-gradient(135deg, #e8f5e9 0%, #d8f0dc 100%);
+        color: #2f5f3b;
+        text-align: center;
+        padding: 12px 14px;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 800;
+    }
+    .orders-table td {
+        padding: 12px 14px;
+        border-top: 1px solid #eef2f7;
+        color: #334155;
+        vertical-align: middle;
+        text-align: center;
+        background-color: rgba(255,255,255,0.55);
+    }
+    .orders-table tr:first-child td {
+        border-top: none;
+    }
+    .orders-table .order-product {
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .orders-table .status-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+    .orders-table .status-badge.estado-pendiente {
+        background: #fff7e6;
+        color: #b45309;
+    }
+    .orders-table .status-badge.estado-confirmado {
+        background: #ecfdf3;
+        color: #166534;
+    }
+    .orders-table .status-badge.estado-cancelado {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+    .orders-table .order-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .orders-table .order-actions .btn {
+        padding: 7px 12px;
+        font-size: 0.9rem;
+    }
+    .order-detail-btn {
+        background: #f1f5f9;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+        box-shadow: none;
+        transition: background-color 0.2s ease;
+    }
+    .order-detail-btn:hover {
+        background: #e2e8f0;
+    }
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal-content {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fdf8 100%);
+        border-radius: 20px;
+        max-width: 780px;
+        width: 100%;
+        box-shadow: 0 22px 60px rgba(15, 23, 42, 0.2);
+        overflow: hidden;
+        animation: fadeIn 0.25s ease;
+        border: 1px solid rgba(76, 175, 80, 0.16);
+    }
+    .modal-header {
+        background: linear-gradient(135deg, #4CAF50, #2e7d32);
+        color: white;
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        width: 100%;
+        text-align: center;
+    }
+    .modal-body {
+        padding: 22px 24px 24px;
+        background: #fcfffc;
+    }
+    .modal-body .modal-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: baseline;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #ffffff;
+        border: 1px solid #eef3ee;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+        color: #444;
+        line-height: 1.6;
+    }
+    .modal-body .modal-row:last-child {
+        margin-bottom: 0;
+    }
+    .modal-body .modal-label {
+        font-weight: 700;
+        color: #1f2937;
+        min-width: 170px;
+    }
+    .modal-body .modal-value {
+        color: #4b5563;
+        flex: 1;
+    }
+    .modal-footer {
+        padding: 16px 24px 24px;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+    .modal-footer .btn {
+        min-width: 120px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 <div class="page-shell">
     <div class="page-card">
         <div class="page-top">
             <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
         </div>
 
-        <h1 class="page-title">Mis pedidos</h1>
+        <h1 class="page-title" style="margin-bottom: 20px;">Mis pedidos</h1>
         {% if pedidos %}
-            <div class="orders-list">
-                {% for pedido in pedidos %}
-                    <div class="order-card">
-                        <div class="order-header">
-                            <strong>Pedido N°{{ pedido.id }}</strong>
-                            <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
-                        </div>
-                        <p><strong>Producto:</strong> {{ pedido.producto.nombre }}</p>
-                        <p><strong>Vendedor:</strong> {{ pedido.vendedor.username }}</p>
-                        <p><strong>Total:</strong> ${{ pedido.total }}</p>
-                        <p><strong>Fecha:</strong> {{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</p>
-                    </div>
-                {% endfor %}
+            <div class="orders-table-wrapper">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Pedidos</th>
+                            <th>Vendedor</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos %}
+                            <tr>
+                                <td class="order-product">
+                                    <span class="order-id-badge" style="white-space: nowrap;">Pedido N°{{ pedido.id }}</span>
+                                </td>
+                                <td>{{ pedido.vendedor.username }}</td>
+                                <td>${{ pedido.total }}</td>
+                                <td>
+                                    <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                                </td>
+                                <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
+                                <td>
+                                    <div class="order-actions">
+                                        <button type="button" class="btn order-detail-btn" data-producto="{% if pedido.referencia_historica %}{{ pedido.referencia_historica|escapejs }}{% else %}Sin referencia{% endif %}" data-vendedor="{{ pedido.vendedor.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
+                                            Ver detalles
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         {% else %}
             <div class="empty-state">
@@ -33,4 +230,87 @@
         {% endif %}
     </div>
 </div>
+
+<div id="product-detail-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <div class="modal-header">
+            <h3 id="detail-title">Detalle del pedido</h3>
+        </div>
+        <div class="modal-body">
+            <div class="modal-row"><span class="modal-label">Producto:</span><span id="detail-producto" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Vendedor:</span><span id="detail-vendedor" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Cantidad productos:</span><span id="detail-cantidad" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Total:</span><span id="detail-total" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Método de entrega:</span><span id="detail-entrega" class="modal-value"></span></div>
+            <div class="modal-row" id="detail-direccion-row"><span class="modal-label">Dirección de entrega:</span><span id="detail-direccion" class="modal-value"></span></div>
+            <div class="modal-row" id="detail-referencia-row"><span class="modal-label">Referencia:</span><span id="detail-referencia" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Método de pago:</span><span id="detail-pago" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Estado:</span><span id="detail-estado" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Fecha y hora:</span><span id="detail-fecha" class="modal-value"></span></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" id="close-modal" class="btn btn-secondary">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalDetallePedido = document.getElementById('product-detail-modal');
+        const detalleProducto = document.getElementById('detail-producto');
+        const detalleVendedor = document.getElementById('detail-vendedor');
+        const detalleCantidad = document.getElementById('detail-cantidad');
+        const detalleTotal = document.getElementById('detail-total');
+        const detalleEntrega = document.getElementById('detail-entrega');
+        const detalleDireccion = document.getElementById('detail-direccion');
+        const detalleDireccionRow = document.getElementById('detail-direccion-row');
+        const detalleReferencia = document.getElementById('detail-referencia');
+        const detalleReferenciaRow = document.getElementById('detail-referencia-row');
+        const detallePago = document.getElementById('detail-pago');
+        const detalleEstado = document.getElementById('detail-estado');
+        const detalleFecha = document.getElementById('detail-fecha');
+        const botonCerrar = document.getElementById('close-modal');
+
+        function abrirDetallePedido(boton) {
+            detalleProducto.innerHTML = (boton.dataset.producto || '').split(',').map(item => item.trim()).filter(Boolean).join('<br>');
+            detalleVendedor.textContent = boton.dataset.vendedor || '';
+            detalleCantidad.textContent = boton.dataset.cantidad || '';
+            detalleTotal.textContent = `$${boton.dataset.total || '0'}`;
+            detalleEntrega.textContent = boton.dataset.entrega || 'No registrada';
+            const entrega = (boton.dataset.entrega || '').toLowerCase();
+            if (entrega.includes('retiro') || entrega.includes('tienda')) {
+                detalleDireccionRow.style.display = 'none';
+                detalleReferenciaRow.style.display = 'none';
+            } else {
+                detalleDireccionRow.style.display = 'flex';
+                detalleReferenciaRow.style.display = 'flex';
+                detalleDireccion.textContent = boton.dataset.direccion || 'No registrada';
+                detalleReferencia.textContent = boton.dataset.referencia || 'No registrada';
+            }
+            detallePago.textContent = boton.dataset.pago || 'No registrado';
+            detalleEstado.textContent = boton.dataset.estado || 'Pendiente';
+            detalleFecha.textContent = boton.dataset.fecha || '';
+            modalDetallePedido.classList.add('active');
+            modalDetallePedido.setAttribute('aria-hidden', 'false');
+        }
+
+        function cerrarModal() {
+            modalDetallePedido.classList.remove('active');
+            modalDetallePedido.setAttribute('aria-hidden', 'true');
+        }
+
+        document.querySelectorAll('.order-detail-btn').forEach(function(boton) {
+            boton.addEventListener('click', function() {
+                abrirDetallePedido(boton);
+            });
+        });
+
+        botonCerrar.addEventListener('click', cerrarModal);
+        modalDetallePedido.addEventListener('click', function(evento) {
+            if (evento.target === modalDetallePedido) {
+                cerrarModal();
+            }
+        });
+    });
+</script>
 {% endblock %}

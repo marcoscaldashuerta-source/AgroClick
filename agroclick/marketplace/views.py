@@ -84,7 +84,7 @@ def mis_pedidos(request):
     except Perfil.DoesNotExist:
         return redirect('/')
 
-    if perfil.rol != 'comprador' or not perfil.aprobado:
+    if perfil.rol != 'comprador':
         return redirect('/')
 
     pedidos = Pedido.objects.filter(comprador=request.user).select_related('vendedor', 'producto').order_by('-fecha_creacion')
