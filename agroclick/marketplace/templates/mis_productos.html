@@ -77,11 +77,6 @@
             margin-bottom: 18px;
             background: #ffffff;
             box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .product-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
         }
         .product-header {
             display: flex;
@@ -90,6 +85,22 @@
             flex-wrap: wrap;
             margin-bottom: 14px;
             padding-left: 2px;
+        }
+        .product-id-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 38px;
+            height: 24px;
+            padding: 0 7px;
+            border-radius: 999px;
+            background: #e8f0ff;
+            color: #1d4ed8;
+            font-weight: 800;
+            font-size: 10px;
+            border: 1px solid #c7d2fe;
+            margin-right: 6px;
+            letter-spacing: 0.02em;
         }
         .product-name {
             font-size: 21px;
@@ -171,11 +182,7 @@
             display: inline-block;
             font-size: 14px;
             font-weight: 700;
-            transition: all 0.2s ease;
             box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
-        }
-        .btn:hover {
-            transform: translateY(-1px);
         }
         .btn-edit {
             background: #2563eb;
@@ -204,6 +211,226 @@
         }
         .btn-delete:hover {
             background: #dc2626;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+        .modal-delete-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.72);
+            padding: 20px;
+            z-index: 9999;
+            display: none;
+            overscroll-behavior: contain;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            visibility: visible;
+            transition: none;
+        }
+        .modal-delete-overlay.open {
+            display: flex;
+        }
+        .modal-delete-card {
+            position: relative;
+            width: min(100%, 680px);
+            max-width: 680px;
+            margin: 0;
+            background: linear-gradient(135deg, #ffffff 0%, #fdfefe 100%);
+            border-radius: 24px;
+            padding: 30px 32px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+            border: 1px solid #e5e7eb;
+            box-sizing: border-box;
+            transform: none !important;
+            flex-shrink: 0;
+            max-height: calc(100vh - 56px);
+            overflow-y: auto;
+            transition: none;
+        }
+        .modal-delete-header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .modal-delete-title {
+            margin: 0;
+            color: #1f2937;
+            font-size: 24px;
+            letter-spacing: -0.02em;
+        }
+        .modal-delete-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            border: none;
+            background: #f3f4f6;
+            color: #374151;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+            transition: transform 180ms ease, background 180ms ease;
+        }
+        .modal-delete-close:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+        .warning-box {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border: 1px solid #fdba74;
+            border-radius: 18px;
+            padding: 22px 24px;
+            margin: 8px 0 16px;
+            text-align: center;
+            box-shadow: 0 14px 28px rgba(249, 115, 22, 0.12);
+        }
+        .warning-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            font-weight: 800;
+            margin-bottom: 10px;
+            font-size: 24px;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.24);
+        }
+        .warning-box h2 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #b91c1c;
+            font-size: 20px;
+            letter-spacing: -0.01em;
+        }
+        .warning-box p {
+            margin: 0 auto;
+            color: #7c2d12;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 480px;
+        }
+        .product-info-modal {
+            background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+            padding: 16px 18px;
+            border-radius: 16px;
+            margin: 18px 0 10px;
+            border: 1px solid #dbeafe;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+            text-align: center;
+        }
+        .summary-list {
+            display: grid;
+            gap: 8px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.92);
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+        }
+        .summary-label {
+            color: #6b7280;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .summary-value {
+            color: #111827;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: right;
+            word-break: break-word;
+        }
+        .consequences {
+            background: linear-gradient(135deg, #ffebee 0%, #fef2f2 100%);
+            padding: 14px 16px;
+            border-radius: 14px;
+            margin: 16px 0 10px;
+            border-left: 4px solid #f44336;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+        }
+        .consequences h4 {
+            margin: 0 0 8px 0;
+            color: #c62828;
+            font-size: 15px;
+        }
+        .consequences ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #4b5563;
+        }
+        .consequences li {
+            margin: 5px 0;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .checkbox-group {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            cursor: pointer;
+            color: #4b5563;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .confirm-button {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 800;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.22);
+            transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease, opacity 180ms ease;
+            letter-spacing: 0.02em;
+        }
+        .confirm-button:not(:disabled) {
+            opacity: 1;
+            cursor: pointer;
+        }
+        .confirm-button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px rgba(239, 68, 68, 0.28);
+            filter: brightness(1.04);
+        }
+        .confirm-button:not(:disabled):active {
+            transform: translateY(0);
+            box-shadow: 0 8px 14px rgba(239, 68, 68, 0.24);
         }
         .no-products {
             text-align: center;
@@ -282,6 +509,7 @@
                 {% for producto in productos %}
                     <div class="product-item">
                         <div class="product-header">
+                            <span class="product-id-pill">ID: {{ producto.id }}</span>
                             <span class="product-name">{{ producto.nombre }}</span>
                             <span class="product-status {% if producto.estado == 'activo' %}status-activo{% elif producto.estado == 'pausado' %}status-pausado{% else %}status-borrador{% endif %}">
                                 {% if producto.estado == 'activo' %}
@@ -322,7 +550,59 @@
                                         </form>
                                     {% endif %}
 
-                                    <a href="{% url 'eliminar_producto' producto.id %}" class="btn btn-delete">Eliminar</a>
+                                    <button type="button" class="btn btn-delete" data-modal-open="delete-modal-{{ producto.id }}">Eliminar</button>
+                                </div>
+
+                                <div class="modal-delete-overlay" id="delete-modal-{{ producto.id }}" role="dialog" aria-modal="true" aria-labelledby="delete-product-title-{{ producto.id }}">
+                                    <div class="modal-delete-card">
+                                        <button type="button" class="modal-delete-close" data-modal-close="delete-modal-{{ producto.id }}" aria-label="Cerrar">×</button>
+
+                                        <div class="modal-delete-header">
+                                            <h2 class="modal-delete-title">Confirmar eliminación</h2>
+                                        </div>
+
+                                        <div class="warning-box">
+                                            <div class="warning-icon">!</div>
+                                            <h2>¿Eliminar este producto?</h2>
+                                        </div>
+
+                                        <div class="product-info-modal" style="margin-bottom: 10px;">
+                                            <div class="summary-list">
+                                                <div class="summary-row">
+                                                    <span class="summary-label">ID</span>
+                                                    <span class="summary-value">#{{ producto.id }}</span>
+                                                </div>
+                                                <div class="summary-row">
+                                                    <span class="summary-label">Producto</span>
+                                                    <span class="summary-value">{{ producto.nombre }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="consequences">
+                                            <h4>Importante:</h4>
+                                            <ul>
+                                                <li>El producto dejará de estar disponible para los compradores.</li>
+                                                <li>Esta acción no se puede deshacer.</li>
+                                            </ul>
+                                        </div>
+
+                                        <form method="POST" action="{% url 'eliminar_producto' producto.id %}">
+                                            {% csrf_token %}
+                                            <div class="checkbox-group">
+                                                <label>
+                                                    <input type="checkbox" class="confirmar-checkbox" data-confirm-button="delete-button-{{ producto.id }}">
+                                                    Entiendo que esta acción eliminará permanentemente el producto y sus datos.
+                                                </label>
+                                            </div>
+
+                                            <div class="button-group">
+                                                <button type="submit" class="btn-delete confirm-button" id="delete-button-{{ producto.id }}" disabled name="confirmar_eliminar" value="si">
+                                                    Eliminar permanentemente
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -351,5 +631,97 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const CERRAR_MODAL = function (identificador_modal) {
+                const modal = document.getElementById(identificador_modal);
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.remove('open');
+
+                const producto_item = modal.closest('.product-item');
+                if (producto_item) {
+                    producto_item.classList.remove('product-item--modal-open');
+                }
+
+                const MODALES_ABIERTOS = document.querySelectorAll('.modal-delete-overlay.open').length;
+                document.body.classList.toggle('modal-open', MODALES_ABIERTOS > 0);
+                document.body.style.overflow = MODALES_ABIERTOS > 0 ? 'hidden' : '';
+
+                const CASILLA_CONFIRMACION = modal.querySelector('.confirmar-checkbox');
+                const BOTON_ELIMINAR = modal.querySelector('.confirm-button');
+                if (CASILLA_CONFIRMACION) {
+                    CASILLA_CONFIRMACION.checked = false;
+                }
+                if (BOTON_ELIMINAR) {
+                    BOTON_ELIMINAR.disabled = true;
+                }
+            };
+
+            const ABRIR_MODAL = function (identificador_modal) {
+                const modal = document.getElementById(identificador_modal);
+                if (!modal) {
+                    return;
+                }
+
+                modal.classList.add('open');
+                const producto_item = modal.closest('.product-item');
+                if (producto_item) {
+                    producto_item.classList.add('product-item--modal-open');
+                }
+                document.body.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            };
+
+            document.querySelectorAll('[data-modal-open]').forEach(function (elemento_disparador) {
+                elemento_disparador.addEventListener('click', function (evento) {
+                    evento.preventDefault();
+                    const IDENTIFICADOR_MODAL = this.getAttribute('data-modal-open');
+                    if (IDENTIFICADOR_MODAL) {
+                        ABRIR_MODAL(IDENTIFICADOR_MODAL);
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-modal-close]').forEach(function (elemento_disparador) {
+                elemento_disparador.addEventListener('click', function (evento) {
+                    evento.preventDefault();
+                    const IDENTIFICADOR_MODAL = this.getAttribute('data-modal-close');
+                    if (IDENTIFICADOR_MODAL) {
+                        CERRAR_MODAL(IDENTIFICADOR_MODAL);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.modal-delete-overlay').forEach(function (superficie_modal) {
+                superficie_modal.addEventListener('click', function (evento) {
+                    if (evento.target === this) {
+                        CERRAR_MODAL(this.id);
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (evento) {
+                if (evento.key === 'Escape') {
+                    document.querySelectorAll('.modal-delete-overlay.open').forEach(function (modal) {
+                        CERRAR_MODAL(modal.id);
+                    });
+                }
+            });
+
+            document.querySelectorAll('.confirmar-checkbox').forEach(function (casilla_confirmacion) {
+                casilla_confirmacion.addEventListener('change', function () {
+                    const IDENTIFICADOR_BOTON = this.getAttribute('data-confirm-button');
+                    const BOTON_ELIMINAR = document.getElementById(IDENTIFICADOR_BOTON);
+                    if (BOTON_ELIMINAR) {
+                        BOTON_ELIMINAR.disabled = !this.checked;
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
