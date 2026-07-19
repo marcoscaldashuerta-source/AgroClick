@@ -1,3 +1,5 @@
+import re
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.contrib import messages
@@ -393,13 +395,29 @@ def eliminar_producto_admin(request, producto_id):
     return render(request, 'confirmar_eliminar_producto_admin.html', {'producto': producto})
 
 
+def _normalizar_mensaje_notificacion(mensaje):
+    if not mensaje:
+        return mensaje
+
+    return re.sub(
+        r'(?i)\bpedido\s*#(\d+)\b',
+        lambda match: f'Pedido N°{match.group(1)}',
+        mensaje,
+    )
+
+
 def ver_notificaciones(request):
     if not request.user.is_authenticated:
         return redirect('/accounts/login/')
 
-    notificaciones = Notificacion.objects.filter(usuario=request.user).order_by('-fecha')
-    # Marcar como leídas todas las notificaciones vistas
-    notificaciones.update(leida=True)
+    notificaciones = list(Notificacion.objects.filter(usuario=request.user).order_by('-fecha'))
+
+    for notificacion in notificaciones:
+        mensaje_normalizado = _normalizar_mensaje_notificacion(notificacion.mensaje)
+        notificacion.leida = True
+        if mensaje_normalizado != notificacion.mensaje:
+            notificacion.mensaje = mensaje_normalizado
+        notificacion.save(update_fields=['mensaje', 'leida'])
 
     return render(request, 'notificaciones.html', {
         'notificaciones': notificaciones,
@@ -869,17 +887,30 @@ def checkout(request):
                 solicitud_entrega.referencia = None
 
             solicitud_entrega.save()
+
             pedidos_creados = []
-            for item in carrito_usuario.items.select_related('producto').all():
-                producto = item.producto
+            items_del_carrito = list(carrito_usuario.items.select_related('producto').all())
+            items_por_vendedor = {}
+            for item in items_del_carrito:
+                vendedor = item.producto.vendedor
+                items_por_vendedor.setdefault(vendedor, []).append(item)
+
+            for vendedor, items in items_por_vendedor.items():
+                cantidad_total = sum(item.cantidad for item in items)
+                total_general = sum(item.producto.precio * item.cantidad for item in items)
+                primer_item = items[0]
+                productos_detalle = ', '.join(
+                    f"{item.producto.nombre} (x{item.cantidad})" for item in items
+                )
                 pedido = Pedido.objects.create(
                     comprador=request.user,
-                    vendedor=producto.vendedor,
-                    producto=producto,
+                    vendedor=vendedor,
+                    producto=primer_item.producto,
                     solicitud=solicitud_entrega,
-                    cantidad=item.cantidad,
-                    precio_unitario=producto.precio,
-                    total=producto.precio * item.cantidad,
+                    productos_detalle=productos_detalle,
+                    cantidad=cantidad_total,
+                    precio_unitario=primer_item.producto.precio,
+                    total=total_general,
                     tipo_entrega=solicitud_entrega.tipo_entrega,
                     direccion_entrega=solicitud_entrega.direccion_entrega,
                     referencia=solicitud_entrega.referencia,
@@ -887,15 +918,14 @@ def checkout(request):
                     estado='pendiente',
                 )
                 pedidos_creados.append(pedido)
-                # Registrar creación de pedido por el comprador
-                ProductActionLog.objects.create(producto=producto, actor=request.user, accion='pedido_creado')
+                for item in items:
+                    ProductActionLog.objects.create(producto=item.producto, actor=request.user, accion='pedido_creado')
 
             carrito_usuario.items.all().delete()
             messages.success(request, 'Compra confirmada correctamente.')
 
             # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
             if solicitud_entrega.tipo_pago == 'transferencia' and pedidos_creados:
-                # datos bancarios simples — personalízalos según necesidades
                 datos_banco = {
                     'banco': 'Banco Ejemplo',
                     'titular': 'Asociación AgroClick',
@@ -945,20 +975,20 @@ def actualizar_estado_pedido(request, pedido_id):
         pedido.producto.save(update_fields=['stock'])
         pedido.estado = 'confirmado'
         pedido.motivo_cancelacion = ''
-        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_confirmado', razon=f'Pedido #{pedido.id}')
-        messages.success(request, f'Pedido #{pedido.id} confirmado.')
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_confirmado', razon=f'Pedido N°{pedido.id}')
+        messages.success(request, f'Pedido N°{pedido.id} confirmado.')
     elif accion == 'cancelar':
         motivo_cancelacion = request.POST.get('motivo_cancelacion', '').strip()
         if motivo_cancelacion:
-            mensaje = f"Tu pedido #{pedido.id} fue cancelado por el vendedor. Motivo: {motivo_cancelacion}"
+            mensaje = f"Tu pedido N°{pedido.id} fue cancelado por el vendedor. Motivo: {motivo_cancelacion}"
         else:
-            mensaje = f"Tu pedido #{pedido.id} fue cancelado por el vendedor."
+            mensaje = f"Tu pedido N°{pedido.id} fue cancelado por el vendedor."
 
         Notificacion.objects.create(usuario=pedido.comprador, mensaje=mensaje)
         pedido.estado = 'cancelado'
         pedido.motivo_cancelacion = motivo_cancelacion
-        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_cancelado', razon=f'Pedido #{pedido.id} - {motivo_cancelacion}')
-        messages.success(request, f'Pedido #{pedido.id} cancelado.')
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_cancelado', razon=f'Pedido N°{pedido.id} - {motivo_cancelacion}')
+        messages.success(request, f'Pedido N°{pedido.id} cancelado.')
     else:
         messages.error(request, 'Acción inválida.')
         return redirect('inicio')
@@ -984,8 +1014,8 @@ def subir_comprobante(request, pedido_id):
             comprobante.save()
 
             # Registrar acción en log y notificar al vendedor
-            ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='comprobante_subido', razon=f'Pedido #{pedido.id}')
-            mensaje = f"Se ha subido un comprobante de pago para el pedido #{pedido.id}. Revisa y valida el comprobante."
+            ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='comprobante_subido', razon=f'Pedido N°{pedido.id}')
+            mensaje = f"Se ha subido un comprobante de pago para el pedido N°{pedido.id}. Revisa y valida el comprobante."
             Notificacion.objects.create(usuario=pedido.vendedor, mensaje=mensaje)
 
             messages.success(request, 'Comprobante subido correctamente. El vendedor será notificado.')
@@ -1041,9 +1071,9 @@ def revisar_comprobante(request, proof_id):
         pedido.estado = 'confirmado'
         pedido.save(update_fields=['estado'])
 
-        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pago_aprobado', razon=f'Pedido #{pedido.id}')
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pago_aprobado', razon=f'Pedido N°{pedido.id}')
 
-        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f"Tu pago para el pedido #{pedido.id} ha sido aprobado. El vendedor procederá al despacho.")
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f"Tu pago para el pedido N°{pedido.id} ha sido aprobado. El vendedor procederá al despacho.")
 
         messages.success(request, f'Comprobante #{comprobante.id} aprobado y comprador notificado.')
 
@@ -1055,7 +1085,7 @@ def revisar_comprobante(request, proof_id):
         comprobante.save()
 
         # Notificar al comprador con instrucciones
-        texto = f"Tu comprobante para el pedido #{comprobante.pedido.id} fue rechazado."
+        texto = f"Tu comprobante para el pedido N°{comprobante.pedido.id} fue rechazado."
         if motivo:
             texto += f" Motivo: {motivo}"
         texto += " Por favor sube nuevamente un comprobante correcto."
