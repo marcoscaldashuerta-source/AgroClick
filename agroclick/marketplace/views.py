@@ -74,6 +74,23 @@ def historial_registros(request):
         'f_fecha_fin': fecha_fin,
     })
 
+def mis_pedidos(request):
+    """Muestra los pedidos realizados por el comprador autenticado."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'comprador' or not perfil.aprobado:
+        return redirect('/')
+
+    pedidos = Pedido.objects.filter(comprador=request.user).select_related('vendedor', 'producto').order_by('-fecha_creacion')
+    return render(request, 'mis_pedidos.html', {'pedidos': pedidos})
+
+
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
     productos = Producto.objects.filter(borrador=False, estado='activo').order_by('-fecha_creacion')

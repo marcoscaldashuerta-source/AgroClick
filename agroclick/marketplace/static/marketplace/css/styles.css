@@ -54,13 +54,13 @@ body{
 .nav-links details.admin-actions-menu,
 .nav-links details.user-actions-menu{position:relative;display:inline-flex;align-items:center}
 .nav-links details.admin-actions-menu summary,
-.nav-links details.user-actions-menu summary{list-style:none;cursor:pointer;color:#fff;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,0.14);font-weight:700;border:1px solid rgba(255,255,255,0.22);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:0 4px 10px rgba(15,23,42,0.12)}
+.nav-links details.user-actions-menu summary{list-style:none;cursor:pointer;color:#fff;padding:9px 14px;border-radius:999px;background:transparent;font-weight:700;border:1px solid rgba(255,255,255,0.22);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;box-shadow:none}
 .nav-links details.admin-actions-menu summary::-webkit-details-marker,
 .nav-links details.user-actions-menu summary::-webkit-details-marker{display:none}
 .nav-links details.admin-actions-menu summary::after,
 .nav-links details.user-actions-menu summary::after{content:'▾';font-size:12px;opacity:0.85}
 .nav-links details.admin-actions-menu[open] summary,
-.nav-links details.user-actions-menu[open] summary{background:rgba(255,255,255,0.25);box-shadow:0 6px 12px rgba(15,23,42,0.16)}
+.nav-links details.user-actions-menu[open] summary{background:transparent;box-shadow:none}
 .nav-links details.admin-actions-menu .menu-items,
 .nav-links details.user-actions-menu .menu-items{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);margin-top:0;min-width:150px;width:fit-content;background:#fff;color:#111;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 16px 36px rgba(15,23,42,0.16);overflow:hidden;z-index:50;display:flex;flex-direction:column;white-space:nowrap;padding:6px}
 .nav-links details.admin-actions-menu .menu-items a,

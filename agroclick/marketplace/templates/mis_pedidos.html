@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis pedidos - AgroClick{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <div class="page-card">
+        <div class="page-top">
+            <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
+        </div>
+
+        <h1 class="page-title">Mis pedidos</h1>
+        {% if pedidos %}
+            <div class="orders-list">
+                {% for pedido in pedidos %}
+                    <div class="order-card">
+                        <div class="order-header">
+                            <strong>Pedido N°{{ pedido.id }}</strong>
+                            <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                        </div>
+                        <p><strong>Producto:</strong> {{ pedido.producto.nombre }}</p>
+                        <p><strong>Vendedor:</strong> {{ pedido.vendedor.username }}</p>
+                        <p><strong>Total:</strong> ${{ pedido.total }}</p>
+                        <p><strong>Fecha:</strong> {{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h2>No tienes pedidos registrados aún</h2>
+                <p>Aquí aparecerán tus pedidos cuando realices una compra.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

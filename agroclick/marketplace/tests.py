@@ -195,6 +195,23 @@ class CheckoutOrdersTests(TestCase):
         self.assertIn('Plátano', pedido.productos_detalle)
 
 
+class NavbarMisPedidosTests(TestCase):
+    def test_navbar_muestra_boton_mis_pedidos_para_comprador(self):
+        comprador = User.objects.create_user(
+            username='comprador_navbar',
+            email='comprador_navbar@example.com',
+            password='pass1234'
+        )
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
+
+        self.client.force_login(comprador)
+        response = self.client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mis pedidos')
+        self.assertContains(response, '/mis-pedidos/')
+
+
 class PublicarProductoDraftTests(TestCase):
     def test_guardar_borrador_sin_nombre_muestra_error_especifico(self):
         vendedor = User.objects.create_user(username='vendedor_draft', email='vendedor_draft@example.com', password='pass1234')
