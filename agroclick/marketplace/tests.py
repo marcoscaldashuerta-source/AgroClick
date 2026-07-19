@@ -1,8 +1,13 @@
+from io import BytesIO
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from PIL import Image
 
-from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, deshabilitar_cuenta_usuario
+from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, deshabilitar_cuenta_usuario, ProductImage
 
 
 class DeshabilitarCuentaUsuarioTests(TestCase):
@@ -119,6 +124,40 @@ class CheckoutOrdersTests(TestCase):
         self.assertContains(response, 'Calle 123')
 
 
+class PublicarProductoDraftTests(TestCase):
+    def test_guardar_borrador_sin_nombre_muestra_error_especifico(self):
+        vendedor = User.objects.create_user(username='vendedor_draft', email='vendedor_draft@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        self.client.force_login(vendedor)
+        response = self.client.post('/publicar/', {'guardar_borrador': 'Guardar borrador'}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'El nombre del producto es obligatorio para guardar un borrador.')
+        self.assertFalse(Producto.objects.exists())
+
+
+class PublicarProductoSinImagenTests(TestCase):
+    def test_publicar_sin_imagen_muestra_error_y_no_crea_producto(self):
+        vendedor = User.objects.create_user(username='vendedor_sin_imagen', email='vendedor_sin_imagen@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        self.client.force_login(vendedor)
+        response = self.client.post('/publicar/', {
+            'nombre': 'Pepino',
+            'categoria': 'Verdura',
+            'descripcion': 'Pepino fresco',
+            'precio': '1500',
+            'unidad_venta': 'kg',
+            'stock': '12',
+            'publicar': 'Publicar ahora',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Debes agregar al menos una imagen antes de publicar o guardar el producto.')
+        self.assertFalse(Producto.objects.exists())
+
+
 class ActualizarEstadoPedidoTests(TestCase):
     def test_confirmar_pedido_descuenta_stock_y_cambia_estado(self):
         comprador = User.objects.create_user(username='comprador_prueba', email='comprador@prueba.com', password='pass1234')
@@ -159,4 +198,211 @@ class ActualizarEstadoPedidoTests(TestCase):
         producto.refresh_from_db()
         self.assertEqual(pedido.estado, 'confirmado')
         self.assertEqual(producto.stock, 5)
+
+
+class EditarProductoMainImageTests(TestCase):
+    def test_se_puede_cambiar_la_imagen_principal_a_una_existente(self):
+        vendedor = User.objects.create_user(username='vendedor_principal', email='vendedor_principal@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        def create_uploaded_image(name):
+            image = Image.new('RGB', (1, 1), color=(255, 0, 0))
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Tomate',
+            categoria='Fruta',
+            descripcion='Tomate rojo',
+            precio=1000,
+            unidad_venta='kg',
+            stock=10,
+            imagen=create_uploaded_image('principal.png'),
+            borrador=False,
+            estado='activo',
+        )
+        imagen_galeria = ProductImage.objects.create(
+            producto=producto,
+            imagen=create_uploaded_image('galeria.png'),
+            orden=1,
+        )
+
+        self.client.force_login(vendedor)
+        response = self.client.post(f'/editar-producto/{producto.id}/', {
+            'nombre': producto.nombre,
+            'categoria': 'Fruta',
+            'descripcion': producto.descripcion,
+            'precio': producto.precio,
+            'unidad_venta': producto.unidad_venta,
+            'stock': producto.stock,
+            'main_image_index': '1',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        producto.refresh_from_db()
+        self.assertEqual(producto.imagen.name, imagen_galeria.imagen.name)
+
+
+class EliminarProductoLimpiaArchivosTests(TestCase):
+    def test_al_eliminar_producto_se_borra_su_imagen_y_galeria(self):
+        vendedor = User.objects.create_user(username='vendedor_cleanup', email='vendedor_cleanup@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        def create_uploaded_image(name):
+            image = Image.new('RGB', (2, 2), color=(0, 255, 0))
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Plátano',
+            categoria='Fruta',
+            descripcion='Plátano maduro',
+            precio=1200,
+            unidad_venta='kg',
+            stock=5,
+            imagen=create_uploaded_image('principal.png'),
+            borrador=False,
+            estado='activo',
+        )
+        ProductImage.objects.create(producto=producto, imagen=create_uploaded_image('galeria.png'), orden=1)
+
+        self.assertTrue(producto.imagen.storage.exists(producto.imagen.name))
+        self.assertTrue(producto.imagenes.first().imagen.storage.exists(producto.imagenes.first().imagen.name))
+
+        producto.delete()
+
+        self.assertFalse(Producto.objects.filter(id=producto.id).exists())
+        self.assertFalse(ProductImage.objects.filter(producto_id=producto.id).exists())
+
+
+class EditarProductoMainImagePreservaAnteriorTests(TestCase):
+    def test_al_cambiar_la_imagen_principal_se_preserva_la_anterior_en_la_galeria(self):
+        vendedor = User.objects.create_user(username='vendedor_preserva', email='vendedor_preserva@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        def create_uploaded_image(name):
+            image = Image.new('RGB', (3, 3), color=(0, 0, 255))
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Aguacate',
+            categoria='Fruta',
+            descripcion='Aguacate orgánico',
+            precio=2000,
+            unidad_venta='kg',
+            stock=15,
+            imagen=create_uploaded_image('principal.png'),
+            borrador=False,
+            estado='activo',
+        )
+        imagen_galeria = ProductImage.objects.create(
+            producto=producto,
+            imagen=create_uploaded_image('galeria.png'),
+            orden=1,
+        )
+
+        self.client.force_login(vendedor)
+        response = self.client.post(f'/editar-producto/{producto.id}/', {
+            'nombre': producto.nombre,
+            'categoria': 'Fruta',
+            'descripcion': producto.descripcion,
+            'precio': producto.precio,
+            'unidad_venta': producto.unidad_venta,
+            'stock': producto.stock,
+            'main_image_index': '1',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        producto.refresh_from_db()
+        self.assertEqual(producto.imagen.name, imagen_galeria.imagen.name)
+        self.assertTrue(ProductImage.objects.filter(producto=producto, imagen__name__icontains='principal.png').exists())
+
+
+class EditarProductoRemoverMainImageTests(TestCase):
+    def test_al_eliminar_la_imagen_principal_se_promociona_la_galeria_restante(self):
+        vendedor = User.objects.create_user(
+            username='vendedor_remueve',
+            email='vendedor_remueve@example.com',
+            password='pass1234',
+        )
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        def create_uploaded_image(name):
+            image = Image.new('RGB', (2, 2), color=(255, 255, 0))
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Banano',
+            categoria='Fruta',
+            descripcion='Banano fresco',
+            precio=1200,
+            unidad_venta='kg',
+            stock=12,
+            imagen=create_uploaded_image('principal.png'),
+            borrador=False,
+            estado='activo',
+        )
+        imagen_galeria = ProductImage.objects.create(
+            producto=producto,
+            imagen=create_uploaded_image('galeria.png'),
+            orden=1,
+        )
+
+        self.client.force_login(vendedor)
+        response = self.client.post(f'/editar-producto/{producto.id}/', {
+            'nombre': producto.nombre,
+            'categoria': 'Fruta',
+            'descripcion': producto.descripcion,
+            'precio': producto.precio,
+            'unidad_venta': producto.unidad_venta,
+            'stock': producto.stock,
+            'main_image_index': '0',
+            'deleted_image_ids': '',
+            'removed_main_image': '1',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        producto.refresh_from_db()
+        self.assertEqual(producto.imagen.name, imagen_galeria.imagen.name)
+        self.assertFalse(producto.imagenes.exists())
+
+
+class PublicarProductoMainImageTests(TestCase):
+    def test_publicar_producto_usa_la_imagen_seleccionada_como_principal(self):
+        vendedor = User.objects.create_user(username='vendedor_publica', email='vendedor_publica@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        def create_uploaded_image(name):
+            image = Image.new('RGB', (2, 2), color=(0, 255, 0))
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+        self.client.force_login(vendedor)
+        response = self.client.post('/publicar/', {
+            'nombre': 'Pepino',
+            'categoria': 'Verdura',
+            'descripcion': 'Pepino fresco',
+            'precio': '1500',
+            'unidad_venta': 'kg',
+            'stock': '12',
+            'main_image_index': '1',
+            'images': [create_uploaded_image('uno.png'), create_uploaded_image('dos.png')],
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        producto = Producto.objects.get(nombre='Pepino')
+        self.assertTrue(producto.imagen)
+        self.assertTrue(producto.imagenes.exists())
+        self.assertEqual(producto.imagen.name, producto.imagenes.first().imagen.name)
 

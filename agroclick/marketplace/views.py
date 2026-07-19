@@ -16,6 +16,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import user_passes_test
 from django.utils.dateparse import parse_date
 
+MAX_IMAGENES_POR_PRODUCTO = 5
+
 
 @user_passes_test(lambda u: u.is_authenticated and u.is_staff)
 def historial_registros(request):
@@ -234,21 +236,32 @@ def publicar_producto(request):
     if not perfil.aprobado:
         return redirect('/')
 
-    MAX_IMAGES = 5
-
     if request.method == 'POST':
 
-        form = ProductoForm(request.POST, request.FILES)
+        saving_draft = 'guardar_borrador' in request.POST
+        form = ProductoForm(request.POST, request.FILES, saving_draft=saving_draft)
+
+        if saving_draft:
+            nombre = (request.POST.get('nombre') or '').strip()
+            if not nombre:
+                form.add_error('nombre', 'El nombre del producto es obligatorio para guardar un borrador.')
+                return render(
+                    request,
+                    'publicar_producto.html',
+                    {'form': form, 'remaining_slots': MAX_IMAGENES_POR_PRODUCTO}
+                )
 
         if form.is_valid():
 
             producto = form.save(commit=False)
             producto.vendedor = request.user
 
-            if 'guardar_borrador' in request.POST:
+            if saving_draft:
                 producto.borrador = True
+                messages.success(request, 'Producto guardado como borrador correctamente.')
             else:
                 producto.borrador = False
+                messages.success(request, 'Producto publicado correctamente.')
 
             producto.save()
 
@@ -258,31 +271,35 @@ def publicar_producto(request):
                 if not exists:
                     ProductActionLog.objects.create(producto=producto, actor=request.user, accion='publicado')
 
-            # Handle multiple uploaded images from single input 'images'
-            images = request.FILES.getlist('images')
-            if images:
+            # Manejar múltiples imágenes subidas desde el campo 'images'
+            imagenes_subidas = request.FILES.getlist('images')
+            if imagenes_subidas:
                 from .models import ProductImage
-                existing = producto.imagenes.count() + (1 if producto.imagen else 0)
-                remaining = MAX_IMAGES - existing
-                if remaining <= 0:
-                    messages.warning(request, f'Se alcanzó el límite de {MAX_IMAGES} imágenes por producto. No se añadieron imágenes adicionales.')
-                else:
-                    added = 0
-                    for f in images:
-                        if added >= remaining:
+                imagenes_existentes = producto.imagenes.count() + (1 if producto.imagen else 0)
+                espacios_disponibles = MAX_IMAGENES_POR_PRODUCTO - imagenes_existentes
+                if espacios_disponibles > 0:
+                    imagenes_agregadas = 0
+                    indice_imagen_principal = request.POST.get('main_image_index')
+                    try:
+                        indice_imagen_principal = int(indice_imagen_principal)
+                    except (TypeError, ValueError):
+                        indice_imagen_principal = 0
+                    indice_imagen_principal = max(0, min(indice_imagen_principal, len(imagenes_subidas) - 1))
+                    for indice_imagen, archivo_imagen in enumerate(imagenes_subidas):
+                        if imagenes_agregadas >= espacios_disponibles:
                             break
-                        # set first available as main image if none
-                        if not producto.imagen:
-                            producto.imagen = f
-                            producto.save()
-                            added += 1
+                        if indice_imagen == indice_imagen_principal:
+                            producto.imagen = archivo_imagen
+                            producto.save(update_fields=['imagen'])
+                            imagenes_agregadas += 1
                             continue
-                        ProductImage.objects.create(producto=producto, imagen=f, orden=added)
-                        added += 1
-                    if added < len(images):
-                        messages.warning(request, f'Se subieron {added} imágenes; el resto fueron ignoradas para cumplir el límite de {MAX_IMAGES}.')
-                    else:
-                        messages.success(request, f'Se subieron {added} imágenes correctamente.')
+                        if not producto.imagen and indice_imagen > indice_imagen_principal:
+                            producto.imagen = archivo_imagen
+                            producto.save(update_fields=['imagen'])
+                            imagenes_agregadas += 1
+                            continue
+                        ProductImage.objects.create(producto=producto, imagen=archivo_imagen, orden=imagenes_agregadas)
+                        imagenes_agregadas += 1
 
             return redirect('/')
 
@@ -293,7 +310,7 @@ def publicar_producto(request):
     return render(
         request,
         'publicar_producto.html',
-        {'form': form, 'remaining_slots': MAX_IMAGES}
+        {'form': form, 'remaining_slots': MAX_IMAGENES_POR_PRODUCTO}
     )
 
 
@@ -304,33 +321,21 @@ def cerrar_sesion(request):
 
 def aprobar_vendedores(request):
     if not request.user.is_authenticated or not request.user.is_staff:
-        return redirect('/')
-
-    perfil = None
-    is_vendedor = False
-    is_aprobado = False
-    try:
-        perfil = request.user.perfil
-    except Perfil.DoesNotExist:
-        perfil = None
-
-    if perfil:
-        is_vendedor = perfil.rol == 'vendedor'
-        is_aprobado = perfil.aprobado
+        return redirect('inicio')
 
     if request.method == 'POST':
         perfil_id = request.POST.get('perfil_id')
         perfil = get_object_or_404(Perfil, id=perfil_id, rol='vendedor')
         perfil.aprobado = True
         perfil.save()
-        return redirect('aprobar_vendedores')
+        messages.success(request, f'El vendedor {perfil.usuario.username} ha sido aprobado correctamente.')
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        return redirect('inicio')
 
-    pending_vendedores = Perfil.objects.filter(rol='vendedor', aprobado=False)
-    return render(request, 'aprobar_vendedores.html', {
-        'pending_vendedores': pending_vendedores,
-        'is_vendedor': is_vendedor,
-        'is_aprobado': is_aprobado,
-    })
+    messages.info(request, 'Puedes aprobar vendedores directamente desde la pantalla de inicio.')
+    return redirect('inicio')
 
 
 def supervisar_productos(request):
@@ -368,7 +373,7 @@ def supervisar_productos(request):
 
 
 def eliminar_producto_admin(request, producto_id):
-    """Elimina (marca como eliminado) un producto desde la vista de administrador y registra la acción."""
+    """Elimina permanentemente un producto desde la vista de administrador."""
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/')
 
@@ -376,23 +381,13 @@ def eliminar_producto_admin(request, producto_id):
 
     if request.method == 'POST':
         razon = request.POST.get('razon', '').strip()
-        # Marcar producto como eliminado
-        producto.estado = 'eliminado'
-        producto.save()
-
-        # Registrar la acción
-        ProductActionLog.objects.create(
-            producto=producto,
-            actor=request.user,
-            accion='eliminado',
-            razon=razon
-        )
+        nombre_producto = producto.nombre
+        producto.delete()
 
         # Crear notificación para el vendedor
-        mensaje = f"Tu producto '{producto.nombre}' fue eliminado por un administrador. Motivo: {razon}"
+        mensaje = f"Tu producto '{nombre_producto}' fue eliminado por un administrador. Motivo: {razon}"
         Notificacion.objects.create(usuario=producto.vendedor, mensaje=mensaje)
 
-        messages.success(request, 'Producto eliminado y vendedor notificado.')
         return redirect('supervisar_productos')
 
     return render(request, 'confirmar_eliminar_producto_admin.html', {'producto': producto})
@@ -487,8 +482,6 @@ def editar_producto(request, producto_id):
     if producto.estado == 'eliminado':
         return redirect('mis_productos')
 
-    MAX_IMAGES = 5
-
     if request.method == 'POST':
         form = ProductoForm(request.POST, request.FILES, instance=producto)
 
@@ -497,43 +490,129 @@ def editar_producto(request, producto_id):
             producto.vendedor = request.user
             producto.save()
 
-            # Handle added images from single multiple input 'images' on edit
-            images = request.FILES.getlist('images')
-            if images:
-                from .models import ProductImage
-                existing = producto.imagenes.count() + (1 if producto.imagen else 0)
-                remaining = MAX_IMAGES - existing
-                if remaining <= 0:
-                    messages.warning(request, f'Se alcanzó el límite de {MAX_IMAGES} imágenes por producto. No se añadieron imágenes adicionales.')
-                else:
-                    added = 0
-                    for f in images:
-                        if added >= remaining:
-                            break
-                        if not producto.imagen:
-                            producto.imagen = f
-                            producto.save()
-                            added += 1
-                            continue
-                        ProductImage.objects.create(producto=producto, imagen=f, orden=added)
-                        added += 1
-                    if added < len(images):
-                        messages.warning(request, f'Se subieron {added} imágenes; el resto fueron ignoradas para cumplir el límite de {MAX_IMAGES}.')
+            from .models import ProductImage
+
+            deleted_image_ids_raw = request.POST.get('deleted_image_ids', '')
+            deleted_image_ids = []
+            for raw_id in deleted_image_ids_raw.split(','):
+                cleaned = str(raw_id).strip()
+                if cleaned.isdigit():
+                    deleted_image_ids.append(int(cleaned))
+
+            removed_main_image = request.POST.get('removed_main_image', '0') == '1'
+
+            for image_id in deleted_image_ids:
+                ProductImage.objects.filter(producto=producto, id=image_id).delete()
+
+            imagenes_actuales = []
+            if producto.imagen:
+                imagenes_actuales.append(('principal', producto.imagen, None))
+            for imagen_galeria in producto.imagenes.order_by('orden', 'id').all():
+                imagenes_actuales.append(('galeria', imagen_galeria.imagen, imagen_galeria))
+
+            main_image_index = request.POST.get('main_image_index')
+            try:
+                indice_imagen_principal = int(main_image_index)
+            except (TypeError, ValueError):
+                indice_imagen_principal = 0
+
+            if imagenes_actuales:
+                if removed_main_image and producto.imagen:
+                    siguiente_galeria = producto.imagenes.order_by('orden', 'id').first()
+                    if siguiente_galeria is not None:
+                        try:
+                            producto.imagen = siguiente_galeria.imagen
+                            producto.save(update_fields=['imagen'])
+                            siguiente_galeria.delete()
+                        except Exception:
+                            pass
                     else:
-                        messages.success(request, f'Se subieron {added} imágenes correctamente.')
+                        try:
+                            producto.imagen = None
+                            producto.save(update_fields=['imagen'])
+                        except Exception:
+                            pass
+                indice_normalizado = max(0, min(indice_imagen_principal, len(imagenes_actuales) - 1))
+                seleccionado = imagenes_actuales[indice_normalizado]
+                if seleccionado[0] == 'galeria':
+                    instancia_galeria = seleccionado[2]
+                    if instancia_galeria is not None:
+                        try:
+                            instancia_galeria.delete()
+                        except Exception:
+                            pass
+
+                    imagen_actual_principal = producto.imagen
+                    if imagen_actual_principal and imagen_actual_principal.name != seleccionado[1].name:
+                        try:
+                            ya_esta_en_galeria = producto.imagenes.filter(imagen__name=imagen_actual_principal.name).exists()
+                        except Exception:
+                            ya_esta_en_galeria = False
+                        if not ya_esta_en_galeria:
+                            try:
+                                ProductImage.objects.create(
+                                    producto=producto,
+                                    imagen=imagen_actual_principal,
+                                    orden=producto.imagenes.count(),
+                                )
+                            except Exception:
+                                pass
+                    try:
+                        producto.imagen = seleccionado[1]
+                        producto.save(update_fields=['imagen'])
+                    except Exception:
+                        pass
+
+            # Manejar imágenes añadidas desde el campo 'images' al editar
+            imagenes_subidas = request.FILES.getlist('images')
+            if imagenes_subidas:
+                imagenes_existentes = producto.imagenes.count() + (1 if producto.imagen else 0)
+                espacios_disponibles = MAX_IMAGENES_POR_PRODUCTO - imagenes_existentes
+                if espacios_disponibles > 0:
+                    imagenes_agregadas = 0
+                    indice_imagen_principal_nuevo = None
+                    indice_total_previa = len(imagenes_actuales) + len(imagenes_subidas)
+                    indice_imagen_principal = max(0, min(indice_imagen_principal, indice_total_previa - 1))
+                    if indice_imagen_principal >= len(imagenes_actuales):
+                        indice_imagen_principal_nuevo = indice_imagen_principal - len(imagenes_actuales)
+
+                    imagen_actual_principal = producto.imagen
+                    for indice_imagen, archivo_imagen in enumerate(imagenes_subidas):
+                        if imagenes_agregadas >= espacios_disponibles:
+                            break
+                        if indice_imagen_principal_nuevo is not None and indice_imagen == indice_imagen_principal_nuevo:
+                            if imagen_actual_principal and imagen_actual_principal.name != archivo_imagen.name:
+                                ya_esta_en_galeria = producto.imagenes.filter(imagen__name=imagen_actual_principal.name).exists()
+                                if not ya_esta_en_galeria:
+                                    ProductImage.objects.create(
+                                        producto=producto,
+                                        imagen=imagen_actual_principal,
+                                        orden=producto.imagenes.count(),
+                                    )
+                            producto.imagen = archivo_imagen
+                            producto.save(update_fields=['imagen'])
+                            imagenes_agregadas += 1
+                            continue
+                        if not producto.imagen and indice_imagen == 0 and indice_imagen_principal_nuevo is None:
+                            producto.imagen = archivo_imagen
+                            producto.save(update_fields=['imagen'])
+                            imagenes_agregadas += 1
+                            continue
+                        ProductImage.objects.create(producto=producto, imagen=archivo_imagen, orden=imagenes_agregadas)
+                        imagenes_agregadas += 1
 
             return redirect('mis_productos')
 
     else:
         form = ProductoForm(instance=producto)
 
-    existing = producto.imagenes.count() + (1 if producto.imagen else 0)
-    remaining_slots = max(0, MAX_IMAGES - existing)
+    imagenes_existentes = producto.imagenes.count() + (1 if producto.imagen else 0)
+    espacios_disponibles = max(0, MAX_IMAGENES_POR_PRODUCTO - imagenes_existentes)
 
     return render(request, 'editar_producto.html', {
         'form': form,
         'producto': producto,
-        'remaining_slots': remaining_slots
+        'remaining_slots': espacios_disponibles
     })
 
 
@@ -585,19 +664,55 @@ def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id, vendedor=request.user)
 
     if request.method == 'POST':
-        # Confirmar la acción
         confirmacion = request.POST.get('confirmar_eliminar')
 
         if confirmacion == 'si':
-            producto.estado = 'eliminado'
-            producto.save()
-            ProductActionLog.objects.create(producto=producto, actor=request.user, accion='eliminado')
+            producto.delete()
+            messages.success(request, 'El producto se eliminó correctamente.')
             return redirect('mis_productos')
         else:
             return redirect('mis_productos')
 
-    # Si no es POST, mostrar página de confirmación
     return render(request, 'confirmar_eliminar_producto.html', {'producto': producto})
+
+
+@require_POST
+def eliminar_productos_seleccionados(request):
+    """Elimina múltiples productos seleccionados por el vendedor autenticado."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'vendedor':
+        return redirect('/')
+
+    confirmacion = request.POST.get('confirmar_eliminar')
+    if confirmacion != 'si':
+        return redirect('mis_productos')
+
+    producto_ids_raw = request.POST.get('producto_ids', '')
+    producto_ids = []
+    for raw_value in producto_ids_raw.split(','):
+        valor_limpio = str(raw_value).strip()
+        if valor_limpio.isdigit():
+            producto_ids.append(int(valor_limpio))
+
+    if not producto_ids:
+        return redirect('mis_productos')
+
+    productos = list(Producto.objects.filter(id__in=producto_ids, vendedor=request.user).exclude(estado='eliminado'))
+    if not productos:
+        return redirect('mis_productos')
+
+    for producto in productos:
+        producto.delete()
+
+    messages.success(request, f'Se eliminaron {len(productos)} producto(s).')
+    return redirect('mis_productos')
 
 
 # ==================== CARRITO DE COMPRAS ====================
@@ -656,12 +771,12 @@ def ver_carrito(request):
 def actualizar_cantidad_carrito(request, item_id):
     """Actualiza la cantidad de un item en el carrito."""
     if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'No autenticado'})
+        return JsonResponse({'success': False, 'error': 'No has iniciado sesión.'})
 
     try:
         carrito = Carrito.objects.get(comprador=request.user)
     except Carrito.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Carrito no encontrado'})
+        return JsonResponse({'success': False, 'error': 'No se encontró un carrito para este usuario.'})
 
     item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
 
@@ -669,13 +784,13 @@ def actualizar_cantidad_carrito(request, item_id):
     try:
         cantidad = int(cantidad)
     except ValueError:
-        return JsonResponse({'success': False, 'error': 'Cantidad inválida'})
+        return JsonResponse({'success': False, 'error': 'La cantidad ingresada no es válida.'})
 
     if cantidad < 0:
-        return JsonResponse({'success': False, 'error': 'La cantidad no puede ser negativa'})
+        return JsonResponse({'success': False, 'error': 'La cantidad no puede ser negativa.'})
 
     if cantidad > item.producto.stock:
-        return JsonResponse({'success': False, 'error': f'Stock insuficiente. Disponible: {item.producto.stock}'})
+        return JsonResponse({'success': False, 'error': f'Stock insuficiente. Disponible: {item.producto.stock} unidades.'})
 
     if cantidad == 0:
         item.delete()
@@ -706,10 +821,8 @@ def eliminar_del_carrito(request, item_id):
         return redirect('ver_carrito')
 
     item = get_object_or_404(ItemCarrito, id=item_id, carrito=carrito)
-    producto_nombre = item.producto.nombre
     item.delete()
 
-    messages.success(request, f'"{producto_nombre}" eliminado del carrito.')
     return redirect('ver_carrito')
 
 
@@ -736,52 +849,52 @@ def checkout(request):
         return redirect('/accounts/login/')
 
     try:
-        carrito = Carrito.objects.get(comprador=request.user)
+        carrito_usuario = Carrito.objects.get(comprador=request.user)
     except Carrito.DoesNotExist:
-        carrito = None
+        carrito_usuario = None
 
-    if not carrito or not carrito.items.exists():
+    if not carrito_usuario or not carrito_usuario.items.exists():
         messages.error(request, 'Tu carrito está vacío.')
         return redirect('ver_carrito')
 
     if request.method == 'POST':
-        form = EntregaForm(request.POST)
+        formulario = EntregaForm(request.POST)
 
-        if form.is_valid():
-            solicitud = form.save(commit=False)
-            solicitud.comprador = request.user
+        if formulario.is_valid():
+            solicitud_entrega = formulario.save(commit=False)
+            solicitud_entrega.comprador = request.user
 
-            if solicitud.tipo_entrega != 'delivery':
-                solicitud.direccion_entrega = None
-                solicitud.referencia = None
+            if solicitud_entrega.tipo_entrega != 'delivery':
+                solicitud_entrega.direccion_entrega = None
+                solicitud_entrega.referencia = None
 
-            solicitud.save()
-            created_pedidos = []
-            for item in carrito.items.select_related('producto').all():
+            solicitud_entrega.save()
+            pedidos_creados = []
+            for item in carrito_usuario.items.select_related('producto').all():
                 producto = item.producto
                 pedido = Pedido.objects.create(
                     comprador=request.user,
                     vendedor=producto.vendedor,
                     producto=producto,
-                    solicitud=solicitud,
+                    solicitud=solicitud_entrega,
                     cantidad=item.cantidad,
                     precio_unitario=producto.precio,
                     total=producto.precio * item.cantidad,
-                    tipo_entrega=solicitud.tipo_entrega,
-                    direccion_entrega=solicitud.direccion_entrega,
-                    referencia=solicitud.referencia,
-                    tipo_pago=solicitud.tipo_pago,
+                    tipo_entrega=solicitud_entrega.tipo_entrega,
+                    direccion_entrega=solicitud_entrega.direccion_entrega,
+                    referencia=solicitud_entrega.referencia,
+                    tipo_pago=solicitud_entrega.tipo_pago,
                     estado='pendiente',
                 )
-                created_pedidos.append(pedido)
+                pedidos_creados.append(pedido)
                 # Registrar creación de pedido por el comprador
                 ProductActionLog.objects.create(producto=producto, actor=request.user, accion='pedido_creado')
 
-            carrito.items.all().delete()
+            carrito_usuario.items.all().delete()
             messages.success(request, 'Compra confirmada correctamente.')
 
             # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
-            if solicitud.tipo_pago == 'transferencia' and created_pedidos:
+            if solicitud_entrega.tipo_pago == 'transferencia' and pedidos_creados:
                 # datos bancarios simples — personalízalos según necesidades
                 datos_banco = {
                     'banco': 'Banco Ejemplo',
@@ -791,18 +904,18 @@ def checkout(request):
                     'tipo': 'Cuenta corriente',
                 }
                 return render(request, 'checkout_success.html', {
-                    'pedidos': created_pedidos,
+                    'pedidos': pedidos_creados,
                     'datos_banco': datos_banco,
                 })
 
             return redirect('checkout')
     else:
-        form = EntregaForm()
+        formulario = EntregaForm()
 
     return render(request, 'checkout.html', {
-        'form': form,
-        'carrito': carrito,
-        'total': carrito.obtener_total(),
+        'formulario': formulario,
+        'carrito_usuario': carrito_usuario,
+        'total_carrito': carrito_usuario.obtener_total(),
     })
 
 

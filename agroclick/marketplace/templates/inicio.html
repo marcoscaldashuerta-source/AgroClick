@@ -49,6 +49,10 @@
         .nav-links a:hover {
             background-color: rgba(255,255,255,0.12);
         }
+        .brand img {
+            width: 84px !important;
+            height: 84px !important;
+        }
         .nav-links span {
             color: white;
             font-weight: 600;
@@ -74,29 +78,6 @@
         .welcome p {
             margin-bottom: 12px;
         }
-        .auth-buttons {
-            background-color: white;
-            padding: 24px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
-        }
-        .auth-buttons h2 {
-            margin-bottom: 12px;
-        }
-        .auth-buttons p {
-            margin: 0 0 20px;
-            color: #4b5563;
-            line-height: 1.7;
-        }
-        .auth-buttons a {
-            padding: 12px 28px;
-            margin: 0 8px;
-            display: inline-block;
-            border-radius: 999px;
-            font-weight: 600;
-        }
         .action-buttons {
             gap: 14px;
         }
@@ -105,31 +86,6 @@
         }
         .product-description {
             max-height: 80px;
-        }
-        .welcome {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .welcome h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .seller-actions,
-        .seller-orders {
-            background-color: #ffffff;
-            padding: 18px 20px;
-            border-radius: 14px;
-            margin: 15px 0;
-            border: 1px solid rgba(76, 175, 80, 0.16);
-            box-shadow: 0 10px 24px rgba(15,23,42,0.06);
-        }
-        .seller-actions h3,
-        .seller-orders h3 {
-            color: #2e7d32;
-            margin-bottom: 10px;
         }
         .action-buttons {
             display: flex;
@@ -168,17 +124,6 @@
         .btn-small {
             padding: 8px 15px;
             font-size: 14px;
-        }
-        .admin-section {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #FF9800;
-        }
-        .admin-section h3 {
-            color: #856404;
-            margin-bottom: 10px;
         }
         /* Estilos para búsqueda */
         .search-section {
@@ -507,36 +452,11 @@
             from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .no-products {
-            background-color: white;
-            padding: 40px;
-            text-align: center;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .no-products h2 {
-            color: #999;
-            margin-bottom: 10px;
-        }
-        .no-products p {
-            color: #bbb;
-            margin: 10px 0;
-        }
         .pending-vendors {
             background-color: white;
             padding: 15px;
             border-radius: 8px;
             margin: 10px 0;
-        }
-        .pending-vendors ul {
-            list-style: none;
-            margin: 10px 0;
-        }
-        .pending-vendors li {
-            padding: 8px;
-            background-color: #f9f9f9;
-            margin: 5px 0;
-            border-radius: 4px;
         }
         .not-approved {
             background-color: #ffebee;
@@ -549,141 +469,8 @@
             color: #c62828;
             margin-bottom: 10px;
         }
-        .auth-buttons {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .auth-buttons h2 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .auth-buttons a {
-            padding: 12px 30px;
-            margin: 0 10px;
-            display: inline-block;
-        }
-        .home-shell {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-        .card-surface {
-            background: rgba(255,255,255,0.96);
-            border: 1px solid rgba(15,23,42,0.06);
-            border-radius: 24px;
-            box-shadow: 0 18px 50px rgba(15,23,42,0.08);
-            padding: 24px;
-            backdrop-filter: blur(8px);
-        }
-        .hero-section {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 24px;
-            align-items: center;
-            padding: 32px;
-            overflow: hidden;
-        }
-        .hero-copy h1 {
-            font-size: clamp(1.9rem, 3.2vw, 3rem);
-            color: #0f172a;
-            margin: 10px 0 12px;
-            line-height: 1.1;
-        }
-        .hero-copy p {
-            color: #475569;
-            font-size: 1rem;
-            line-height: 1.7;
-            margin-bottom: 18px;
-            max-width: 620px;
-        }
-        .hero-pill,
-        .section-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #e8f5e9;
-            color: #256029;
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 20px;
-        }
-        .hero-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 22px;
-        }
-        .stat-card {
-            min-width: 140px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px 16px;
-        }
-        .stat-card strong {
-            display: block;
-            color: #0f172a;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-        }
-        .stat-card span {
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-        .hero-visual img {
-            width: 100%;
-            border-radius: 20px;
-            display: block;
-            box-shadow: 0 12px 30px rgba(15,23,42,0.12);
-        }
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        .section-header.compact {
-            margin-bottom: 12px;
-        }
-        .section-header h2 {
-            margin: 6px 0 0;
-            color: #0f172a;
-            font-size: 1.3rem;
-        }
-        .section-badge {
-            background: #f1f5f9;
-            color: #334155;
-            padding: 8px 12px;
-            border-radius: 999px;
-            font-weight: 700;
-            font-size: 0.92rem;
-        }
-        .search-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 14px;
-            margin-bottom: 12px;
-        }
         .search-form .form-group {
             margin-bottom: 0;
-        }
-        .search-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
         }
         .active-filters {
             margin-top: 14px;
@@ -702,87 +489,8 @@
             margin-left: 6px;
             font-size: 0.85rem;
         }
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 18px;
-        }
-        .product-card {
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            box-shadow: 0 12px 30px rgba(15,23,42,0.06);
-        }
-        .product-visual {
-            position: relative;
-            height: 180px;
-            background: #f8fafc;
-        }
-        .product-visual img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .badge-new {
-            position: absolute;
-            left: 12px;
-            top: 12px;
-            background: #ffb020;
-            color: white;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 800;
-        }
         .product-info {
             padding: 16px;
-        }
-        .product-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            background: #e8f5e9;
-            color: #256029;
-            padding: 5px 10px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-        .meta-detail {
-            color: #64748b;
-            font-size: 0.85rem;
-        }
-        .product-info h3 {
-            margin: 0 0 8px;
-            color: #0f172a;
-            font-size: 1.05rem;
-        }
-        .product-price-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .product-price {
-            font-size: 1.15rem;
-            font-weight: 800;
-            color: #4f9a2d;
-        }
-        .stock-pill {
-            background: #f1f5f9;
-            color: #334155;
-            padding: 5px 9px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 700;
         }
         .product-description {
             color: #64748b;
@@ -790,11 +498,6 @@
             line-height: 1.6;
             min-height: 56px;
             margin-bottom: 12px;
-        }
-        .product-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
         }
         .btn-small {
             padding: 8px 14px;
@@ -903,29 +606,6 @@
         .order-detail-btn:hover {
             background: #e2e8f0;
         }
-        .join-card {
-            text-align: center;
-        }
-        .join-card h2 {
-            margin-top: 0;
-            color: #0f172a;
-        }
-        .join-card p {
-            color: #64748b;
-            margin-bottom: 16px;
-        }
-        .empty-state {
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            border-radius: 18px;
-            padding: 24px;
-            text-align: center;
-            color: #475569;
-        }
-        .empty-state h3 {
-            margin-top: 0;
-            color: #0f172a;
-        }
         @media (max-width: 768px) {
             .search-row {
                 grid-template-columns: 1fr;
@@ -953,20 +633,23 @@
 
 <div class="navbar page-bg">
     <div class="brand">
-        <img src="/static/marketplace/img/asoagro-fb.jpg" alt="ASOAGRO logo" />
+        <img src="/static/marketplace/img/Logo-AgroClick.png" alt="AgroClick logo" />
         <div class="site-title">AgroClick</div>
     </div>
     <div class="nav-links">
         {% if user.is_authenticated %}
-            <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
+            {% if request.resolver_match.url_name == 'ver_notificaciones' %}
+                <span class="nav-link-disabled">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</span>
+            {% else %}
+                <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
+            {% endif %}
+            {% if user.perfil.rol == 'comprador' %}
+                <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+            {% endif %}
             {% if user.is_staff %}
                 <details class="admin-actions-menu">
-                    <summary>Acciones de administrador</summary>
+                    <summary>{{ user.username }}</summary>
                     <div class="menu-items">
-                        <a href="{% url 'inicio' %}">Inicio</a>
-                        <a href="{% url 'supervisar_productos' %}">Supervisar productos</a>
-                        <a href="{% url 'panel_soporte' %}">Panel de soporte</a>
-                        <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
                         <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
                     </div>
                 </details>
@@ -988,36 +671,14 @@
 
 <div class="container home-shell">
     <div>
-        <div class="welcome">
+        <div class="welcome" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
             <p style="color: #666; font-size: 14px;">Conectando productores y compradores de Arica</p>
             {% if user.is_authenticated %}
                 <h2>Bienvenido, {{ user.username }}! 👋</h2>
             {% endif %}
         </div>
 
-    {% if is_admin %}
-            <div class="admin-section">
-            <h3>Panel de administrador</h3>
-            {% if pending_vendedores %}
-                <div class="pending-vendors">
-                    <p><strong>Vendedores pendientes de aprobación:</strong></p>
-                    <ul>
-                        {% for perfil in pending_vendedores %}
-                            <li>{{ perfil.usuario.username }}</li>
-                        {% endfor %}
-                    </ul>
-                    <div class="action-buttons">
-                        <a href="{% url 'aprobar_vendedores' %}" class="btn btn-primary">Ir a aprobaciones</a>
-                        <a href="{% url 'supervisar_productos' %}" class="btn btn-primary">Supervisar productos</a>
-                        <a href="{% url 'panel_soporte' %}" class="btn btn-primary">Panel de soporte</a>
-                        <a href="{% url 'admin:auth_user_changelist' %}" class="btn btn-secondary">Deshabilitar usuarios</a>
-                    </div>
-                </div>
-            {% else %}
-                <p>✓ No hay vendedores pendientes de aprobación</p>
-            {% endif %}
-        </div>
-    {% endif %}
+    {% include 'partials/inicio_admin.html' %}
 
     {% include 'partials/inicio_vendedor.html' %}
 
@@ -1152,13 +813,13 @@
                      data-descripcion="{{ producto.descripcion|escapejs }}"
                      data-vendedor="{{ producto.vendedor.username|escapejs }}"
                      data-categoria="{{ producto.categoria|escapejs }}">
-                    {% if producto.imagenes.all %}
-                        <div class="product-image">
-                            <img src="{{ producto.imagenes.all.0.imagen.url }}" alt="{{ producto.nombre }}" />
-                        </div>
-                    {% elif producto.imagen %}
+                    {% if producto.imagen %}
                         <div class="product-image">
                             <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+                        </div>
+                    {% elif producto.imagenes.exists %}
+                        <div class="product-image">
+                            <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}" />
                         </div>
                     {% else %}
                         <div class="product-image" style="background-color: #e0e0e0;">
