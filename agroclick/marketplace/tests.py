@@ -2,6 +2,7 @@ from io import BytesIO
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
@@ -242,6 +243,40 @@ class EditarProductoMainImageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         producto.refresh_from_db()
         self.assertEqual(producto.imagen.name, imagen_galeria.imagen.name)
+
+
+class EliminarProductoLimpiaArchivosTests(TestCase):
+    def test_al_eliminar_producto_se_borra_su_imagen_y_galeria(self):
+        vendedor = User.objects.create_user(username='vendedor_cleanup', email='vendedor_cleanup@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        def create_uploaded_image(name):
+            image = Image.new('RGB', (2, 2), color=(0, 255, 0))
+            buffer = BytesIO()
+            image.save(buffer, format='PNG')
+            return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Plátano',
+            categoria='Fruta',
+            descripcion='Plátano maduro',
+            precio=1200,
+            unidad_venta='kg',
+            stock=5,
+            imagen=create_uploaded_image('principal.png'),
+            borrador=False,
+            estado='activo',
+        )
+        ProductImage.objects.create(producto=producto, imagen=create_uploaded_image('galeria.png'), orden=1)
+
+        self.assertTrue(producto.imagen.storage.exists(producto.imagen.name))
+        self.assertTrue(producto.imagenes.first().imagen.storage.exists(producto.imagenes.first().imagen.name))
+
+        producto.delete()
+
+        self.assertFalse(Producto.objects.filter(id=producto.id).exists())
+        self.assertFalse(ProductImage.objects.filter(producto_id=producto.id).exists())
 
 
 class EditarProductoMainImagePreservaAnteriorTests(TestCase):
