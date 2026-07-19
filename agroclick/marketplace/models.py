@@ -248,6 +248,7 @@ class Pedido(models.Model):
     vendedor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pedidos_recibidos')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='pedidos')
     solicitud = models.ForeignKey(SolicitudEntrega, on_delete=models.CASCADE, related_name='pedidos', null=True, blank=True)
+    productos_detalle = models.TextField(blank=True, default='')
     cantidad = models.PositiveIntegerField(default=1)
     precio_unitario = models.IntegerField(default=0)
     total = models.IntegerField(default=0)
@@ -263,7 +264,7 @@ class Pedido(models.Model):
         ordering = ['-fecha_creacion']
 
     def __str__(self):
-        return f"Pedido #{self.id} - {self.producto.nombre} ({self.cantidad} unidades)"
+        return f"Pedido N°{self.id} - {self.producto.nombre} ({self.cantidad} unidades)"
 
 
 class PaymentProof(models.Model):
@@ -283,7 +284,7 @@ class PaymentProof(models.Model):
     fecha_revision = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Comprobante #{self.id} - Pedido #{self.pedido.id} ({self.estado})"
+        return f"Comprobante #{self.id} - Pedido N°{self.pedido.id} ({self.estado})"
 
 
 class ItemCarrito(models.Model):

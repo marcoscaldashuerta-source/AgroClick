@@ -1,5 +1,20 @@
 {% if is_vendedor %}
     {% if is_aprobado %}
+        <style>
+            .order-id-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 44px;
+                padding: 6px 10px;
+                border-radius: 999px;
+                background: linear-gradient(135deg, #eaf3ff 0%, #dbeafe 100%);
+                color: #1d4ed8;
+                font-weight: 700;
+                font-size: 0.95rem;
+                border: 1px solid #93c5fd;
+            }
+        </style>
         <div class="seller-actions" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
             <h3 style="margin-bottom: 14px;">Acciones de vendedor</h3>
             <div class="action-buttons" style="margin-top: 8px;">
@@ -15,9 +30,8 @@
                     <table class="orders-table">
                         <thead>
                             <tr>
-                                <th>Producto</th>
+                                <th>Pedidos</th>
                                 <th>Comprador</th>
-                                <th>Cantidad</th>
                                 <th>Total</th>
                                 <th>Estado</th>
                                 <th>Fecha</th>
@@ -27,9 +41,10 @@
                         <tbody>
                             {% for pedido in pedidos_vendedor %}
                                 <tr>
-                                    <td class="order-product">{{ pedido.producto.nombre }}</td>
+                                    <td class="order-product">
+                                        <span class="order-id-badge" style="white-space: nowrap;">Pedido N°{{ pedido.id }}</span>
+                                    </td>
                                     <td>{{ pedido.comprador.username }}</td>
-                                    <td>{{ pedido.cantidad }}</td>
                                     <td>${{ pedido.total }}</td>
                                     <td>
                                         <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
@@ -45,7 +60,7 @@
                                                     </div>
                                                 {% endif %}
                                             {% endwith %}
-                                            <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{{ pedido.producto.nombre|escapejs }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
+                                            <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{% if pedido.productos_detalle %}{{ pedido.productos_detalle|escapejs }}{% else %}{{ pedido.producto.nombre|escapejs }}{% endif %}" data-pedido-id="{{ pedido.id }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
                                                 Ver detalles
                                             </button>
                                             {% if pedido.estado != 'confirmado' and pedido.estado != 'cancelado' %}

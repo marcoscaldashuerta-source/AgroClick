@@ -731,9 +731,9 @@
                 <button id="close-modal" class="btn btn-secondary">Cerrar</button>
             </div>
             <div class="modal-body">
-                <div class="modal-row"><span class="modal-label">Producto:</span><span id="detail-producto" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Pedidos</span><span id="detail-producto" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Comprador:</span><span id="detail-comprador" class="modal-value"></span></div>
-                <div class="modal-row"><span class="modal-label">Cantidad:</span><span id="detail-cantidad" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Cantidad productos:</span><span id="detail-cantidad" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Total:</span><span id="detail-total" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Método de entrega:</span><span id="detail-entrega" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Dirección de entrega:</span><span id="detail-direccion" class="modal-value"></span></div>
@@ -771,7 +771,14 @@
             let accion_pendiente = 'confirmar';
 
             function abrir_detalle_pedido(boton) {
-                DETALLE_PRODUCTO.textContent = boton.dataset.producto || '';
+                const productos = boton.dataset.producto || '';
+                const pedidosTexto = productos
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(Boolean)
+                    .map(item => item.trim())
+                    .join('<br>');
+                DETALLE_PRODUCTO.innerHTML = pedidosTexto || '';
                 DETALLE_COMPRADOR.textContent = boton.dataset.comprador || '';
                 DETALLE_CANTIDAD.textContent = boton.dataset.cantidad || '';
                 DETALLE_TOTAL.textContent = `$${boton.dataset.total || '0'}`;

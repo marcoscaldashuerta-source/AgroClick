@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
 
-from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, deshabilitar_cuenta_usuario, ProductImage
+from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, Notificacion, deshabilitar_cuenta_usuario, ProductImage
 
 
 class DeshabilitarCuentaUsuarioTests(TestCase):
@@ -80,6 +80,28 @@ class DeshabilitarUsuariosAdminViewTests(TestCase):
         self.assertTrue(self.comprador.is_active)
 
 
+class NotificacionesPedidoFormattingTests(TestCase):
+    def test_ver_notificaciones_normaliza_mensajes_antiguos_con_pedido_numero(self):
+        usuario = User.objects.create_user(
+            username='usuario_notificaciones',
+            email='notificaciones@example.com',
+            password='pass1234',
+        )
+        notificacion = Notificacion.objects.create(
+            usuario=usuario,
+            mensaje='Tu pedido #7 fue cancelado por el vendedor.',
+        )
+
+        self.client.force_login(usuario)
+        response = self.client.get('/notificaciones/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Pedido N°7')
+        self.assertContains(response, 'Tu Pedido N°7')
+        notificacion.refresh_from_db()
+        self.assertIn('Pedido N°7', notificacion.mensaje)
+
+
 class CheckoutOrdersTests(TestCase):
     def test_checkout_crea_pedido_y_lo_muestra_en_pagina_del_vendedor(self):
         comprador = User.objects.create_user(username='comprador_test', email='comprador@test.com', password='pass1234')
@@ -122,6 +144,55 @@ class CheckoutOrdersTests(TestCase):
         response = self.client.get('/')
         self.assertContains(response, 'Tomate')
         self.assertContains(response, 'Calle 123')
+
+    def test_checkout_con_varios_productos_del_mismo_vendedor_crea_un_solo_pedido(self):
+        comprador = User.objects.create_user(username='comprador_multi', email='comprador_multi@test.com', password='pass1234')
+        vendedor = User.objects.create_user(username='vendedor_multi', email='vendedor_multi@test.com', password='pass1234')
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        tomate = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Tomate',
+            categoria='Fruta',
+            descripcion='Tomate rojo',
+            precio=5000,
+            unidad_venta='kg',
+            stock=10,
+            borrador=False,
+            estado='activo',
+        )
+        platano = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Plátano',
+            categoria='Fruta',
+            descripcion='Plátano maduro',
+            precio=2500,
+            unidad_venta='kg',
+            stock=10,
+            borrador=False,
+            estado='activo',
+        )
+        carrito = Carrito.objects.create(comprador=comprador)
+        ItemCarrito.objects.create(carrito=carrito, producto=tomate, cantidad=1)
+        ItemCarrito.objects.create(carrito=carrito, producto=platano, cantidad=1)
+
+        self.client.force_login(comprador)
+        response = self.client.post('/carrito/checkout/', {
+            'tipo_entrega': 'delivery',
+            'direccion_entrega': 'Calle 456',
+            'referencia': 'Depto 2',
+            'tipo_pago': 'transferencia',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Pedido.objects.filter(comprador=comprador, vendedor=vendedor).count(), 1)
+        pedido = Pedido.objects.get(comprador=comprador, vendedor=vendedor)
+        self.assertEqual(pedido.cantidad, 2)
+        self.assertEqual(pedido.total, 7500)
+        self.assertEqual(pedido.direccion_entrega, 'Calle 456')
+        self.assertIn('Tomate', pedido.productos_detalle)
+        self.assertIn('Plátano', pedido.productos_detalle)
 
 
 class PublicarProductoDraftTests(TestCase):
