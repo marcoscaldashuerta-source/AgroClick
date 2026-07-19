@@ -385,7 +385,7 @@ def supervisar_productos(request):
 
 
 def eliminar_producto_admin(request, producto_id):
-    """Elimina (marca como eliminado) un producto desde la vista de administrador y registra la acción."""
+    """Elimina permanentemente un producto desde la vista de administrador."""
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/')
 
@@ -393,20 +393,11 @@ def eliminar_producto_admin(request, producto_id):
 
     if request.method == 'POST':
         razon = request.POST.get('razon', '').strip()
-        # Marcar producto como eliminado
-        producto.estado = 'eliminado'
-        producto.save()
-
-        # Registrar la acción
-        ProductActionLog.objects.create(
-            producto=producto,
-            actor=request.user,
-            accion='eliminado',
-            razon=razon
-        )
+        nombre_producto = producto.nombre
+        producto.delete()
 
         # Crear notificación para el vendedor
-        mensaje = f"Tu producto '{producto.nombre}' fue eliminado por un administrador. Motivo: {razon}"
+        mensaje = f"Tu producto '{nombre_producto}' fue eliminado por un administrador. Motivo: {razon}"
         Notificacion.objects.create(usuario=producto.vendedor, mensaje=mensaje)
 
         return redirect('supervisar_productos')
@@ -685,19 +676,55 @@ def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id, vendedor=request.user)
 
     if request.method == 'POST':
-        # Confirmar la acción
         confirmacion = request.POST.get('confirmar_eliminar')
 
         if confirmacion == 'si':
-            producto.estado = 'eliminado'
-            producto.save()
-            ProductActionLog.objects.create(producto=producto, actor=request.user, accion='eliminado')
+            producto.delete()
+            messages.success(request, 'El producto se eliminó correctamente.')
             return redirect('mis_productos')
         else:
             return redirect('mis_productos')
 
-    # Si no es POST, mostrar página de confirmación
     return render(request, 'confirmar_eliminar_producto.html', {'producto': producto})
+
+
+@require_POST
+def eliminar_productos_seleccionados(request):
+    """Elimina múltiples productos seleccionados por el vendedor autenticado."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'vendedor':
+        return redirect('/')
+
+    confirmacion = request.POST.get('confirmar_eliminar')
+    if confirmacion != 'si':
+        return redirect('mis_productos')
+
+    producto_ids_raw = request.POST.get('producto_ids', '')
+    producto_ids = []
+    for raw_value in producto_ids_raw.split(','):
+        valor_limpio = str(raw_value).strip()
+        if valor_limpio.isdigit():
+            producto_ids.append(int(valor_limpio))
+
+    if not producto_ids:
+        return redirect('mis_productos')
+
+    productos = list(Producto.objects.filter(id__in=producto_ids, vendedor=request.user).exclude(estado='eliminado'))
+    if not productos:
+        return redirect('mis_productos')
+
+    for producto in productos:
+        producto.delete()
+
+    messages.success(request, f'Se eliminaron {len(productos)} producto(s).')
+    return redirect('mis_productos')
 
 
 # ==================== CARRITO DE COMPRAS ====================

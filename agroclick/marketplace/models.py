@@ -1,5 +1,9 @@
+import os
+
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 def deshabilitar_cuenta_usuario(usuario):
@@ -82,6 +86,34 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Imagen de {self.producto.nombre} ({self.id})"
+
+
+def _eliminar_archivo_si_existe(instancia, nombre_campo):
+    campo = getattr(instancia, nombre_campo, None)
+    if not campo:
+        return
+    try:
+        nombre_archivo = campo.name
+    except Exception:
+        nombre_archivo = None
+    if not nombre_archivo:
+        return
+    try:
+        if campo.storage.exists(nombre_archivo):
+            campo.storage.delete(nombre_archivo)
+    except Exception:
+        pass
+
+
+@receiver(post_delete, sender=Producto)
+def eliminar_archivos_producto(sender, instance, **kwargs):
+    for nombre_campo in ['imagen', 'imagen2', 'imagen3', 'imagen4', 'imagen5']:
+        _eliminar_archivo_si_existe(instance, nombre_campo)
+
+
+@receiver(post_delete, sender=ProductImage)
+def eliminar_archivos_productimage(sender, instance, **kwargs):
+    _eliminar_archivo_si_existe(instance, 'imagen')
 
 
 class ProductActionLog(models.Model):
