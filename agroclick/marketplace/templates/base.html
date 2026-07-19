@@ -20,8 +20,12 @@
                 {% else %}
                     <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count|default:0 > 0 %} ({{ notificaciones_count }}){% endif %}</a>
                 {% endif %}
-                {% if user.perfil.rol == 'comprador' and request.resolver_match.url_name != 'ver_carrito' %}
-                    <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+                {% if user.perfil.rol == 'comprador' %}
+                    {% if request.resolver_match.url_name == 'ver_carrito' %}
+                        <span class="nav-link-disabled nav-carrito-disabled">🛒 Carrito</span>
+                    {% else %}
+                        <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+                    {% endif %}
                 {% endif %}
                 {% if user.is_staff %}
                     <details class="admin-actions-menu">
@@ -58,6 +62,20 @@
             min-height: 40px;
             padding: 8px 12px;
             border-radius: 10px;
+        }
+        .nav-carrito-disabled {
+            color: #9ca3af;
+            text-decoration: none;
+            cursor: not-allowed;
+            pointer-events: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            min-height: 40px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            opacity: 0.75;
+            background-color: rgba(255,255,255,0.08);
         }
     </style>
 
