@@ -316,9 +316,9 @@ class EditarProductoMainImageTests(TestCase):
         self.assertEqual(producto.imagen.name, imagen_galeria.imagen.name)
 
 
-class EliminarProductoLimpiaArchivosTests(TestCase):
-    def test_al_eliminar_producto_se_borra_su_imagen_y_galeria(self):
-        vendedor = User.objects.create_user(username='vendedor_cleanup', email='vendedor_cleanup@example.com', password='pass1234')
+class EliminarProductoSoftDeleteTests(TestCase):
+    def test_la_vista_de_eliminacion_marcar_producto_como_eliminado_y_preserva_datos(self):
+        vendedor = User.objects.create_user(username='vendedor_soft_delete', email='vendedor_soft_delete@example.com', password='pass1234')
         Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
 
         def create_uploaded_image(name):
@@ -344,10 +344,54 @@ class EliminarProductoLimpiaArchivosTests(TestCase):
         self.assertTrue(producto.imagen.storage.exists(producto.imagen.name))
         self.assertTrue(producto.imagenes.first().imagen.storage.exists(producto.imagenes.first().imagen.name))
 
-        producto.delete()
+        self.client.force_login(vendedor)
+        response = self.client.post(f'/eliminar-producto/{producto.id}/', {'confirmar_eliminar': 'si'}, follow=True)
 
-        self.assertFalse(Producto.objects.filter(id=producto.id).exists())
-        self.assertFalse(ProductImage.objects.filter(producto_id=producto.id).exists())
+        self.assertEqual(response.status_code, 200)
+        producto.refresh_from_db()
+        self.assertEqual(producto.estado, 'eliminado')
+        self.assertTrue(Producto.objects.filter(id=producto.id).exists())
+        self.assertTrue(ProductImage.objects.filter(producto_id=producto.id).exists())
+        self.assertTrue(producto.imagen.storage.exists(producto.imagen.name))
+        self.assertTrue(producto.imagenes.first().imagen.storage.exists(producto.imagenes.first().imagen.name))
+
+
+class PedidoReferenciaHistoricaTests(TestCase):
+    def test_pedido_conserva_referencia_historica_al_eliminar_producto(self):
+        vendedor = User.objects.create_user(username='vendedor_historial', email='vendedor_historial@example.com', password='pass1234')
+        comprador = User.objects.create_user(username='comprador_historial', email='comprador_historial@example.com', password='pass1234')
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Lechuga',
+            categoria='Verdura',
+            descripcion='Lechuga fresca',
+            precio=1500,
+            unidad_venta='kg',
+            stock=8,
+            borrador=False,
+            estado='activo',
+        )
+        pedido = Pedido.objects.create(
+            comprador=comprador,
+            vendedor=vendedor,
+            producto=producto,
+            cantidad=2,
+            precio_unitario=producto.precio,
+            total=producto.precio * 2,
+            tipo_entrega='delivery',
+            direccion_entrega='Calle 999',
+            referencia='Casa verde',
+            tipo_pago='transferencia',
+            estado='pendiente',
+        )
+
+        producto.soft_delete()
+
+        self.assertEqual(pedido.referencia_historica, 'Lechuga')
+        self.assertEqual(pedido.producto.nombre, 'Lechuga')
 
 
 class EditarProductoMainImagePreservaAnteriorTests(TestCase):

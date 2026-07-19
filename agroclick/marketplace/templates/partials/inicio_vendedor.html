@@ -30,7 +30,7 @@
                     <table class="orders-table">
                         <thead>
                             <tr>
-                                <th>Pedidos</th>
+                                <th>Pedido</th>
                                 <th>Comprador</th>
                                 <th>Total</th>
                                 <th>Estado</th>
@@ -60,7 +60,7 @@
                                                     </div>
                                                 {% endif %}
                                             {% endwith %}
-                                            <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{% if pedido.productos_detalle %}{{ pedido.productos_detalle|escapejs }}{% else %}{{ pedido.producto.nombre|escapejs }}{% endif %}" data-pedido-id="{{ pedido.id }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
+                                            <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{% if pedido.referencia_historica %}{{ pedido.referencia_historica|escapejs }}{% else %}Sin referencia{% endif %}" data-pedido-id="{{ pedido.id }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
                                                 Ver detalles
                                             </button>
                                             {% if pedido.estado != 'confirmado' and pedido.estado != 'cancelado' %}

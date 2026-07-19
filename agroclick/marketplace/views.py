@@ -375,20 +375,21 @@ def supervisar_productos(request):
 
 
 def eliminar_producto_admin(request, producto_id):
-    """Elimina permanentemente un producto desde la vista de administrador."""
+    """Marca un producto como eliminado desde la vista de administrador sin borrarlo físicamente."""
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('/')
 
     producto = get_object_or_404(Producto, id=producto_id)
+    vendedor = producto.vendedor
 
     if request.method == 'POST':
         razon = request.POST.get('razon', '').strip()
         nombre_producto = producto.nombre
-        producto.delete()
+        producto.soft_delete()
 
         # Crear notificación para el vendedor
         mensaje = f"Tu producto '{nombre_producto}' fue eliminado por un administrador. Motivo: {razon}"
-        Notificacion.objects.create(usuario=producto.vendedor, mensaje=mensaje)
+        Notificacion.objects.create(usuario=vendedor, mensaje=mensaje)
 
         return redirect('supervisar_productos')
 
@@ -685,7 +686,7 @@ def eliminar_producto(request, producto_id):
         confirmacion = request.POST.get('confirmar_eliminar')
 
         if confirmacion == 'si':
-            producto.delete()
+            producto.soft_delete()
             messages.success(request, 'El producto se eliminó correctamente.')
             return redirect('mis_productos')
         else:
@@ -727,7 +728,7 @@ def eliminar_productos_seleccionados(request):
         return redirect('mis_productos')
 
     for producto in productos:
-        producto.delete()
+        producto.soft_delete()
 
     messages.success(request, f'Se eliminaron {len(productos)} producto(s).')
     return redirect('mis_productos')
