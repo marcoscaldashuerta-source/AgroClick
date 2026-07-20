@@ -32,6 +32,7 @@ urlpatterns = [
     path('delivery/pedidos/', views.pedidos_delivery, name='pedidos_delivery'),
     path('delivery/pedido/<int:pedido_id>/asignar/', views.asignar_pedido_delivery, name='asignar_pedido_delivery'),
     path('delivery/pedido/<int:pedido_id>/actualizar-estado/', views.actualizar_estado_entrega, name='actualizar_estado_entrega'),
+    path('delivery/pedido/<int:pedido_id>/detalle/', views.detalle_pedido_delivery, name='detalle_pedido_delivery'),
     path('pedido/<int:pedido_id>/subir-comprobante/', views.subir_comprobante, name='subir_comprobante'),
     path('vendedor/comprobantes/', views.ver_comprobantes_vendedor, name='ver_comprobantes_vendedor'),
     path('vendedor/comprobante/revisar/<int:proof_id>/', views.revisar_comprobante, name='revisar_comprobante'),

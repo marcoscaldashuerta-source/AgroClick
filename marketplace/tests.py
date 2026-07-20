@@ -372,6 +372,19 @@ class DeliveryPedidosTests(TestCase):
         self.assertContains(response, 'Mis pedidos asignados')
         self.assertContains(response, 'Calle 123')
 
+    def test_ver_detalle_pedido_delivery_muestra_informacion_completa(self):
+        self.pedido.repartidor = self.delivery
+        self.pedido.estado_entrega = 'asignado'
+        self.pedido.save()
+
+        response = self.client.get(f'/delivery/pedido/{self.pedido.id}/detalle/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Calle 123')
+        self.assertContains(response, 'comprador_delivery')
+        self.assertContains(response, 'Lechuga')
+        self.assertContains(response, 'vendedor_delivery')
+        self.assertContains(response, 'Puerta roja')
+
     def test_actualizar_estado_entrega_a_en_camino_y_entregado(self):
         self.pedido.repartidor = self.delivery
         self.pedido.estado_entrega = 'asignado'

@@ -180,15 +180,18 @@
                                 <td>${{ pedido.total }}</td>
                                 <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
                                 <td>
-                                    <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:grid; gap: 8px;">
-                                        {% csrf_token %}
-                                        <select name="estado_entrega" class="btn btn-tertiary" style="width:100%; text-align:left;">
-                                            <option value="asignado" {% if pedido.estado_entrega == 'asignado' %}selected{% endif %}>Asignado</option>
-                                            <option value="en_camino" {% if pedido.estado_entrega == 'en_camino' %}selected{% endif %}>En camino</option>
-                                            <option value="entregado" {% if pedido.estado_entrega == 'entregado' %}selected{% endif %}>Entregado</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-secondary btn-small">Actualizar</button>
-                                    </form>
+                                    <div class="button-group">
+                                        <a href="{% url 'detalle_pedido_delivery' pedido.id %}" class="btn btn-tertiary btn-small">Ver detalle</a>
+                                        <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:grid; gap: 8px; margin:0;">
+                                            {% csrf_token %}
+                                            <select name="estado_entrega" class="btn btn-tertiary" style="width:100%; text-align:left;">
+                                                <option value="asignado" {% if pedido.estado_entrega == 'asignado' %}selected{% endif %}>Asignado</option>
+                                                <option value="en_camino" {% if pedido.estado_entrega == 'en_camino' %}selected{% endif %}>En camino</option>
+                                                <option value="entregado" {% if pedido.estado_entrega == 'entregado' %}selected{% endif %}>Entregado</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-secondary btn-small">Actualizar</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}

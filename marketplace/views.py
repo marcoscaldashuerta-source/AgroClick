@@ -217,6 +217,32 @@ def pedidos_delivery(request):
     })
 
 
+def detalle_pedido_delivery(request, pedido_id):
+    """Muestra los detalles completos de un pedido asignado al delivery."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'delivery' or not perfil.aprobado:
+        return redirect('/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        repartidor=request.user,
+        estado='confirmado',
+        tipo_entrega='delivery',
+    )
+
+    return render(request, 'pedido_delivery_detalle.html', {
+        'pedido': pedido,
+    })
+
+
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
     productos = Producto.objects.filter(borrador=False, estado='activo').order_by('-fecha_creacion')
