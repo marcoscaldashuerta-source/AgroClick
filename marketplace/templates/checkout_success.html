@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Compra confirmada - AgroClick{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <div class="page-card" style="max-width: 760px; margin: 32px auto;">
+        <h1 class="page-title" style="margin-bottom: 10px;">¡Compra confirmada!</h1>
+        <p style="color: #4b5563; margin-bottom: 20px;">Tu pedido fue registrado correctamente. Te mostraremos los datos de pago si corresponde.</p>
+
+        {% if pedidos %}
+            <div class="orders-table-wrapper" style="margin-bottom: 20px;">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Vendedor</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos %}
+                            <tr>
+                                <td><span class="order-id-badge">{{ pedido.id }}</span></td>
+                                <td>{{ pedido.vendedor.username }}</td>
+                                <td>${{ pedido.total }}</td>
+                                <td><span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        {% if datos_banco %}
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-top: 12px;">
+                <h3 style="margin-bottom: 8px;">Datos para transferencia</h3>
+                <p><strong>Banco:</strong> {{ datos_banco.banco }}</p>
+                <p><strong>Titular:</strong> {{ datos_banco.titular }}</p>
+                <p><strong>RUT:</strong> {{ datos_banco.rut }}</p>
+                <p><strong>Cuenta:</strong> {{ datos_banco.cuenta }}</p>
+                <p><strong>Tipo:</strong> {{ datos_banco.tipo }}</p>
+            </div>
+        {% endif %}
+
+        <div style="margin-top: 20px;">
+            <a href="{% url 'inicio' %}" class="btn btn-primary">Volver al inicio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

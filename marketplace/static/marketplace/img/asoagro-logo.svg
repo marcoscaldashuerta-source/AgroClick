@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 240 80">
+  <rect rx="12" width="240" height="80" fill="none"/>
+  <g fill="#2f7b2a">
+    <circle cx="34" cy="40" r="20" fill="#4f9a2d" />
+    <path d="M18 40c6-10 22-14 32-8 10 6 10 20 0 26-10 6-26 2-32-8z" fill="#86efac" opacity="0.95"/>
+  </g>
+  <text x="70" y="48" font-family="Arial, sans-serif" font-size="28" fill="#174d13" font-weight="700">ASOAGRO</text>
+</svg>
