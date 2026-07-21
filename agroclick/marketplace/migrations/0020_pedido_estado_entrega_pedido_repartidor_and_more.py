@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('marketplace', '0019_merge_20260721_0015'),
+        ('marketplace', '0018_datos_transferencia_y_estado_preparando'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

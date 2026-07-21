@@ -1227,6 +1227,46 @@ def actualizar_estado_pedido(request, pedido_id):
     return redirect('inicio')
 
 
+def confirmar_retiro_pedido(request, pedido_id):
+    """Permite al comprador confirmar que retiro un pedido listo en tienda."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'comprador':
+        return redirect('/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        comprador=request.user,
+        tipo_entrega='tienda',
+    )
+
+    if pedido.estado != 'listo':
+        messages.error(request, 'El pedido todavia no esta listo para confirmar el retiro.')
+        return redirect('mis_pedidos')
+
+    pedido.estado = 'completado'
+    pedido.save(update_fields=['estado'])
+    ProductActionLog.objects.create(
+        producto=pedido.producto,
+        actor=request.user,
+        accion='pedido_completado',
+        razon=f'Pedido N°{pedido.id} retirado por el comprador',
+    )
+    Notificacion.objects.create(
+        usuario=pedido.vendedor,
+        mensaje=f'El comprador confirmo el retiro del Pedido N°{pedido.id}. El pedido fue completado.',
+    )
+    messages.success(request, f'Pedido N°{pedido.id} completado. Gracias por confirmar el retiro.')
+    return redirect('mis_pedidos')
+
+
 def subir_comprobante(request, pedido_id):
     """Permite al comprador subir el comprobante de pago para un pedido."""
     if not request.user.is_authenticated:
