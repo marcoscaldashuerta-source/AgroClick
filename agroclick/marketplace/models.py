@@ -285,8 +285,9 @@ class Pedido(models.Model):
 
     ESTADO_PEDIDO_CHOICES = [
         ('pendiente', 'Pendiente'),
-        ('confirmado', 'Confirmado'),
-        ('preparando', 'Preparando'),
+        ('preparando', 'Preparando pedido'),
+        ('listo', 'Listo para retiro'),
+        ('completado', 'Completado'),
         ('cancelado', 'Cancelado'),
     ]
 
