@@ -463,8 +463,82 @@ class ActualizarEstadoPedidoTests(TestCase):
         self.assertEqual(response.status_code, 200)
         pedido.refresh_from_db()
         producto.refresh_from_db()
-        self.assertEqual(pedido.estado, 'preparando')
+        self.assertEqual(pedido.estado, 'confirmado')
         self.assertEqual(producto.stock, 5)
+
+
+class FlujoDeliveryTests(TestCase):
+    def setUp(self):
+        self.comprador = User.objects.create_user(username='comprador_delivery', password='pass1234')
+        self.vendedor = User.objects.create_user(username='vendedor_delivery', password='pass1234')
+        self.delivery = User.objects.create_user(username='delivery_prueba', password='12345')
+        self.otro_delivery = User.objects.create_user(username='delivery_no_aprobado', password='12345')
+        Perfil.objects.create(usuario=self.comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=self.vendedor, rol='vendedor', aprobado=True)
+        Perfil.objects.create(usuario=self.delivery, rol='delivery', aprobado=True)
+        Perfil.objects.create(usuario=self.otro_delivery, rol='delivery', aprobado=False)
+        self.producto = Producto.objects.create(
+            vendedor=self.vendedor,
+            nombre='Caja para delivery',
+            categoria='Verduras',
+            descripcion='Pedido de prueba',
+            precio=5000,
+            unidad_venta='unidad',
+            stock=10,
+            borrador=False,
+            estado='activo',
+        )
+        self.pedido = Pedido.objects.create(
+            comprador=self.comprador,
+            vendedor=self.vendedor,
+            producto=self.producto,
+            cantidad=1,
+            precio_unitario=5000,
+            total=5000,
+            tipo_entrega='delivery',
+            direccion_entrega='Calle de prueba 123',
+            tipo_pago='efectivo',
+            estado='confirmado',
+        )
+
+    def test_delivery_aprobado_ve_y_se_asigna_pedido(self):
+        self.client.force_login(self.delivery)
+        response = self.client.get('/delivery/pedidos/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Caja para delivery')
+
+        response = self.client.post(f'/delivery/pedido/{self.pedido.id}/asignar/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.repartidor, self.delivery)
+        self.assertEqual(self.pedido.estado_entrega, 'asignado')
+
+    def test_delivery_actualiza_ruta_y_completa_pedido(self):
+        self.pedido.repartidor = self.delivery
+        self.pedido.estado_entrega = 'asignado'
+        self.pedido.save(update_fields=['repartidor', 'estado_entrega'])
+        self.client.force_login(self.delivery)
+
+        self.client.post(
+            f'/delivery/pedido/{self.pedido.id}/actualizar-estado/',
+            {'estado_entrega': 'en_camino'},
+        )
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado_entrega, 'en_camino')
+
+        self.client.post(
+            f'/delivery/pedido/{self.pedido.id}/actualizar-estado/',
+            {'estado_entrega': 'entregado'},
+        )
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado_entrega, 'entregado')
+        self.assertEqual(self.pedido.estado, 'completado')
+        self.assertTrue(Notificacion.objects.filter(usuario=self.comprador, mensaje__icontains='entregado').exists())
+
+    def test_delivery_no_aprobado_no_puede_acceder(self):
+        self.client.force_login(self.otro_delivery)
+        response = self.client.get('/delivery/pedidos/')
+        self.assertRedirects(response, '/')
 
 
 class PedidoRetiroTrackingTests(TestCase):

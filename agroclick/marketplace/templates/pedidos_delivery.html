@@ -135,7 +135,7 @@
                                 <td>{{ pedido.id }}</td>
                                 <td>{{ pedido.comprador.username }}</td>
                                 <td>{{ pedido.direccion_entrega }}</td>
-                                <td>{{ pedido.productos_detalle }}</td>
+                                <td>{{ pedido.referencia_historica }}</td>
                                 <td>${{ pedido.total }}</td>
                                 <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
                                 <td>
@@ -176,7 +176,7 @@
                                 <td>{{ pedido.id }}</td>
                                 <td>{{ pedido.comprador.username }}</td>
                                 <td>{{ pedido.direccion_entrega }}</td>
-                                <td>{{ pedido.productos_detalle }}</td>
+                                <td>{{ pedido.referencia_historica }}</td>
                                 <td>${{ pedido.total }}</td>
                                 <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
                                 <td>

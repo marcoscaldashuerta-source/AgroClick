@@ -48,6 +48,7 @@ class RegistroForm(forms.Form):
     ROL_CHOICES = [
         ('comprador', 'Comprador'),
         ('vendedor', 'Vendedor'),
+        ('delivery', 'Delivery'),
     ]
 
     rol = forms.ChoiceField(

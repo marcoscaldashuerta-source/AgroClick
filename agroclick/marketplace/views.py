@@ -120,6 +120,130 @@ def mis_datos_vendedor(request):
     })
 
 
+def _perfil_delivery_aprobado(request):
+    try:
+        return request.user.is_authenticated and request.user.perfil.rol == 'delivery' and request.user.perfil.aprobado
+    except Perfil.DoesNotExist:
+        return False
+
+
+@require_POST
+def asignar_pedido_delivery(request, pedido_id):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        estado='confirmado',
+        tipo_entrega='delivery',
+        repartidor__isnull=True,
+    )
+    pedido.repartidor = request.user
+    pedido.estado_entrega = 'asignado'
+    pedido.save(update_fields=['repartidor', 'estado_entrega'])
+    ProductActionLog.objects.create(
+        producto=pedido.producto,
+        actor=request.user,
+        accion='pedido_asignado',
+        razon=f'Pedido N°{pedido.id}',
+    )
+    messages.success(request, f'Pedido N°{pedido.id} asignado a tu ruta de delivery.')
+    return redirect('pedidos_delivery')
+
+
+@require_POST
+def actualizar_estado_entrega(request, pedido_id):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        repartidor=request.user,
+        estado='confirmado',
+        tipo_entrega='delivery',
+    )
+    nuevo_estado = request.POST.get('estado_entrega', '').strip().lower()
+    motivo_no_entrega = request.POST.get('motivo_no_entrega', '').strip()
+    opciones_validas = ['en_camino', 'entregado', 'no_entregado']
+
+    if nuevo_estado not in opciones_validas:
+        messages.error(request, 'Estado de entrega inválido.')
+        return redirect('pedidos_delivery')
+    if nuevo_estado == 'en_camino' and pedido.estado_entrega != 'asignado':
+        messages.error(request, 'El pedido debe estar asignado antes de marcarlo en camino.')
+        return redirect('pedidos_delivery')
+    if nuevo_estado == 'entregado' and pedido.estado_entrega != 'en_camino':
+        messages.error(request, 'El pedido debe estar en camino antes de marcarlo como entregado.')
+        return redirect('pedidos_delivery')
+    if nuevo_estado == 'no_entregado' and pedido.estado_entrega not in ['asignado', 'en_camino']:
+        messages.error(request, 'El pedido debe estar asignado o en camino antes de marcarlo como no entregado.')
+        return redirect('pedidos_delivery')
+    if nuevo_estado == 'no_entregado' and not motivo_no_entrega:
+        messages.error(request, 'Debes indicar el motivo cuando el pedido no se entrega.')
+        return redirect('pedidos_delivery')
+
+    pedido.estado_entrega = nuevo_estado
+    if nuevo_estado == 'entregado':
+        pedido.estado = 'completado'
+        pedido.motivo_cancelacion = ''
+    elif nuevo_estado == 'no_entregado':
+        pedido.motivo_cancelacion = motivo_no_entrega
+    pedido.save(update_fields=['estado_entrega', 'estado', 'motivo_cancelacion'])
+    ProductActionLog.objects.create(
+        producto=pedido.producto,
+        actor=request.user,
+        accion=f'estado_entrega_{nuevo_estado}',
+        razon=f'Pedido N°{pedido.id} - {nuevo_estado}',
+    )
+
+    if nuevo_estado == 'entregado':
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f'Tu pedido N°{pedido.id} fue entregado por delivery.')
+        Notificacion.objects.create(usuario=pedido.vendedor, mensaje=f'El pedido N°{pedido.id} fue entregado por delivery.')
+    elif nuevo_estado == 'no_entregado':
+        texto = f'El pedido N°{pedido.id} no pudo ser entregado. Motivo: {motivo_no_entrega}'
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=texto)
+        Notificacion.objects.create(usuario=pedido.vendedor, mensaje=texto)
+
+    messages.success(request, f'Estado de entrega actualizado a {pedido.get_estado_entrega_display()}.')
+    return redirect('pedidos_delivery')
+
+
+def pedidos_delivery(request):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedidos_disponibles = Pedido.objects.filter(
+        estado='confirmado',
+        tipo_entrega='delivery',
+        repartidor__isnull=True,
+    ).select_related('comprador', 'vendedor', 'producto').order_by('-fecha_creacion')
+    pedidos_asignados = Pedido.objects.filter(
+        estado='confirmado',
+        tipo_entrega='delivery',
+        repartidor=request.user,
+    ).select_related('comprador', 'vendedor', 'producto').order_by('-fecha_creacion')
+    return render(request, 'pedidos_delivery.html', {
+        'pedidos_disponibles': pedidos_disponibles,
+        'pedidos_asignados': pedidos_asignados,
+    })
+
+
+def detalle_pedido_delivery(request, pedido_id):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        repartidor=request.user,
+        estado='confirmado',
+        tipo_entrega='delivery',
+    )
+    return render(request, 'pedido_delivery_detalle.html', {'pedido': pedido})
+
+
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
     productos = Producto.objects.filter(borrador=False, estado='activo').order_by('-fecha_creacion')
@@ -184,6 +308,7 @@ def inicio(request):
     pedidos_vendedor = []
 
     is_comprador = False
+    is_delivery = False
     if request.user.is_authenticated:
         try:
             perfil = request.user.perfil
@@ -193,13 +318,14 @@ def inicio(request):
         if perfil:
             is_vendedor = perfil.rol == 'vendedor'
             is_comprador = perfil.rol == 'comprador'
+            is_delivery = perfil.rol == 'delivery' and perfil.aprobado
             is_aprobado = perfil.aprobado
 
             if is_vendedor and is_aprobado:
                 pedidos_vendedor = Pedido.objects.filter(vendedor=request.user).select_related('comprador', 'producto').order_by('-fecha_creacion')[:10]
 
         if is_admin:
-            pending_vendedores = Perfil.objects.filter(rol='vendedor', aprobado=False)
+            pending_vendedores = Perfil.objects.filter(rol__in=['vendedor', 'delivery'], aprobado=False)
 
     # Determinar si hay filtros activos
     tiene_filtros = bool(busqueda or categoria or precio_min or precio_max)
@@ -223,6 +349,7 @@ def inicio(request):
         'productos': productos,
         'perfil': perfil,
         'is_comprador': is_comprador,
+        'is_delivery': is_delivery,
         'is_vendedor': is_vendedor,
         'is_aprobado': is_aprobado,
         'is_admin': is_admin,
@@ -1043,19 +1170,28 @@ def actualizar_estado_pedido(request, pedido_id):
 
         pedido.producto.stock -= pedido.cantidad
         pedido.producto.save(update_fields=['stock'])
-        pedido.estado = 'preparando'
+        es_delivery = pedido.tipo_entrega == 'delivery'
+        pedido.estado = 'confirmado' if es_delivery else 'preparando'
         pedido.motivo_cancelacion = ''
         if ultimo_comprobante:
             ultimo_comprobante.estado = 'aprobado'
             ultimo_comprobante.revisado_por = request.user
             ultimo_comprobante.fecha_revision = timezone.now()
             ultimo_comprobante.save(update_fields=['estado', 'revisado_por', 'fecha_revision'])
-        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_preparando', razon=f'Pedido N°{pedido.id}')
+        accion_log = 'pedido_confirmado_delivery' if es_delivery else 'pedido_preparando'
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion=accion_log, razon=f'Pedido N°{pedido.id}')
         Notificacion.objects.create(
             usuario=pedido.comprador,
-            mensaje=f'Tu Pedido N°{pedido.id} fue aceptado y se está preparando.',
+            mensaje=(
+                f'Tu Pedido N°{pedido.id} fue aceptado y está disponible para asignación de delivery.'
+                if es_delivery else
+                f'Tu Pedido N°{pedido.id} fue aceptado y se está preparando.'
+            ),
         )
-        messages.success(request, f'Pedido N°{pedido.id} aceptado y en preparación.')
+        messages.success(
+            request,
+            f'Pedido N°{pedido.id} aceptado para delivery.' if es_delivery else f'Pedido N°{pedido.id} aceptado y en preparación.',
+        )
     elif accion == 'marcar_listo':
         if pedido.tipo_entrega != 'tienda':
             messages.error(request, 'Esta acción solo está disponible para pedidos con retiro en tienda.')
@@ -1221,12 +1357,17 @@ def revisar_comprobante(request, proof_id):
         if pedido.estado == 'pendiente':
             pedido.producto.stock -= pedido.cantidad
             pedido.producto.save(update_fields=['stock'])
-            pedido.estado = 'preparando'
+            pedido.estado = 'confirmado' if pedido.tipo_entrega == 'delivery' else 'preparando'
             pedido.save(update_fields=['estado'])
 
         ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pago_aprobado', razon=f'Pedido N°{pedido.id}')
 
-        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f"Tu pago para el Pedido N°{pedido.id} fue aprobado y el pedido se está preparando.")
+        mensaje_pago = (
+            f"Tu pago para el Pedido N°{pedido.id} fue aprobado y quedó disponible para delivery."
+            if pedido.tipo_entrega == 'delivery' else
+            f"Tu pago para el Pedido N°{pedido.id} fue aprobado y el pedido se está preparando."
+        )
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=mensaje_pago)
 
         messages.success(request, f'Comprobante #{comprobante.id} aprobado y comprador notificado.')
 

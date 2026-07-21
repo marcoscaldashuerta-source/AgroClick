@@ -144,6 +144,24 @@
   }
 },
 {
+  "model": "auth.user",
+  "pk": 9,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$7KGAPjKB0Rlz6JzIxjogOB$zbSgE5iRhmsY0APEl6HDC5rj09n4p3fI3mbZsCnbQQQ=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "delivery1",
+    "first_name": "Delivery",
+    "last_name": "Prueba",
+    "email": "delivery1@example.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-21T00:00:00.000Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
   "model": "marketplace.perfil",
   "pk": 1,
   "fields": {
@@ -195,6 +213,15 @@
     "usuario": 7,
     "rol": "vendedor",
     "aprobado": false
+  }
+},
+{
+  "model": "marketplace.perfil",
+  "pk": 7,
+  "fields": {
+    "usuario": 9,
+    "rol": "delivery",
+    "aprobado": true
   }
 },
 {
