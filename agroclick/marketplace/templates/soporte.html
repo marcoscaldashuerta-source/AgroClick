@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Soporte - AgroClick{% endblock %}
+{% block content %}
+<div class="welcome card" style="margin-bottom: 24px;">
+    <p style="color: #666; font-size: 14px;">¿Tienes un problema o una consulta? Cuéntanos y te ayudaremos.</p>
+    <h2>Panel de soporte</h2>
+</div>
+
+<div class="card" style="max-width: 640px; margin-bottom: 32px;">
+    <h3>Nueva solicitud</h3>
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Usuario</label>
+            <input type="text" value="{{ user.username }}" disabled />
+        </div>
+
+        <div class="form-group">
+            <label for="id_razon">{{ form.razon.label }}</label>
+            {{ form.razon }}
+            {% if form.razon.errors %}
+                <div class="field-error">{{ form.razon.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_descripcion">{{ form.descripcion.label }}</label>
+            {{ form.descripcion }}
+            {% if form.descripcion.errors %}
+                <div class="field-error">{{ form.descripcion.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Mis solicitudes</h3>
+    {% if mis_tickets %}
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Razón</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Respuesta</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in mis_tickets %}
+                    <tr>
+                        <td>#{{ ticket.id }}</td>
+                        <td>{{ ticket.get_razon_display }}</td>
+                        <td>{{ ticket.descripcion|truncatewords:15 }}</td>
+                        <td class="status {{ ticket.estado }}">{{ ticket.get_estado_display }}</td>
+                        <td>{{ ticket.respuesta_admin|default:"—" }}</td>
+                        <td>{{ ticket.fecha_creacion|date:'d M Y H:i' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Aún no has enviado ninguna solicitud de soporte.</p>
+    {% endif %}
+</div>
+{% endblock %}
