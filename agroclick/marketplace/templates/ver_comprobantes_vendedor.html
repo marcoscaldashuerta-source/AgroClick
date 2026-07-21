@@ -1,27 +1,65 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h2>Comprobantes recibidos</h2>
+{% block title %}Comprobantes recibidos - AgroClick{% endblock %}
 
-{% for c in comprobantes %}
-  <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-    <p><strong>Pedido N°{{ c.pedido.id }}</strong> - Subido por: {{ c.subido_por.username }} - Estado: {{ c.get_estado_display }}</p>
-    <p>Fecha: {{ c.fecha_subida }}</p>
-    <p><img src="{{ c.imagen.url }}" alt="comprobante" style="max-width:400px;"></p>
-    {% if c.estado == 'pendiente' %}
-      <p>Revisa la imagen y luego acepta el pedido desde <strong>Pedidos recibidos</strong>.</p>
-      <form method="post" action="{% url 'revisar_comprobante' c.id %}">
-        {% csrf_token %}
-        <button name="accion" value="rechazar" type="submit">Rechazar</button>
-        <input type="text" name="motivo" placeholder="Opcional: motivo del rechazo">
-      </form>
-      <a href="{% url 'inicio' %}">Ir a Pedidos recibidos</a>
+{% block content %}
+<div class="page-shell">
+  <div class="page-card proof-page">
+    <div class="page-top">
+      <div>
+        <h1 class="page-title">Comprobantes recibidos</h1>
+        <p class="proof-page-subtitle">Revisa transferencias subidas por compradores y abre la imagen del comprobante cuando necesites verla completa.</p>
+      </div>
+      <a class="back-link" href="{% url 'inicio' %}">Volver al panel</a>
+    </div>
+
+    {% if comprobantes %}
+      <div class="proof-grid">
+        {% for c in comprobantes %}
+          <article class="proof-card">
+            <a class="proof-card-media" href="{{ c.imagen.url }}" target="_blank" rel="noopener">
+              <img src="{{ c.imagen.url }}" alt="Comprobante del pedido N°{{ c.pedido.id }}">
+            </a>
+            <div class="proof-card-body">
+              <div class="proof-card-header">
+                <div>
+                  <p class="proof-label">Pedido</p>
+                  <h2>Pedido N°{{ c.pedido.id }}</h2>
+                </div>
+                <span class="proof-status proof-status-{{ c.estado }}">{{ c.get_estado_display }}</span>
+              </div>
+              <dl class="proof-meta-list">
+                <div>
+                  <dt>Comprador</dt>
+                  <dd>{{ c.subido_por.username }}</dd>
+                </div>
+                <div>
+                  <dt>Total</dt>
+                  <dd>${{ c.pedido.total }}</dd>
+                </div>
+                <div>
+                  <dt>Fecha</dt>
+                  <dd>{{ c.fecha_subida|date:'d/m/Y H:i' }}</dd>
+                </div>
+                <div>
+                  <dt>Entrega</dt>
+                  <dd>{{ c.pedido.get_tipo_entrega_display }}</dd>
+                </div>
+              </dl>
+              <div class="proof-card-actions">
+                <a class="btn btn-primary" href="{{ c.imagen.url }}" target="_blank" rel="noopener">Abrir imagen</a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
     {% else %}
-      {% if c.revisado_por %}<p>Revisado por: {{ c.revisado_por.username }}</p>{% endif %}
+      <div class="empty-state">
+        <h2>No hay comprobantes</h2>
+        <p>Los comprobantes enviados por compradores aparecerán aquí para que puedas revisarlos.</p>
+      </div>
     {% endif %}
   </div>
-{% empty %}
-  <p>No hay comprobantes.</p>
-{% endfor %}
+</div>
 
 {% endblock %}

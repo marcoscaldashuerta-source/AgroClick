@@ -258,6 +258,31 @@ tbody tr td:first-child{font-weight:700;width:70px}
 .approval-card .card-header{
     background: linear-gradient(90deg, rgba(79,154,45,0.98), rgba(56,142,60,0.9));
     color: #fff;
+
+/* Payment proof pages */
+.proof-page-subtitle{margin:8px 0 0;color:#6b7280;max-width:760px;line-height:1.5}
+.proof-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.proof-card{background:#fff;border:1px solid #e5e7eb;border-radius:24px;overflow:hidden;box-shadow:0 16px 40px rgba(15,23,42,0.08);display:flex;flex-direction:column}
+.proof-card-media{display:block;background:linear-gradient(180deg,#f8fafc,#eefbf0);padding:18px;border-bottom:1px solid #e5e7eb}
+.proof-card-media img{width:100%;height:220px;object-fit:cover;border-radius:18px;display:block;box-shadow:0 12px 28px rgba(15,23,42,0.12)}
+.proof-card-body{padding:20px;display:grid;gap:18px}
+.proof-card-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.proof-card-header h2{margin:4px 0 0;font-size:1.2rem;color:#111827}
+.proof-label{margin:0;font-size:0.78rem;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;font-weight:800}
+.proof-status{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;font-size:.82rem;font-weight:800;white-space:nowrap}
+.proof-status-pendiente{background:#fff7e6;color:#b45309}
+.proof-status-aprobado{background:#ecfdf3;color:#166534}
+.proof-status-rechazado{background:#fee2e2;color:#b91c1c}
+.proof-meta-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0}
+.proof-meta-list div{background:#f8fafc;border:1px solid #e5e7eb;border-radius:16px;padding:12px 14px}
+.proof-meta-list dt{font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:#64748b;font-weight:800;margin:0 0 6px}
+.proof-meta-list dd{margin:0;color:#111827;font-weight:700}
+.proof-card-actions{display:flex;gap:10px;flex-wrap:wrap}
+.order-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+@media (max-width: 720px){
+    .proof-meta-list{grid-template-columns:1fr}
+}
     padding: 20px 22px;
 }
 .approval-card .card-header h3{
