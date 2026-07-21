@@ -278,6 +278,7 @@ class Pedido(models.Model):
             ('asignado', 'Asignado'),
             ('en_camino', 'En camino'),
             ('entregado', 'Entregado'),
+            ('no_entregado', 'No entregado'),
         ],
         default='pendiente'
     )

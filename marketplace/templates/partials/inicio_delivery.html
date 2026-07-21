@@ -1,9 +1,16 @@
-{% if is_delivery %}
-    <div class="delivery-panel" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
-        <h3 style="margin-bottom: 12px;">Panel de delivery</h3>
-        <p style="color: #334155; margin-bottom: 16px;">Visualiza los pedidos delivery confirmados, accede a la información completa de cada entrega y actualiza el estado en tiempo real.</p>
-        <div class="action-buttons" style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <a href="{% url 'pedidos_delivery' %}" class="btn btn-primary">Ver pedidos delivery</a>
+{% if user.is_authenticated and user.perfil.rol == 'delivery' %}
+    {% if is_delivery %}
+        <div class="delivery-panel" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
+            <h3 style="margin-bottom: 12px;">Panel de delivery</h3>
+            <p style="color: #334155; margin-bottom: 16px;">Visualiza los pedidos delivery confirmados, accede a la información completa de cada entrega y actualiza el estado en tiempo real.</p>
+            <div class="action-buttons" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="{% url 'pedidos_delivery' %}" class="btn btn-primary">Ver pedidos delivery</a>
+            </div>
         </div>
-    </div>
+    {% else %}
+        <div class="delivery-panel" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
+            <h3 style="margin-bottom: 12px;">Panel de delivery</h3>
+            <p style="color: #334155; margin-bottom: 16px;">Tu perfil de delivery está registrado, pero aún no está aprobado. Cuando sea aprobado, podrás ver los pedidos delivery disponibles aquí.</p>
+        </div>
+    {% endif %}
 {% endif %}
