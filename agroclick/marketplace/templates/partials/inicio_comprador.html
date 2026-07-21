@@ -118,14 +118,23 @@
                         {% if producto.imagen %}
                             <div class="product-image">
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
+                                {% if is_comprador %}
+                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn-quick-add" data-product-id="{{ producto.id }}" title="Agregar al carrito">🛒</a>
+                                {% endif %}
                             </div>
                         {% elif producto.imagenes.exists %}
                             <div class="product-image">
                                 <img src="{{ producto.imagenes.first.imagen.url }}" alt="{{ producto.nombre }}" />
+                                {% if is_comprador %}
+                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn-quick-add" data-product-id="{{ producto.id }}" title="Agregar al carrito">🛒</a>
+                                {% endif %}
                             </div>
                         {% else %}
                             <div class="product-image" style="background-color: #e0e0e0;">
                                 <span style="color: #999;">Sin imagen</span>
+                                {% if is_comprador %}
+                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn-quick-add" data-product-id="{{ producto.id }}" title="Agregar al carrito">🛒</a>
+                                {% endif %}
                             </div>
                         {% endif %}
                         {% if producto.is_new %}
@@ -135,7 +144,7 @@
                             {% if not is_vendedor %}
                                 <button type="button" class="btn btn-secondary btn-detail">Ver detalle</button>
                                 {% if is_comprador %}
-                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">🛒 Comprar</a>
+                                    <a href="{% url 'agregar_al_carrito' producto.id %}" class="btn btn-primary btn-add" data-name="{{ producto.nombre }}">Comprar</a>
                                 {% else %}
                                     <a href="/accounts/login/" class="btn btn-primary btn-add">Inicia sesión</a>
                                 {% endif %}

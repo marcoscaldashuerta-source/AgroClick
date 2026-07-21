@@ -351,6 +351,45 @@
         .product-card:hover .product-image img {
             transform: scale(1.04);
         }
+        .product-image {
+            position: relative;
+        }
+        .btn-quick-add {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 2px solid #4CAF50;
+            color: #4CAF50;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease, color 0.2s ease;
+            z-index: 10;
+            text-decoration: none;
+            line-height: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .product-card:hover .btn-quick-add {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .btn-quick-add:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-quick-add.added {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
         .product-info {
             padding: 15px;
         }
@@ -1285,6 +1324,37 @@
             document.getElementById('close-producto-modal-footer').addEventListener('click', cerrarDetalleProducto);
             MODAL_PRODUCTO.addEventListener('click', function(e) {
                 if (e.target === MODAL_PRODUCTO) cerrarDetalleProducto();
+            });
+            // ───────────────────────────────────────────────────────────────
+
+            // ── BOTÓN FLOTANTE AGREGAR AL CARRITO ──────────────────────────
+            document.querySelectorAll('.btn-quick-add').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    if (btn.dataset.processing) return;
+                    btn.dataset.processing = '1';
+                    const url = btn.getAttribute('href');
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            const original = btn.textContent;
+                            btn.textContent = '✓';
+                            btn.classList.add('added');
+                            setTimeout(function() {
+                                btn.textContent = original;
+                                btn.classList.remove('added');
+                                delete btn.dataset.processing;
+                            }, 1500);
+                        } else {
+                            delete btn.dataset.processing;
+                        }
+                    };
+                    xhr.onerror = function() { delete btn.dataset.processing; };
+                    xhr.send();
+                }, true);
             });
             // ───────────────────────────────────────────────────────────────
 
