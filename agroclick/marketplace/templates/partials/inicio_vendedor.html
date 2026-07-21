@@ -64,12 +64,16 @@
                                                 Ver detalles
                                             </button>
                                             {% if pedido.estado == 'pendiente' %}
-                                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="accion" value="confirmar">
-                                                    <button type="button" class="btn btn-primary accept-order-btn">Aceptar</button>
-                                                    <button type="button" class="btn btn-secondary cancel-order-btn">Cancelar</button>
-                                                </form>
+                                                {% if pedido.tipo_pago == 'efectivo' or pedido.comprobantes.exists %}
+                                                    <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="accion" value="confirmar">
+                                                        <button type="button" class="btn btn-primary accept-order-btn">Aceptar</button>
+                                                        <button type="button" class="btn btn-secondary cancel-order-btn">Cancelar</button>
+                                                    </form>
+                                                {% else %}
+                                                    <span class="status-badge estado-pendiente">Esperando comprobante</span>
+                                                {% endif %}
                                             {% elif pedido.estado == 'preparando' and pedido.tipo_entrega == 'tienda' %}
                                                 <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; margin: 0;">
                                                     {% csrf_token %}

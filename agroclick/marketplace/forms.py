@@ -1,5 +1,5 @@
 from django import forms
-from .models import Producto, Perfil, TicketSoporte, SolicitudEntrega
+from .models import Producto, Perfil, TicketSoporte, SolicitudEntrega, DatosTransferenciaVendedor
 from .models import PaymentProof
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
@@ -216,6 +216,27 @@ class EntregaForm(forms.ModelForm):
             self.add_error('direccion_entrega', 'Indica la dirección de entrega para el Delivery.')
 
         return cleaned_data
+
+
+class DatosTransferenciaVendedorForm(forms.ModelForm):
+    class Meta:
+        model = DatosTransferenciaVendedor
+        fields = ['banco', 'tipo_cuenta', 'numero_cuenta', 'titular', 'rut', 'email']
+        labels = {
+            'banco': 'Banco',
+            'tipo_cuenta': 'Tipo de cuenta',
+            'numero_cuenta': 'Número de cuenta',
+            'titular': 'Nombre del titular',
+            'rut': 'RUT del titular',
+            'email': 'Correo para transferencias',
+        }
+        widgets = {
+            'banco': forms.TextInput(attrs={'placeholder': 'Ej: BancoEstado'}),
+            'numero_cuenta': forms.TextInput(attrs={'placeholder': 'Número de cuenta'}),
+            'titular': forms.TextInput(attrs={'placeholder': 'Nombre completo'}),
+            'rut': forms.TextInput(attrs={'placeholder': '12.345.678-9'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'correo@ejemplo.cl'}),
+        }
 
 
 class PaymentProofForm(forms.ModelForm):

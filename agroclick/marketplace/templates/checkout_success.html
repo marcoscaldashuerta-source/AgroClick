@@ -1,12 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Compra confirmada - AgroClick{% endblock %}
+{% block title %}Pedido registrado - AgroClick{% endblock %}
 
 {% block content %}
 <div class="page-shell">
     <div class="page-card" style="max-width: 760px; margin: 32px auto;">
-        <h1 class="page-title" style="margin-bottom: 10px;">¡Compra confirmada!</h1>
-        <p style="color: #4b5563; margin-bottom: 20px;">Tu pedido fue registrado correctamente. Te mostraremos los datos de pago si corresponde.</p>
+        {% if pago_transferencia %}
+            <h1 class="page-title" style="margin-bottom: 10px;">Pedido pendiente de comprobante</h1>
+            <p style="color: #4b5563; margin-bottom: 20px;">Transfiere a cada vendedor y sube el comprobante correspondiente. El pedido seguirá pendiente hasta que el vendedor lo acepte.</p>
+        {% else %}
+            <h1 class="page-title" style="margin-bottom: 10px;">Pedido registrado</h1>
+            <p style="color: #4b5563; margin-bottom: 20px;">El vendedor recibió tu pedido y debe aceptarlo antes de comenzar la preparación.</p>
+        {% endif %}
 
         {% if pedidos %}
             <div class="orders-table-wrapper" style="margin-bottom: 20px;">
@@ -17,6 +22,7 @@
                             <th>Vendedor</th>
                             <th>Total</th>
                             <th>Estado</th>
+                            {% if pago_transferencia %}<th>Comprobante</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -26,6 +32,9 @@
                                 <td>{{ pedido.vendedor.username }}</td>
                                 <td>${{ pedido.total }}</td>
                                 <td><span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></td>
+                                {% if pago_transferencia %}
+                                    <td><a href="{% url 'subir_comprobante' pedido.id %}" class="btn btn-primary">Subir comprobante</a></td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -33,15 +42,22 @@
             </div>
         {% endif %}
 
-        {% if datos_banco %}
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-top: 12px;">
-                <h3 style="margin-bottom: 8px;">Datos para transferencia</h3>
-                <p><strong>Banco:</strong> {{ datos_banco.banco }}</p>
-                <p><strong>Titular:</strong> {{ datos_banco.titular }}</p>
-                <p><strong>RUT:</strong> {{ datos_banco.rut }}</p>
-                <p><strong>Cuenta:</strong> {{ datos_banco.cuenta }}</p>
-                <p><strong>Tipo:</strong> {{ datos_banco.tipo }}</p>
-            </div>
+        {% if pago_transferencia %}
+            {% for pedido in pedidos %}
+                {% with datos=pedido.vendedor.datos_transferencia %}
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; margin-top: 12px;">
+                        <h3 style="margin-bottom: 8px;">Transferencia para Pedido N°{{ pedido.id }} — {{ pedido.vendedor.username }}</h3>
+                        <p><strong>Monto:</strong> ${{ pedido.total }}</p>
+                        <p><strong>Banco:</strong> {{ datos.banco }}</p>
+                        <p><strong>Titular:</strong> {{ datos.titular }}</p>
+                        <p><strong>RUT:</strong> {{ datos.rut }}</p>
+                        <p><strong>Número de cuenta:</strong> {{ datos.numero_cuenta }}</p>
+                        <p><strong>Tipo:</strong> {{ datos.get_tipo_cuenta_display }}</p>
+                        <p><strong>Correo:</strong> {{ datos.email }}</p>
+                        <a href="{% url 'subir_comprobante' pedido.id %}" class="btn btn-primary">Subir comprobante</a>
+                    </div>
+                {% endwith %}
+            {% endfor %}
         {% endif %}
 
         <div style="margin-top: 20px;">

@@ -9,14 +9,15 @@
     <p>Fecha: {{ c.fecha_subida }}</p>
     <p><img src="{{ c.imagen.url }}" alt="comprobante" style="max-width:400px;"></p>
     {% if c.estado == 'pendiente' %}
+      <p>Revisa la imagen y luego acepta el pedido desde <strong>Pedidos recibidos</strong>.</p>
       <form method="post" action="{% url 'revisar_comprobante' c.id %}">
         {% csrf_token %}
-        <button name="accion" value="aprobar" type="submit">Aprobar</button>
         <button name="accion" value="rechazar" type="submit">Rechazar</button>
         <input type="text" name="motivo" placeholder="Opcional: motivo del rechazo">
       </form>
+      <a href="{% url 'inicio' %}">Ir a Pedidos recibidos</a>
     {% else %}
-      <p>Revisado por: {{ c.revisado_por.username if c.revisado_por }}</p>
+      {% if c.revisado_por %}<p>Revisado por: {{ c.revisado_por.username }}</p>{% endif %}
     {% endif %}
   </div>
 {% empty %}

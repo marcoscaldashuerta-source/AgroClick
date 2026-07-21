@@ -6,8 +6,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db.utils import OperationalError
-from .forms import RegistroForm, ProductoForm, TicketSoporteForm, EntregaForm
-from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega, Pedido
+from .forms import RegistroForm, ProductoForm, TicketSoporteForm, EntregaForm, DatosTransferenciaVendedorForm
+from .models import Perfil, Producto, deshabilitar_cuenta_usuario, ProductActionLog, Notificacion, Carrito, ItemCarrito, TicketSoporte, SolicitudEntrega, Pedido, DatosTransferenciaVendedor
 from .models import PaymentProof
 from .forms import PaymentProofForm
 from django.utils import timezone
@@ -89,6 +89,35 @@ def mis_pedidos(request):
 
     pedidos = Pedido.objects.filter(comprador=request.user).select_related('vendedor', 'producto').order_by('-fecha_creacion')
     return render(request, 'mis_pedidos.html', {'pedidos': pedidos})
+
+
+def mis_datos_vendedor(request):
+    """Permite al vendedor configurar los datos bancarios para transferencias."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'vendedor':
+        return redirect('/')
+
+    datos, _ = DatosTransferenciaVendedor.objects.get_or_create(vendedor=request.user)
+    if request.method == 'POST':
+        formulario = DatosTransferenciaVendedorForm(request.POST, instance=datos)
+        if formulario.is_valid():
+            formulario.save()
+            messages.success(request, 'Tus datos para transferencia fueron guardados correctamente.')
+            return redirect('mis_datos_vendedor')
+    else:
+        formulario = DatosTransferenciaVendedorForm(instance=datos)
+
+    return render(request, 'mis_datos_vendedor.html', {
+        'formulario': formulario,
+        'datos_completos': datos.esta_completo,
+    })
 
 
 def inicio(request):
@@ -897,6 +926,21 @@ def checkout(request):
     if not carrito_usuario or not carrito_usuario.items.exists():
         return redirect('ver_carrito')
 
+    items_del_carrito = list(
+        carrito_usuario.items.select_related('producto__vendedor').all()
+    )
+    vendedores = {item.producto.vendedor for item in items_del_carrito}
+    vendedores_sin_transferencia = []
+    for vendedor in vendedores:
+        try:
+            datos = vendedor.datos_transferencia
+        except DatosTransferenciaVendedor.DoesNotExist:
+            datos = None
+        if not datos or not datos.esta_completo:
+            vendedores_sin_transferencia.append(vendedor)
+
+    transferencia_disponible = not vendedores_sin_transferencia
+
     if request.method == 'POST':
         formulario = EntregaForm(request.POST)
 
@@ -904,62 +948,56 @@ def checkout(request):
             solicitud_entrega = formulario.save(commit=False)
             solicitud_entrega.comprador = request.user
 
-            if solicitud_entrega.tipo_entrega != 'delivery':
-                solicitud_entrega.direccion_entrega = None
-                solicitud_entrega.referencia = None
-
-            solicitud_entrega.save()
-
-            pedidos_creados = []
-            items_del_carrito = list(carrito_usuario.items.select_related('producto').all())
-            items_por_vendedor = {}
-            for item in items_del_carrito:
-                vendedor = item.producto.vendedor
-                items_por_vendedor.setdefault(vendedor, []).append(item)
-
-            for vendedor, items in items_por_vendedor.items():
-                cantidad_total = sum(item.cantidad for item in items)
-                total_general = sum(item.producto.precio * item.cantidad for item in items)
-                primer_item = items[0]
-                productos_detalle = ', '.join(
-                    f"{item.producto.nombre} (x{item.cantidad})" for item in items
+            if solicitud_entrega.tipo_pago == 'transferencia' and not transferencia_disponible:
+                formulario.add_error(
+                    'tipo_pago',
+                    'Transferencia no disponible: uno o más vendedores aún no configuran sus datos bancarios.',
                 )
-                pedido = Pedido.objects.create(
-                    comprador=request.user,
-                    vendedor=vendedor,
-                    producto=primer_item.producto,
-                    solicitud=solicitud_entrega,
-                    productos_detalle=productos_detalle,
-                    cantidad=cantidad_total,
-                    precio_unitario=primer_item.producto.precio,
-                    total=total_general,
-                    tipo_entrega=solicitud_entrega.tipo_entrega,
-                    direccion_entrega=solicitud_entrega.direccion_entrega,
-                    referencia=solicitud_entrega.referencia,
-                    tipo_pago=solicitud_entrega.tipo_pago,
-                    estado='pendiente',
-                )
-                pedidos_creados.append(pedido)
-                for item in items:
-                    ProductActionLog.objects.create(producto=item.producto, actor=request.user, accion='pedido_creado')
+            else:
+                if solicitud_entrega.tipo_entrega != 'delivery':
+                    solicitud_entrega.direccion_entrega = None
+                    solicitud_entrega.referencia = None
 
-            carrito_usuario.items.all().delete()
+                solicitud_entrega.save()
 
-            # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
-            if solicitud_entrega.tipo_pago == 'transferencia' and pedidos_creados:
-                datos_banco = {
-                    'banco': 'Banco Ejemplo',
-                    'titular': 'Asociación AgroClick',
-                    'rut': '12.345.678-9',
-                    'cuenta': '1234567890',
-                    'tipo': 'Cuenta corriente',
-                }
+                pedidos_creados = []
+                items_por_vendedor = {}
+                for item in items_del_carrito:
+                    vendedor = item.producto.vendedor
+                    items_por_vendedor.setdefault(vendedor, []).append(item)
+
+                for vendedor, items in items_por_vendedor.items():
+                    cantidad_total = sum(item.cantidad for item in items)
+                    total_general = sum(item.producto.precio * item.cantidad for item in items)
+                    primer_item = items[0]
+                    productos_detalle = ', '.join(
+                        f"{item.producto.nombre} (x{item.cantidad})" for item in items
+                    )
+                    pedido = Pedido.objects.create(
+                        comprador=request.user,
+                        vendedor=vendedor,
+                        producto=primer_item.producto,
+                        solicitud=solicitud_entrega,
+                        productos_detalle=productos_detalle,
+                        cantidad=cantidad_total,
+                        precio_unitario=primer_item.producto.precio,
+                        total=total_general,
+                        tipo_entrega=solicitud_entrega.tipo_entrega,
+                        direccion_entrega=solicitud_entrega.direccion_entrega,
+                        referencia=solicitud_entrega.referencia,
+                        tipo_pago=solicitud_entrega.tipo_pago,
+                        estado='pendiente',
+                    )
+                    pedidos_creados.append(pedido)
+                    for item in items:
+                        ProductActionLog.objects.create(producto=item.producto, actor=request.user, accion='pedido_creado')
+
+                carrito_usuario.items.all().delete()
+
                 return render(request, 'checkout_success.html', {
                     'pedidos': pedidos_creados,
-                    'datos_banco': datos_banco,
+                    'pago_transferencia': solicitud_entrega.tipo_pago == 'transferencia',
                 })
-
-            return redirect('checkout')
     else:
         formulario = EntregaForm()
 
@@ -967,6 +1005,8 @@ def checkout(request):
         'formulario': formulario,
         'carrito_usuario': carrito_usuario,
         'total_carrito': carrito_usuario.obtener_total(),
+        'transferencia_disponible': transferencia_disponible,
+        'vendedores_sin_transferencia': vendedores_sin_transferencia,
     })
 
 
@@ -992,6 +1032,11 @@ def actualizar_estado_pedido(request, pedido_id):
             messages.error(request, 'Este pedido ya fue procesado.')
             return redirect('inicio')
 
+        ultimo_comprobante = pedido.comprobantes.order_by('-fecha_subida').first()
+        if pedido.tipo_pago == 'transferencia' and not ultimo_comprobante:
+            messages.error(request, 'El comprador aún no ha subido el comprobante de transferencia.')
+            return redirect('inicio')
+
         if pedido.producto.stock < pedido.cantidad:
             messages.error(request, 'No hay suficiente stock para confirmar este pedido.')
             return redirect('inicio')
@@ -1000,6 +1045,11 @@ def actualizar_estado_pedido(request, pedido_id):
         pedido.producto.save(update_fields=['stock'])
         pedido.estado = 'preparando'
         pedido.motivo_cancelacion = ''
+        if ultimo_comprobante:
+            ultimo_comprobante.estado = 'aprobado'
+            ultimo_comprobante.revisado_por = request.user
+            ultimo_comprobante.fecha_revision = timezone.now()
+            ultimo_comprobante.save(update_fields=['estado', 'revisado_por', 'fecha_revision'])
         ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_preparando', razon=f'Pedido N°{pedido.id}')
         Notificacion.objects.create(
             usuario=pedido.comprador,
@@ -1093,6 +1143,13 @@ def subir_comprobante(request, pedido_id):
 
     pedido = get_object_or_404(Pedido, id=pedido_id, comprador=request.user)
 
+    if pedido.tipo_pago != 'transferencia':
+        messages.error(request, 'Este pedido no requiere comprobante de transferencia.')
+        return redirect('mis_pedidos')
+    if pedido.estado != 'pendiente':
+        messages.error(request, 'Este pedido ya fue procesado y no admite nuevos comprobantes.')
+        return redirect('mis_pedidos')
+
     if request.method == 'POST':
         form = PaymentProofForm(request.POST, request.FILES)
         if form.is_valid():
@@ -1108,7 +1165,7 @@ def subir_comprobante(request, pedido_id):
             Notificacion.objects.create(usuario=pedido.vendedor, mensaje=mensaje)
 
             messages.success(request, 'Comprobante subido correctamente. El vendedor será notificado.')
-            return redirect('ver_notificaciones')
+            return redirect('mis_pedidos')
     else:
         form = PaymentProofForm()
 
