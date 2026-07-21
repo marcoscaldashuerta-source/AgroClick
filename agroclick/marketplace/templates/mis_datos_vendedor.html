@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis datos - AgroClick{% endblock %}
+
+{% block content %}
+<style>
+    .seller-data-card {
+        max-width: 720px;
+        margin: 32px auto;
+        padding: 28px;
+        border-radius: 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+    }
+    .seller-data-header h1 { margin: 0 0 8px; color: #166534; }
+    .seller-data-header p { margin: 0; color: #64748b; }
+    .seller-data-status {
+        margin: 20px 0;
+        padding: 14px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+    }
+    .seller-data-status.complete { background: #ecfdf3; color: #166534; }
+    .seller-data-status.incomplete { background: #fff7e6; color: #9a3412; }
+    .seller-data-form { display: grid; gap: 16px; }
+    .seller-data-field label {
+        display: block;
+        margin-bottom: 6px;
+        color: #334155;
+        font-weight: 700;
+    }
+    .seller-data-field input,
+    .seller-data-field select { width: 100%; }
+    .seller-data-error { color: #b91c1c; font-size: 0.9rem; margin-top: 5px; }
+    .seller-data-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+</style>
+
+<div class="seller-data-card">
+    <div class="seller-data-header">
+        <h1>Mis datos de transferencia</h1>
+        <p>Estos datos serán mostrados al comprador cuando elija pagar por transferencia.</p>
+    </div>
+
+    {% if datos_completos %}
+        <div class="seller-data-status complete">Transferencias habilitadas para tus productos.</div>
+    {% else %}
+        <div class="seller-data-status incomplete">Completa todos los campos para habilitar pagos por transferencia.</div>
+    {% endif %}
+
+    <form method="post" class="seller-data-form">
+        {% csrf_token %}
+        {% for field in formulario %}
+            <div class="seller-data-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<div class="seller-data-error">{{ error }}</div>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="seller-data-actions">
+            <a href="{% url 'inicio' %}" class="btn btn-secondary">Volver</a>
+            <button type="submit" class="btn btn-primary">Guardar mis datos</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

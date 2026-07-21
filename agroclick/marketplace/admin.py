@@ -12,6 +12,7 @@ from .models import (
     Pedido,
     Producto,
     ProductActionLog,
+    DatosTransferenciaVendedor,
 )
 
 
@@ -34,6 +35,7 @@ class UsuarioAdmin(BaseUserAdmin):
 
 
 admin.site.register(Perfil)
+admin.site.register(DatosTransferenciaVendedor)
 
 
 @admin.register(ItemCarrito)

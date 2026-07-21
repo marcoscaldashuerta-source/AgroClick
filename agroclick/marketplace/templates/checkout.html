@@ -66,12 +66,17 @@
                 <div class="selection-group">
                     <h3>¿Cómo quieres pagar?</h3>
                     <div class="selection-options">
-                        <label class="selection-option">
+                        <label class="selection-option{% if not transferencia_disponible %} selection-option-disabled{% endif %}">
                             <input type="radio" name="tipo_pago" value="transferencia"
-                                {% if formulario.tipo_pago.value == 'transferencia' %}checked{% endif %}>
+                                {% if formulario.tipo_pago.value == 'transferencia' %}checked{% endif %}
+                                {% if not transferencia_disponible %}disabled{% endif %}>
                             <div class="selection-content">
                                 <strong>🏦 Transferencia</strong>
-                                <p>Realiza el pago por transferencia bancaria.</p>
+                                {% if transferencia_disponible %}
+                                    <p>Realiza el pago con los datos bancarios del vendedor.</p>
+                                {% else %}
+                                    <p>No disponible: falta información bancaria del vendedor.</p>
+                                {% endif %}
                             </div>
                         </label>
 
@@ -86,6 +91,14 @@
                     </div>
                     {% if formulario.tipo_pago.errors %}
                         <div class="field-error">{{ formulario.tipo_pago.errors.0 }}</div>
+                    {% endif %}
+                    {% if vendedores_sin_transferencia %}
+                        <div class="transfer-warning">
+                            Transferencia deshabilitada para:
+                            {% for vendedor in vendedores_sin_transferencia %}
+                                <strong>{{ vendedor.username }}</strong>{% if not forloop.last %}, {% endif %}
+                            {% endfor %}.
+                        </div>
                     {% endif %}
                 </div>
 
@@ -249,6 +262,25 @@
         border-color: var(--brand-green);
         box-shadow: 0 6px 16px rgba(34, 139, 34, 0.1);
         transform: translateY(-1px);
+    }
+
+    .selection-option-disabled {
+        cursor: not-allowed;
+        opacity: 0.62;
+        background: #f1f5f9;
+    }
+    .selection-option-disabled:hover {
+        border-color: #e5e7eb;
+        box-shadow: none;
+        transform: none;
+    }
+    .transfer-warning {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #fff7e6;
+        color: #9a3412;
+        font-size: 0.9rem;
     }
 
     .selection-option input[type="radio"] {
