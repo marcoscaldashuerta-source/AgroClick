@@ -337,6 +337,7 @@
             <div class="modal-row" id="detail-referencia-row"><span class="modal-label">Referencia:</span><span id="detail-referencia" class="modal-value"></span></div>
             <div class="modal-row"><span class="modal-label">Método de pago:</span><span id="detail-pago" class="modal-value"></span></div>
             <div class="modal-row"><span class="modal-label">Estado:</span><span id="detail-estado" class="modal-value"></span></div>
+            <div class="modal-row"><span class="modal-label">Estado entrega:</span><span id="detail-estado-entrega" class="modal-value"></span></div>
             <div id="tracking-section-store" class="tracking-section" aria-hidden="true">
                 <h4 class="tracking-title">Seguimiento del pedido</h4>
                 <div class="tracking-steps">
@@ -449,6 +450,7 @@
         const detalleReferenciaRow = document.getElementById('detail-referencia-row');
         const detallePago = document.getElementById('detail-pago');
         const detalleEstado = document.getElementById('detail-estado');
+        const detalleEstadoEntrega = document.getElementById('detail-estado-entrega');
         const trackingSectionStore = document.getElementById('tracking-section-store');
         const trackingSectionDelivery = document.getElementById('tracking-section-delivery');
         const detalleFecha = document.getElementById('detail-fecha');
@@ -479,10 +481,12 @@
             }
             detallePago.textContent = boton.dataset.pago || 'No registrado';
             detalleEstado.textContent = boton.dataset.estado || 'Pendiente';
-            const estado = (boton.dataset.estado || '').toLowerCase();
+            detalleEstadoEntrega.textContent = boton.dataset.estadoEntrega || 'Sin estado';
+            const estadoPedido = (boton.dataset.estado || '').toLowerCase();
+            const estadoEntrega = (boton.dataset.estadoEntrega || '').toLowerCase();
             const esRetiro = entrega.includes('retiro') || entrega.includes('tienda');
             ocultarSeguimientos();
-            if (estado.includes('confirmado')) {
+            if (estadoPedido.includes('confirmado')) {
                 if (esRetiro) {
                     trackingSectionStore.classList.add('active');
                     trackingSectionStore.setAttribute('aria-hidden', 'false');
@@ -490,6 +494,42 @@
                     trackingSectionDelivery.classList.add('active');
                     trackingSectionDelivery.setAttribute('aria-hidden', 'false');
                 }
+            }
+            if (trackingSectionDelivery.classList.contains('active')) {
+                const pasos = trackingSectionDelivery.querySelectorAll('.tracking-step');
+                pasos.forEach(function(paso, indice) {
+                    paso.classList.remove('is-active', 'is-complete');
+                    if (estadoEntrega.includes('entregado')) {
+                        if (indice <= 3) paso.classList.add('is-complete');
+                    } else if (estadoEntrega.includes('en camino')) {
+                        if (indice <= 2) paso.classList.add('is-complete');
+                        if (indice === 2) paso.classList.add('is-active');
+                    } else if (estadoEntrega.includes('no entregado')) {
+                        if (indice <= 0) paso.classList.add('is-complete');
+                        if (indice === 0) paso.classList.add('is-active');
+                    } else {
+                        if (indice <= 1) paso.classList.add('is-complete');
+                        if (indice === 1) paso.classList.add('is-active');
+                    }
+                });
+            }
+            if (trackingSectionStore.classList.contains('active')) {
+                const pasos = trackingSectionStore.querySelectorAll('.tracking-step');
+                pasos.forEach(function(paso, indice) {
+                    paso.classList.remove('is-active', 'is-complete');
+                    if (estadoEntrega.includes('entregado')) {
+                        if (indice <= 3) paso.classList.add('is-complete');
+                    } else if (estadoEntrega.includes('en camino')) {
+                        if (indice <= 2) paso.classList.add('is-complete');
+                        if (indice === 2) paso.classList.add('is-active');
+                    } else if (estadoEntrega.includes('no entregado')) {
+                        if (indice <= 0) paso.classList.add('is-complete');
+                        if (indice === 0) paso.classList.add('is-active');
+                    } else {
+                        if (indice <= 1) paso.classList.add('is-complete');
+                        if (indice === 1) paso.classList.add('is-active');
+                    }
+                });
             }
             detalleFecha.textContent = boton.dataset.fecha || '';
             modalDetallePedido.classList.add('active');
