@@ -29,6 +29,7 @@ urlpatterns = [
     path('admin-soporte/', views.panel_soporte, name='panel_soporte'),
     path('admin-soporte/<int:ticket_id>/', views.responder_ticket, name='responder_ticket'),
     path('pedido/estado/<int:pedido_id>/', views.actualizar_estado_pedido, name='actualizar_estado_pedido'),
+    path('pedido/<int:pedido_id>/confirmar-retiro/', views.confirmar_retiro_pedido, name='confirmar_retiro_pedido'),
     path('pedido/<int:pedido_id>/subir-comprobante/', views.subir_comprobante, name='subir_comprobante'),
     path('vendedor/comprobantes/', views.ver_comprobantes_vendedor, name='ver_comprobantes_vendedor'),
     path('vendedor/comprobante/revisar/<int:proof_id>/', views.revisar_comprobante, name='revisar_comprobante'),

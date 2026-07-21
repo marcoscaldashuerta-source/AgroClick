@@ -63,13 +63,23 @@
                                             <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{% if pedido.referencia_historica %}{{ pedido.referencia_historica|escapejs }}{% else %}Sin referencia{% endif %}" data-pedido-id="{{ pedido.id }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
                                                 Ver detalles
                                             </button>
-                                            {% if pedido.estado != 'confirmado' and pedido.estado != 'cancelado' %}
+                                            {% if pedido.estado == 'pendiente' %}
                                                 <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="accion" value="confirmar">
                                                     <button type="button" class="btn btn-primary accept-order-btn">Aceptar</button>
                                                     <button type="button" class="btn btn-secondary cancel-order-btn">Cancelar</button>
                                                 </form>
+                                            {% elif pedido.estado == 'preparando' and pedido.tipo_entrega == 'tienda' %}
+                                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; margin: 0;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="accion" value="marcar_listo">
+                                                    <button type="submit" class="btn btn-primary">Pedido listo</button>
+                                                </form>
+                                            {% elif pedido.estado == 'listo' and pedido.tipo_entrega == 'tienda' %}
+                                                <span class="status-badge estado-listo">Esperando confirmación del comprador</span>
+                                            {% elif pedido.estado == 'completado' %}
+                                                <span class="status-badge estado-completado">Pedido finalizado</span>
                                             {% endif %}
                                         </div>
                                     </td>

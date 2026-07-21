@@ -316,8 +316,107 @@ class ActualizarEstadoPedidoTests(TestCase):
         self.assertEqual(response.status_code, 200)
         pedido.refresh_from_db()
         producto.refresh_from_db()
-        self.assertEqual(pedido.estado, 'confirmado')
+        self.assertEqual(pedido.estado, 'preparando')
         self.assertEqual(producto.stock, 5)
+
+
+class PedidoRetiroTrackingTests(TestCase):
+    def setUp(self):
+        self.comprador = User.objects.create_user(username='comprador_retiro', password='pass1234')
+        self.otro_comprador = User.objects.create_user(username='otro_comprador', password='pass1234')
+        self.vendedor = User.objects.create_user(username='vendedor_retiro', password='pass1234')
+        Perfil.objects.create(usuario=self.comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=self.otro_comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=self.vendedor, rol='vendedor', aprobado=True)
+        self.producto = Producto.objects.create(
+            vendedor=self.vendedor,
+            nombre='Canasta de verduras',
+            categoria='Verduras',
+            descripcion='Canasta para retiro',
+            precio=10000,
+            unidad_venta='unidad',
+            stock=6,
+            borrador=False,
+            estado='activo',
+        )
+        self.pedido = Pedido.objects.create(
+            comprador=self.comprador,
+            vendedor=self.vendedor,
+            producto=self.producto,
+            cantidad=2,
+            precio_unitario=10000,
+            total=20000,
+            tipo_entrega='tienda',
+            tipo_pago='efectivo',
+            estado='pendiente',
+        )
+
+    def test_vendedor_acepta_y_pedido_pasa_a_preparando(self):
+        self.client.force_login(self.vendedor)
+        response = self.client.post(
+            f'/pedido/estado/{self.pedido.id}/',
+            {'accion': 'confirmar'},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.producto.refresh_from_db()
+        self.assertEqual(self.pedido.estado, 'preparando')
+        self.assertEqual(self.producto.stock, 4)
+        self.assertTrue(Notificacion.objects.filter(usuario=self.comprador, mensaje__icontains='preparando').exists())
+
+    def test_vendedor_marca_pedido_como_listo(self):
+        self.pedido.estado = 'preparando'
+        self.pedido.save(update_fields=['estado'])
+        self.client.force_login(self.vendedor)
+
+        response = self.client.post(
+            f'/pedido/estado/{self.pedido.id}/',
+            {'accion': 'marcar_listo'},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, 'listo')
+        self.assertTrue(Notificacion.objects.filter(usuario=self.comprador, mensaje__icontains='listo para retiro').exists())
+
+    def test_comprador_confirma_retiro_y_completa_pedido(self):
+        self.pedido.estado = 'listo'
+        self.pedido.save(update_fields=['estado'])
+        self.client.force_login(self.comprador)
+
+        response = self.client.post(
+            f'/pedido/{self.pedido.id}/confirmar-retiro/',
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, 'completado')
+        self.assertTrue(Notificacion.objects.filter(usuario=self.vendedor, mensaje__icontains='completado').exists())
+
+    def test_otro_comprador_no_puede_completar_el_pedido(self):
+        self.pedido.estado = 'listo'
+        self.pedido.save(update_fields=['estado'])
+        self.client.force_login(self.otro_comprador)
+
+        response = self.client.post(f'/pedido/{self.pedido.id}/confirmar-retiro/')
+
+        self.assertEqual(response.status_code, 404)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado, 'listo')
+
+    def test_mis_pedidos_separa_detalles_y_seguimiento(self):
+        self.client.force_login(self.comprador)
+
+        response = self.client.get('/mis-pedidos/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ver detalles')
+        self.assertContains(response, 'Seguimiento')
+        self.assertContains(response, '¿Ya retiraste el producto?')
 
 
 class EditarProductoMainImageTests(TestCase):
