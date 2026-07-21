@@ -54,6 +54,12 @@ class DeshabilitarUsuariosAdminViewTests(TestCase):
         Perfil.objects.create(usuario=self.vendedor, rol='vendedor', aprobado=True)
         Perfil.objects.create(usuario=self.comprador, rol='comprador', aprobado=True)
         Perfil.objects.create(usuario=self.vendedor_pendiente, rol='vendedor', aprobado=False)
+        self.delivery_pendiente = User.objects.create_user(
+            username='delivery_pendiente_admin',
+            email='delivery_pendiente_admin@example.com',
+            password='pass1234'
+        )
+        Perfil.objects.create(usuario=self.delivery_pendiente, rol='delivery', aprobado=False)
 
     def test_vista_muestra_usuarios_por_rol_y_puede_deshabilitar_y_habilitar(self):
         self.client.force_login(self.admin)
@@ -96,6 +102,21 @@ class DeshabilitarUsuariosAdminViewTests(TestCase):
         self.assertContains(response, 'No puedes deshabilitar vendedores pendientes de aprobación.')
         self.vendedor_pendiente.refresh_from_db()
         self.assertTrue(self.vendedor_pendiente.is_active)
+
+    def test_admin_aprueba_delivery_pendiente_desde_inicio(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'delivery_pendiente_admin')
+        self.assertContains(response, 'Aprobar solicitudes')
+
+        delivery_perfil = Perfil.objects.get(usuario=self.delivery_pendiente)
+        response = self.client.post('/aprobar-vendedores/', {'perfil_id': delivery_perfil.id, 'next': '/'}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        delivery_perfil.refresh_from_db()
+        self.assertTrue(delivery_perfil.aprobado)
+        self.assertContains(response, 'Delivery delivery_pendiente_admin ha sido aprobado correctamente.')
 
 
 class NotificacionesPedidoFormattingTests(TestCase):
@@ -211,6 +232,45 @@ class CheckoutOrdersTests(TestCase):
         self.assertEqual(pedido.direccion_entrega, 'Calle 456')
         self.assertIn('Tomate', pedido.productos_detalle)
         self.assertIn('Plátano', pedido.productos_detalle)
+
+    def test_checkout_efectivo_muestra_pagina_exito_y_pedido_delivery_pendiente(self):
+        comprador = User.objects.create_user(username='comprador_pago', email='comprador_pago@test.com', password='pass1234')
+        vendedor = User.objects.create_user(username='vendedor_pago', email='vendedor_pago@test.com', password='pass1234')
+        Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+
+        producto = Producto.objects.create(
+            vendedor=vendedor,
+            nombre='Zanahoria',
+            categoria='Verdura',
+            descripcion='Zanahoria fresca',
+            precio=1500,
+            unidad_venta='kg',
+            stock=10,
+            borrador=False,
+            estado='activo',
+        )
+        carrito = Carrito.objects.create(comprador=comprador)
+        ItemCarrito.objects.create(carrito=carrito, producto=producto, cantidad=2)
+
+        self.client.force_login(comprador)
+        response = self.client.post('/carrito/checkout/', {
+            'tipo_entrega': 'delivery',
+            'direccion_entrega': 'Calle 123',
+            'referencia': 'Casa azul',
+            'tipo_pago': 'efectivo',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'checkout_success.html')
+        self.assertContains(response, '¡Compra confirmada!')
+        self.assertContains(response, 'Calle 123')
+        self.assertContains(response, 'Delivery')
+
+        pedido = Pedido.objects.get(comprador=comprador, vendedor=vendedor)
+        self.assertEqual(pedido.estado, 'confirmado')
+        self.assertEqual(pedido.tipo_entrega, 'delivery')
+        self.assertEqual(pedido.direccion_entrega, 'Calle 123')
 
 
 class NavbarMisPedidosTests(TestCase):
@@ -372,6 +432,40 @@ class DeliveryPedidosTests(TestCase):
         self.assertContains(response, 'Mis pedidos asignados')
         self.assertContains(response, 'Calle 123')
 
+    def test_checkout_crea_pedido_delivery_confirmado_y_luego_se_asigna(self):
+        carrito = Carrito.objects.create(comprador=self.comprador)
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        self.client.force_login(self.comprador)
+        response = self.client.post('/carrito/checkout/', {
+            'tipo_entrega': 'delivery',
+            'direccion_entrega': 'Calle 789',
+            'referencia': 'Segundo piso',
+            'tipo_pago': 'efectivo',
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        pedido = Pedido.objects.filter(
+            comprador=self.comprador,
+            tipo_entrega='delivery',
+            estado='confirmado',
+            direccion_entrega='Calle 789'
+        ).exclude(id=self.pedido.id).first()
+        self.assertIsNotNone(pedido)
+
+        self.client.force_login(self.delivery)
+        response = self.client.get('/delivery/pedidos/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Pedidos disponibles')
+        self.assertContains(response, 'Calle 789')
+        self.assertContains(response, 'Realizar delivery')
+
+        response = self.client.post(f'/delivery/pedido/{pedido.id}/asignar/', follow=True)
+        self.assertEqual(response.status_code, 200)
+        pedido.refresh_from_db()
+        self.assertEqual(pedido.repartidor, self.delivery)
+        self.assertEqual(pedido.estado_entrega, 'asignado')
+
     def test_ver_detalle_pedido_delivery_muestra_informacion_completa(self):
         self.pedido.repartidor = self.delivery
         self.pedido.estado_entrega = 'asignado'
@@ -401,6 +495,34 @@ class DeliveryPedidosTests(TestCase):
         self.assertEqual(self.pedido.estado_entrega, 'entregado')
         self.assertTrue(Notificacion.objects.filter(usuario=self.comprador, mensaje__icontains='entregado').exists())
         self.assertTrue(Notificacion.objects.filter(usuario=self.vendedor, mensaje__icontains='entregado').exists())
+
+    def test_actualizar_estado_entrega_a_no_entregado_requiere_motivo(self):
+        self.pedido.repartidor = self.delivery
+        self.pedido.estado_entrega = 'asignado'
+        self.pedido.save()
+
+        response = self.client.post(
+            f'/delivery/pedido/{self.pedido.id}/actualizar-estado/',
+            {'estado_entrega': 'no_entregado'},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado_entrega, 'asignado')
+        self.assertContains(response, 'Debes indicar el motivo cuando el pedido no se entrega.')
+
+        motivo = 'Cliente no atendió'
+        response = self.client.post(
+            f'/delivery/pedido/{self.pedido.id}/actualizar-estado/',
+            {'estado_entrega': 'no_entregado', 'motivo_no_entrega': motivo},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado_entrega, 'no_entregado')
+        self.assertEqual(self.pedido.motivo_cancelacion, motivo)
+        self.assertTrue(Notificacion.objects.filter(usuario=self.comprador, mensaje__icontains='no pudo ser entregado').exists())
+        self.assertTrue(Notificacion.objects.filter(usuario=self.vendedor, mensaje__icontains='no pudo ser entregado').exists())
 
 
 class EditarProductoMainImageTests(TestCase):

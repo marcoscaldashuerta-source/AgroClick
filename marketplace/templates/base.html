@@ -62,6 +62,16 @@
         </div>
     </div>
 
+    {% if messages %}
+        <div class="messages-container" style="max-width:1100px; margin: 16px auto; padding: 0 20px;">
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}" style="margin-bottom: 12px; padding: 14px 18px; border-radius: 12px; border: 1px solid #d1d5db; background: #f8fafc; color: #0f172a;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <style>
         .nav-link-disabled {
             color: #9ca3af;

@@ -149,7 +149,8 @@ def actualizar_estado_entrega(request, pedido_id):
     )
 
     nuevo_estado = request.POST.get('estado_entrega', '').strip().lower()
-    opciones_validas = ['asignado', 'en_camino', 'entregado']
+    motivo_no_entrega = request.POST.get('motivo_no_entrega', '').strip()
+    opciones_validas = ['asignado', 'en_camino', 'entregado', 'no_entregado']
 
     if nuevo_estado not in opciones_validas:
         messages.error(request, 'Estado de entrega inválido.')
@@ -163,8 +164,20 @@ def actualizar_estado_entrega(request, pedido_id):
         messages.error(request, 'El pedido debe estar en camino antes de marcarlo como entregado.')
         return redirect('pedidos_delivery')
 
+    if nuevo_estado == 'no_entregado' and pedido.estado_entrega not in ['asignado', 'en_camino']:
+        messages.error(request, 'El pedido debe estar asignado o en camino antes de marcarlo como no entregado.')
+        return redirect('pedidos_delivery')
+
+    if nuevo_estado == 'no_entregado' and not motivo_no_entrega:
+        messages.error(request, 'Debes indicar el motivo cuando el pedido no se entrega.')
+        return redirect('pedidos_delivery')
+
     pedido.estado_entrega = nuevo_estado
-    pedido.save(update_fields=['estado_entrega'])
+    if nuevo_estado == 'no_entregado':
+        pedido.motivo_cancelacion = motivo_no_entrega
+    else:
+        pedido.motivo_cancelacion = ''
+    pedido.save(update_fields=['estado_entrega', 'motivo_cancelacion'])
     ProductActionLog.objects.create(
         producto=pedido.producto,
         actor=request.user,
@@ -181,9 +194,41 @@ def actualizar_estado_entrega(request, pedido_id):
             usuario=pedido.vendedor,
             mensaje=f'El pedido N°{pedido.id} fue entregado por delivery.'
         )
+    elif nuevo_estado == 'no_entregado':
+        mensaje_comprador = f'Tu pedido N°{pedido.id} no pudo ser entregado por delivery.'
+        mensaje_vendedor = f'El pedido N°{pedido.id} no pudo ser entregado por delivery.'
+        if motivo_no_entrega:
+            mensaje_comprador += f' Motivo: {motivo_no_entrega}'
+            mensaje_vendedor += f' Motivo: {motivo_no_entrega}'
+
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=mensaje_comprador)
+        Notificacion.objects.create(usuario=pedido.vendedor, mensaje=mensaje_vendedor)
 
     messages.success(request, f'El estado de entrega del pedido N°{pedido.id} se actualizó a {pedido.get_estado_entrega_display()}.')
     return redirect('pedidos_delivery')
+
+
+def detalle_pedido_delivery(request, pedido_id):
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'delivery' or not perfil.aprobado:
+        return redirect('/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        repartidor=request.user,
+        estado='confirmado',
+        tipo_entrega='delivery',
+    )
+
+    return render(request, 'pedido_delivery_detalle.html', {'pedido': pedido})
 
 
 def pedidos_delivery(request):
@@ -324,7 +369,7 @@ def inicio(request):
                 pedidos_vendedor = Pedido.objects.filter(vendedor=request.user).select_related('comprador', 'producto').order_by('-fecha_creacion')[:10]
 
         if is_admin:
-            pending_vendedores = Perfil.objects.filter(rol='vendedor', aprobado=False)
+            pending_vendedores = Perfil.objects.filter(rol__in=['vendedor', 'delivery'], aprobado=False)
 
     # Determinar si hay filtros activos
     tiene_filtros = bool(busqueda or categoria or precio_min or precio_max)
@@ -499,16 +544,16 @@ def aprobar_vendedores(request):
 
     if request.method == 'POST':
         perfil_id = request.POST.get('perfil_id')
-        perfil = get_object_or_404(Perfil, id=perfil_id, rol='vendedor')
+        perfil = get_object_or_404(Perfil, id=perfil_id, aprobado=False, rol__in=['vendedor', 'delivery'])
         perfil.aprobado = True
         perfil.save()
-        messages.success(request, f'El vendedor {perfil.usuario.username} ha sido aprobado correctamente.')
+        messages.success(request, f'{perfil.get_rol_display()} {perfil.usuario.username} ha sido aprobado correctamente.')
         next_url = request.POST.get('next')
         if next_url:
             return redirect(next_url)
         return redirect('inicio')
 
-    messages.info(request, 'Puedes aprobar vendedores directamente desde la pantalla de inicio.')
+    messages.info(request, 'Puedes aprobar vendedores o delivery directamente desde la pantalla de inicio.')
     return redirect('inicio')
 
 
@@ -1079,6 +1124,7 @@ def checkout(request):
                 productos_detalle = ', '.join(
                     f"{item.producto.nombre} (x{item.cantidad})" for item in items
                 )
+                estado_pedido = 'confirmado' if solicitud_entrega.tipo_entrega == 'delivery' and solicitud_entrega.tipo_pago == 'efectivo' else 'pendiente'
                 pedido = Pedido.objects.create(
                     comprador=request.user,
                     vendedor=vendedor,
@@ -1092,7 +1138,7 @@ def checkout(request):
                     direccion_entrega=solicitud_entrega.direccion_entrega,
                     referencia=solicitud_entrega.referencia,
                     tipo_pago=solicitud_entrega.tipo_pago,
-                    estado='pendiente',
+                    estado=estado_pedido,
                 )
                 pedidos_creados.append(pedido)
                 for item in items:
@@ -1100,7 +1146,7 @@ def checkout(request):
 
             carrito_usuario.items.all().delete()
 
-            # Si el comprador eligió transferencia, mostrar datos bancarios y enlaces para subir comprobante
+            datos_banco = None
             if solicitud_entrega.tipo_pago == 'transferencia' and pedidos_creados:
                 datos_banco = {
                     'banco': 'Banco Ejemplo',
@@ -1109,12 +1155,17 @@ def checkout(request):
                     'cuenta': '1234567890',
                     'tipo': 'Cuenta corriente',
                 }
-                return render(request, 'checkout_success.html', {
-                    'pedidos': pedidos_creados,
-                    'datos_banco': datos_banco,
-                })
 
-            return redirect('checkout')
+            for pedido in pedidos_creados:
+                Notificacion.objects.create(
+                    usuario=pedido.vendedor,
+                    mensaje=f'Nuevo pedido N°{pedido.id} pendiente de confirmación.'
+                )
+
+            return render(request, 'checkout_success.html', {
+                'pedidos': pedidos_creados,
+                'datos_banco': datos_banco,
+            })
     else:
         formulario = EntregaForm()
 

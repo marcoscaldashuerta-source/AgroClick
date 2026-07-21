@@ -678,6 +678,16 @@
     </div>
 </div>
 
+{% if messages %}
+    <div class="messages-container" style="max-width:1100px; margin: 16px auto; padding: 0 20px;">
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}" style="margin-bottom: 12px; padding: 14px 18px; border-radius: 12px; border: 1px solid #d1d5db; background: #f8fafc; color: #0f172a;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
 <div class="container home-shell">
     <div>
         <div class="welcome" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
@@ -750,6 +760,7 @@
                 <div class="modal-row"><span class="modal-label">Referencia:</span><span id="detail-referencia" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Método de pago:</span><span id="detail-pago" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Estado:</span><span id="detail-estado" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Estado entrega:</span><span id="detail-estado-entrega" class="modal-value"></span></div>
                 <div class="modal-row"><span class="modal-label">Fecha y hora:</span><span id="detail-fecha" class="modal-value"></span></div>
             </div>
             <div class="modal-footer">
@@ -770,6 +781,7 @@
             const DETALLE_REFERENCIA = document.getElementById('detail-referencia');
             const DETALLE_PAGO = document.getElementById('detail-pago');
             const DETALLE_ESTADO = document.getElementById('detail-estado');
+            const DETALLE_ESTADO_ENTREGA = document.getElementById('detail-estado-entrega');
             const DETALLE_FECHA = document.getElementById('detail-fecha');
             const botones_cerrar = [
                 document.getElementById('close-modal')
@@ -811,6 +823,7 @@
                 }
                 DETALLE_PAGO.textContent = boton.dataset.pago || 'No registrada';
                 DETALLE_ESTADO.textContent = boton.dataset.estado || 'Pendiente';
+                DETALLE_ESTADO_ENTREGA.textContent = boton.dataset.estadoEntrega || 'Pendiente';
                 DETALLE_FECHA.textContent = boton.dataset.fecha || '';
                 MODAL_DETALLE_PEDIDO.classList.add('active');
                 MODAL_DETALLE_PEDIDO.setAttribute('aria-hidden', 'false');

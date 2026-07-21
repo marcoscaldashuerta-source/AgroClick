@@ -128,6 +128,9 @@
                 </ul>
                 <p><strong>Total:</strong> ${{ pedido.total }}</p>
                 <p><strong>Tipo de pago:</strong> {{ pedido.get_tipo_pago_display }}</p>
+                {% if pedido.estado_entrega == 'no_entregado' and pedido.motivo_cancelacion %}
+                    <p><strong>Motivo no entregado:</strong> {{ pedido.motivo_cancelacion }}</p>
+                {% endif %}
             </div>
         </div>
     </div>

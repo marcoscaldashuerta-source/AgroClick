@@ -16,6 +16,8 @@
                             <th>ID</th>
                             <th>Vendedor</th>
                             <th>Total</th>
+                            <th>Entrega</th>
+                            <th>Dirección</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
@@ -25,6 +27,8 @@
                                 <td><span class="order-id-badge">{{ pedido.id }}</span></td>
                                 <td>{{ pedido.vendedor.username }}</td>
                                 <td>${{ pedido.total }}</td>
+                                <td>{{ pedido.get_tipo_entrega_display }}</td>
+                                <td>{{ pedido.direccion_entrega|default:'N/A' }}</td>
                                 <td><span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></td>
                             </tr>
                         {% endfor %}
