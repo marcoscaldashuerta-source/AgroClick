@@ -479,6 +479,18 @@ class DeliveryPedidosTests(TestCase):
         self.assertContains(response, 'vendedor_delivery')
         self.assertContains(response, 'Puerta roja')
 
+    def test_mis_pedidos_muestra_estado_entrega_en_detalle_del_pedido(self):
+        self.pedido.repartidor = self.delivery
+        self.pedido.estado_entrega = 'en_camino'
+        self.pedido.save()
+
+        self.client.force_login(self.comprador)
+        response = self.client.get('/mis-pedidos/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="detail-estado-entrega"')
+        self.assertContains(response, 'Estado entrega:')
+        self.assertContains(response, 'En camino')
+
     def test_actualizar_estado_entrega_a_en_camino_y_entregado(self):
         self.pedido.repartidor = self.delivery
         self.pedido.estado_entrega = 'asignado'

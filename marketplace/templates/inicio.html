@@ -965,4 +965,20 @@
 
         });
     </script>
+    <script>
+        // Ocultar posibles mensajes flash (divs/alerts) cuando el usuario NO está autenticado.
+        // Esto evita que mensajes de sesión previos (p.ej. "Pedido N°... confirmado.") se muestren en la portada pública.
+        (function() {
+            const estaAutenticado = {{ user.is_authenticated|yesno:"true,false" }};
+            if (!estaAutenticado) {
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Selectores comunes para mensajes flash en distintas plantillas
+                    const selectors = ['[role="alert"]', '.alert', '.flash', '.flash-message', '.messages', '.message', '.django-messages', '.msg'];
+                    selectors.forEach(sel => {
+                        document.querySelectorAll(sel).forEach(el => el.remove());
+                    });
+                });
+            }
+        })();
+    </script>
 </html>
