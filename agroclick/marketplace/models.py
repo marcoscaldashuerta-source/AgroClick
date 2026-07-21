@@ -24,6 +24,7 @@ class Perfil(models.Model):
     ROL_CHOICES = [
         ('comprador', 'Comprador'),
         ('vendedor', 'Vendedor'),
+        ('delivery', 'Delivery'),
     ]
 
     rol = models.CharField(max_length=20, choices=ROL_CHOICES)
@@ -290,6 +291,14 @@ class Pedido(models.Model):
         ('cancelado', 'Cancelado'),
     ]
 
+    ESTADO_ENTREGA_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('asignado', 'Asignado'),
+        ('en_camino', 'En camino'),
+        ('entregado', 'Entregado'),
+        ('no_entregado', 'No entregado'),
+    ]
+
     comprador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pedidos_realizados')
     vendedor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='pedidos_recibidos')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='pedidos')
@@ -303,6 +312,8 @@ class Pedido(models.Model):
     referencia = models.CharField(max_length=255, blank=True, null=True)
     tipo_pago = models.CharField(max_length=20, choices=SolicitudEntrega.TIPO_PAGO_CHOICES)
     estado = models.CharField(max_length=20, choices=ESTADO_PEDIDO_CHOICES, default='pendiente')
+    estado_entrega = models.CharField(max_length=20, choices=ESTADO_ENTREGA_CHOICES, default='pendiente')
+    repartidor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedidos_delivery_asignados')
     motivo_cancelacion = models.TextField(blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 

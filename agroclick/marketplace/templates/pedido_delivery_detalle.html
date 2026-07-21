@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle pedido delivery - AgroClick{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <div class="page-card" style="max-width: 860px; margin: 0 auto;">
+        <div class="page-top">
+            <a href="{% url 'pedidos_delivery' %}" class="back-link">← Volver a pedidos delivery</a>
+        </div>
+
+        <h1 class="page-title" style="margin-bottom: 14px;">Pedido N°{{ pedido.id }}</h1>
+
+        <div class="notification-card" style="display:grid; gap:10px;">
+            <p><strong>Comprador:</strong> {{ pedido.comprador.username }}</p>
+            <p><strong>Vendedor:</strong> {{ pedido.vendedor.username }}</p>
+            <p><strong>Productos:</strong> {{ pedido.referencia_historica|default:'Sin referencia' }}</p>
+            <p><strong>Total:</strong> ${{ pedido.total }}</p>
+            <p><strong>Dirección:</strong> {{ pedido.direccion_entrega|default:'Sin dirección registrada' }}</p>
+            <p><strong>Referencia:</strong> {{ pedido.referencia|default:'Sin referencia' }}</p>
+            <p><strong>Estado pedido:</strong> {{ pedido.get_estado_display }}</p>
+            <p><strong>Estado entrega:</strong> {{ pedido.get_estado_entrega_display }}</p>
+        </div>
+
+        <div style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px;">
+            <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="estado_entrega" value="en_camino">
+                <button type="submit" class="btn btn-secondary">Marcar en camino</button>
+            </form>
+            <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="estado_entrega" value="entregado">
+                <button type="submit" class="btn btn-primary">Marcar entregado</button>
+            </form>
+        </div>
+
+        <div style="margin-top: 16px; border:1px solid #e5e7eb; border-radius:12px; padding:14px; background:#fff;">
+            <h3 style="margin:0 0 10px;">Marcar no entregado</h3>
+            <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:grid; gap:10px;">
+                {% csrf_token %}
+                <input type="hidden" name="estado_entrega" value="no_entregado">
+                <textarea name="motivo_no_entrega" rows="3" placeholder="Motivo de no entrega" style="width:100%; border:1px solid #d1d5db; border-radius:10px; padding:10px;"></textarea>
+                <button type="submit" class="btn btn-secondary" style="width:max-content;">Guardar no entregado</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos delivery - AgroClick{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <div class="page-card">
+        <div class="page-top">
+            <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
+        </div>
+
+        <h1 class="page-title" style="margin-bottom: 10px;">Pedidos delivery</h1>
+        <p style="color: #4b5563; margin-bottom: 20px;">Asigna pedidos disponibles y actualiza su estado de entrega.</p>
+
+        <h2 style="margin: 6px 0 12px;">Disponibles para tomar</h2>
+        {% if pedidos_disponibles %}
+            <div class="orders-table-wrapper" style="margin-bottom: 22px;">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Comprador</th>
+                            <th>Vendedor</th>
+                            <th>Total</th>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_disponibles %}
+                            <tr>
+                                <td><span class="order-id-badge">{{ pedido.id }}</span></td>
+                                <td>{{ pedido.comprador.username }}</td>
+                                <td>{{ pedido.vendedor.username }}</td>
+                                <td>${{ pedido.total }}</td>
+                                <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'asignar_pedido_delivery' pedido.id %}" style="margin:0;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary">Tomar pedido</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="margin-bottom: 18px;">No hay pedidos disponibles en este momento.</p>
+        {% endif %}
+
+        <h2 style="margin: 8px 0 12px;">Mis pedidos asignados</h2>
+        {% if pedidos_asignados %}
+            <div class="orders-table-wrapper">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Comprador</th>
+                            <th>Dirección</th>
+                            <th>Estado entrega</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_asignados %}
+                            <tr>
+                                <td><span class="order-id-badge">{{ pedido.id }}</span></td>
+                                <td>{{ pedido.comprador.username }}</td>
+                                <td>{{ pedido.direccion_entrega|default:'Sin dirección' }}</td>
+                                <td><span class="status-badge estado-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
+                                <td>
+                                    <div class="order-actions" style="justify-content:center;">
+                                        <a href="{% url 'detalle_pedido_delivery' pedido.id %}" class="btn order-detail-btn">Ver detalle</a>
+                                        <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:inline-flex; margin:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="estado_entrega" value="en_camino">
+                                            <button type="submit" class="btn btn-secondary">En camino</button>
+                                        </form>
+                                        <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:inline-flex; margin:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="estado_entrega" value="entregado">
+                                            <button type="submit" class="btn btn-primary">Entregado</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No tienes pedidos asignados aún.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

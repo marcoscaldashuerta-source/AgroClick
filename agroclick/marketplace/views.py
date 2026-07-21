@@ -120,6 +120,13 @@ def mis_datos_vendedor(request):
     })
 
 
+def _perfil_delivery_aprobado(request):
+    try:
+        return request.user.is_authenticated and request.user.perfil.rol == 'delivery' and request.user.perfil.aprobado
+    except Perfil.DoesNotExist:
+        return False
+
+
 def inicio(request):
     # Obtener todos los productos activos y publicados como base
     productos = Producto.objects.filter(borrador=False, estado='activo').order_by('-fecha_creacion')
@@ -184,6 +191,7 @@ def inicio(request):
     pedidos_vendedor = []
 
     is_comprador = False
+    is_delivery = False
     if request.user.is_authenticated:
         try:
             perfil = request.user.perfil
@@ -193,6 +201,7 @@ def inicio(request):
         if perfil:
             is_vendedor = perfil.rol == 'vendedor'
             is_comprador = perfil.rol == 'comprador'
+            is_delivery = perfil.rol == 'delivery'
             is_aprobado = perfil.aprobado
 
             if is_vendedor and is_aprobado:
@@ -224,6 +233,7 @@ def inicio(request):
         'perfil': perfil,
         'is_comprador': is_comprador,
         'is_vendedor': is_vendedor,
+        'is_delivery': is_delivery,
         'is_aprobado': is_aprobado,
         'is_admin': is_admin,
         'pending_vendedores': pending_vendedores,
@@ -987,6 +997,7 @@ def checkout(request):
                         referencia=solicitud_entrega.referencia,
                         tipo_pago=solicitud_entrega.tipo_pago,
                         estado='pendiente',
+                        estado_entrega='pendiente',
                     )
                     pedidos_creados.append(pedido)
                     for item in items:
@@ -1043,19 +1054,28 @@ def actualizar_estado_pedido(request, pedido_id):
 
         pedido.producto.stock -= pedido.cantidad
         pedido.producto.save(update_fields=['stock'])
-        pedido.estado = 'preparando'
+        es_delivery = pedido.tipo_entrega == 'delivery'
+        pedido.estado = 'confirmado' if es_delivery else 'preparando'
         pedido.motivo_cancelacion = ''
         if ultimo_comprobante:
             ultimo_comprobante.estado = 'aprobado'
             ultimo_comprobante.revisado_por = request.user
             ultimo_comprobante.fecha_revision = timezone.now()
             ultimo_comprobante.save(update_fields=['estado', 'revisado_por', 'fecha_revision'])
-        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_preparando', razon=f'Pedido N°{pedido.id}')
+        accion_log = 'pedido_confirmado_delivery' if es_delivery else 'pedido_preparando'
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion=accion_log, razon=f'Pedido N°{pedido.id}')
         Notificacion.objects.create(
             usuario=pedido.comprador,
-            mensaje=f'Tu Pedido N°{pedido.id} fue aceptado y se está preparando.',
+            mensaje=(
+                f'Tu Pedido N°{pedido.id} fue aceptado y está disponible para asignación de delivery.'
+                if es_delivery else
+                f'Tu Pedido N°{pedido.id} fue aceptado y se está preparando.'
+            ),
         )
-        messages.success(request, f'Pedido N°{pedido.id} aceptado y en preparación.')
+        messages.success(
+            request,
+            f'Pedido N°{pedido.id} aceptado para delivery.' if es_delivery else f'Pedido N°{pedido.id} aceptado y en preparación.',
+        )
     elif accion == 'cancelar':
         motivo_cancelacion = request.POST.get('motivo_cancelacion', '').strip()
         if motivo_cancelacion:
@@ -1074,6 +1094,113 @@ def actualizar_estado_pedido(request, pedido_id):
 
     pedido.save(update_fields=['estado', 'motivo_cancelacion'])
     return redirect('inicio')
+
+
+@require_http_methods(['GET'])
+def pedidos_delivery(request):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedidos_disponibles = Pedido.objects.filter(
+        tipo_entrega='delivery',
+        estado='confirmado',
+        repartidor__isnull=True,
+    ).select_related('comprador', 'vendedor', 'producto').order_by('-fecha_creacion')
+
+    pedidos_asignados = Pedido.objects.filter(
+        tipo_entrega='delivery',
+        repartidor=request.user,
+    ).exclude(estado='cancelado').select_related('comprador', 'vendedor', 'producto').order_by('-fecha_creacion')
+
+    return render(request, 'pedidos_delivery.html', {
+        'pedidos_disponibles': pedidos_disponibles,
+        'pedidos_asignados': pedidos_asignados,
+    })
+
+
+@require_http_methods(['POST'])
+def asignar_pedido_delivery(request, pedido_id):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        tipo_entrega='delivery',
+        estado='confirmado',
+        repartidor__isnull=True,
+    )
+
+    pedido.repartidor = request.user
+    pedido.estado_entrega = 'asignado'
+    pedido.save(update_fields=['repartidor', 'estado_entrega'])
+
+    ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_asignado_delivery', razon=f'Pedido N°{pedido.id}')
+    Notificacion.objects.create(usuario=pedido.comprador, mensaje=f'Tu Pedido N°{pedido.id} fue tomado por un repartidor y pronto irá en camino.')
+    messages.success(request, f'Pedido N°{pedido.id} asignado a tu ruta de delivery.')
+    return redirect('pedidos_delivery')
+
+
+@require_http_methods(['GET'])
+def detalle_pedido_delivery(request, pedido_id):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedido = get_object_or_404(
+        Pedido.objects.select_related('comprador', 'vendedor', 'producto'),
+        id=pedido_id,
+        tipo_entrega='delivery',
+        repartidor=request.user,
+    )
+    return render(request, 'pedido_delivery_detalle.html', {'pedido': pedido})
+
+
+@require_http_methods(['POST'])
+def actualizar_estado_entrega(request, pedido_id):
+    if not _perfil_delivery_aprobado(request):
+        return redirect('/accounts/login/' if not request.user.is_authenticated else '/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        tipo_entrega='delivery',
+        repartidor=request.user,
+    )
+
+    nuevo_estado = request.POST.get('estado_entrega', '').strip()
+    if nuevo_estado not in {'en_camino', 'entregado', 'no_entregado'}:
+        messages.error(request, 'Estado de entrega inválido.')
+        return redirect('pedidos_delivery')
+
+    pedido.estado_entrega = nuevo_estado
+    if nuevo_estado == 'entregado':
+        pedido.estado = 'completado'
+        pedido.motivo_cancelacion = ''
+    elif nuevo_estado == 'no_entregado':
+        pedido.estado = 'confirmado'
+        pedido.motivo_cancelacion = request.POST.get('motivo_no_entrega', '').strip()
+
+    campos = ['estado_entrega']
+    if nuevo_estado in {'entregado', 'no_entregado'}:
+        campos.append('estado')
+        campos.append('motivo_cancelacion')
+    pedido.save(update_fields=campos)
+
+    ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='estado_entrega_actualizado', razon=f'Pedido N°{pedido.id} -> {nuevo_estado}')
+
+    if nuevo_estado == 'entregado':
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f'Tu pedido N°{pedido.id} fue entregado correctamente.')
+        Notificacion.objects.create(usuario=pedido.vendedor, mensaje=f'El pedido N°{pedido.id} fue entregado por delivery.')
+        messages.success(request, f'Pedido N°{pedido.id} marcado como entregado.')
+    elif nuevo_estado == 'en_camino':
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f'Tu pedido N°{pedido.id} va en camino.')
+        messages.success(request, f'Pedido N°{pedido.id} marcado en camino.')
+    else:
+        motivo = pedido.motivo_cancelacion or 'Sin motivo informado.'
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f'El pedido N°{pedido.id} no pudo entregarse. Motivo: {motivo}')
+        messages.warning(request, f'Pedido N°{pedido.id} marcado como no entregado.')
+
+    return redirect('pedidos_delivery')
 
 
 def subir_comprobante(request, pedido_id):

@@ -1,0 +1,17 @@
+{% if is_delivery %}
+    {% if is_aprobado %}
+        <div class="seller-actions" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
+            <h3 style="margin-bottom: 10px;">Acciones de delivery</h3>
+            <p style="margin: 0 0 12px; color: #4b5563;">Revisa pedidos disponibles, asígnalos y actualiza su estado de entrega.</p>
+            <div class="action-buttons" style="margin-top: 8px;">
+                <a href="{% url 'pedidos_delivery' %}" class="btn btn-primary">Ver pedidos de delivery</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="not-approved" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
+            <h3>Tu cuenta delivery está en proceso de revisión</h3>
+            <p>Un administrador debe aprobar tu perfil antes de asignarte pedidos.</p>
+            <p><strong>Estado:</strong> Pendiente de aprobación</p>
+        </div>
+    {% endif %}
+{% endif %}
