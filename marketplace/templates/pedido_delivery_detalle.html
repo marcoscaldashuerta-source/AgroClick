@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de entrega - AgroClick{% endblock %}
+
+{% block content %}
+<style>
+    .detail-shell {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 18px 16px 36px;
+    }
+    .detail-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+    }
+    .detail-header {
+        padding: 22px 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .detail-title {
+        margin: 0;
+        font-size: 26px;
+        color: #0f172a;
+    }
+    .detail-subtitle {
+        margin: 8px 0 0;
+        color: #475569;
+        font-size: 0.95rem;
+    }
+    .detail-grid {
+        display: grid;
+        gap: 20px;
+        padding: 24px;
+    }
+    .detail-block {
+        background: #f8fafc;
+        border-radius: 18px;
+        padding: 18px;
+        border: 1px solid #e2e8f0;
+    }
+    .detail-block h3 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        color: #111827;
+    }
+    .detail-block p,
+    .detail-block li {
+        margin: 8px 0;
+        color: #334155;
+        line-height: 1.5;
+    }
+    .detail-block ul {
+        padding-left: 20px;
+        margin: 0;
+    }
+    .badge-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        background: #f8fafc;
+        color: #0f172a;
+    }
+    .detail-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    .btn-secondary {
+        background: #0ea5e9;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 999px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    @media (max-width: 768px) {
+        .detail-shell { padding: 16px 10px 24px; }
+        .detail-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="detail-shell">
+    <div class="detail-card">
+        <div class="detail-header">
+            <div class="detail-actions">
+                <a class="btn-secondary" href="{% url 'pedidos_delivery' %}">← Volver</a>
+                <span class="badge-status">Estado: {{ pedido.get_estado_entrega_display }}</span>
+            </div>
+            <h1 class="detail-title">Detalle de entrega pedido N°{{ pedido.id }}</h1>
+            <p class="detail-subtitle">Información completa para recoger y entregar el pedido.</p>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-block">
+                <h3>Dirección de entrega</h3>
+                <p>{{ pedido.direccion_entrega|default:'No registrada' }}</p>
+                {% if pedido.referencia %}
+                    <p><strong>Referencia:</strong> {{ pedido.referencia }}</p>
+                {% endif %}
+            </div>
+
+            <div class="detail-block">
+                <h3>Comprador</h3>
+                <p><strong>Nombre:</strong> {{ pedido.comprador.username }}</p>
+                <p><strong>Correo:</strong> {{ pedido.comprador.email }}</p>
+            </div>
+
+            <div class="detail-block">
+                <h3>Local vendedor</h3>
+                <p><strong>Vendedor:</strong> {{ pedido.vendedor.username }}</p>
+                <p><strong>Producto:</strong> {{ pedido.producto.nombre }}</p>
+                <p><strong>Precio unitario:</strong> ${{ pedido.precio_unitario }}</p>
+                <p><strong>Cantidad:</strong> {{ pedido.cantidad }}</p>
+            </div>
+
+            <div class="detail-block">
+                <h3>Resumen de productos</h3>
+                <ul>
+                    <li>{{ pedido.productos_detalle|default:pedido.producto.nombre }}</li>
+                </ul>
+                <p><strong>Total:</strong> ${{ pedido.total }}</p>
+                <p><strong>Tipo de pago:</strong> {{ pedido.get_tipo_pago_display }}</p>
+                {% if pedido.estado_entrega == 'no_entregado' and pedido.motivo_cancelacion %}
+                    <p><strong>Motivo no entregado:</strong> {{ pedido.motivo_cancelacion }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

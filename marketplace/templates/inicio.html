@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+
+<html>
+{% load static %}
+<head>
+    <title>AgroClick - Marketplace Agrícola</title>
+    <link rel="stylesheet" href="{% static 'marketplace/css/styles.css' %}?v=20260718">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .navbar {
+            background: linear-gradient(135deg, var(--brand-green), var(--brand-green-600));
+            padding: 12px 24px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 64px;
+        }
+        .navbar h1 {
+            font-size: 20px;
+            margin: 0;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: relative;
+            min-height: 40px;
+        }
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            min-height: 40px;
+            transition: background-color 0.3s;
+        }
+        .nav-links a:hover {
+            background-color: rgba(255,255,255,0.12);
+        }
+        .brand img {
+            width: 84px !important;
+            height: 84px !important;
+        }
+        .nav-links span {
+            color: white;
+            font-weight: 600;
+            margin-right: 18px;
+            letter-spacing: 0.01em;
+        }
+        .nav-links button {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .nav-links button:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 24px 32px;
+        }
+        .welcome p {
+            margin-bottom: 12px;
+        }
+        .action-buttons {
+            gap: 14px;
+        }
+        .product-card {
+            min-height: 420px;
+        }
+        .product-description {
+            max-height: 80px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            font-weight: 700;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #3b8d2f);
+            color: white;
+            box-shadow: 0 8px 20px rgba(76,175,80,0.2);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #45a049, #327a28);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3, #1769aa);
+            color: white;
+            box-shadow: 0 8px 20px rgba(33,150,243,0.2);
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #1388df, #0f5b8f);
+        }
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        /* Estilos para búsqueda */
+        .search-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(247,250,244,0.96));
+            padding: 22px;
+            border-radius: 18px;
+            margin: 20px 0;
+            box-shadow: 0 14px 38px rgba(15,23,42,0.08);
+            border: 1px solid rgba(79,154,45,0.12);
+        }
+        .search-section h3 {
+            color: #0f172a;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .search-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .btn-search {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-search:hover {
+            background-color: #45a049;
+        }
+        .btn-clear {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-clear:hover {
+            background-color: #da190b;
+        }
+        .active-filters {
+            background-color: #e3f2fd;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .active-filters p {
+            margin: 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        .filter-tag {
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin: 3px;
+            font-size: 12px;
+        }
+        .products-section {
+            margin-top: 30px;
+        }
+        .products-header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .products-header h2 {
+            color: #333;
+            margin: 0;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background: linear-gradient(180deg, #ffffff 0%, #fcfffb 100%);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border: 1px solid rgba(79,154,45,0.12);
+        }
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 34px rgba(15,23,42,0.12);
+        }
+        .product-image {
+            width: 100%;
+            height: 220px;
+            background: linear-gradient(135deg, #f8fafc, #e8f5e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.25s ease;
+        }
+        .product-card:hover .product-image img {
+            transform: scale(1.04);
+        }
+        .product-info {
+            padding: 15px;
+        }
+        .product-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        .product-category {
+            color: #4f9a2d;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .product-price {
+            font-size: 24px;
+            color: #4CAF50;
+            font-weight: 800;
+            margin: 10px 0;
+        }
+        .product-details {
+            color: #64748b;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+        .product-description {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 10px 0;
+            max-height: 66px;
+            overflow: hidden;
+        }
+        .product-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .buy-button,
+        .btn-detail {
+            flex: 1;
+            min-width: 140px;
+        }
+        .buy-button[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fdf8 100%);
+            border-radius: 20px;
+            max-width: 780px;
+            width: 100%;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.2);
+            overflow: hidden;
+            animation: fadeIn 0.25s ease;
+            border: 1px solid rgba(76, 175, 80, 0.16);
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
+            color: white;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            width: 100%;
+            text-align: center;
+        }
+        .modal-body {
+            padding: 22px 24px 24px;
+            background: #fcfffc;
+        }
+        .modal-body .modal-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: baseline;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #eef3ee;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+            color: #444;
+            line-height: 1.6;
+        }
+        .modal-body .modal-row:last-child {
+            margin-bottom: 0;
+        }
+        .modal-body .modal-label {
+            font-weight: 700;
+            color: #1f2937;
+            min-width: 170px;
+        }
+        .modal-body .modal-value {
+            color: #4b5563;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 16px 24px 24px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .modal-footer .btn {
+            min-width: 120px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+        .confirm-modal-content {
+            max-width: 520px;
+            width: min(92vw, 520px);
+        }
+        .confirm-modal-content .modal-header {
+            justify-content: center;
+            text-align: center;
+        }
+        .confirm-modal-content .modal-header h3 {
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .confirm-modal-message {
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
+        }
+        .cancel-modal-content {
+            max-width: 480px;
+            width: min(92vw, 480px);
+        }
+        .cancel-modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .cancel-modal-textarea {
+            width: 100%;
+            min-height: 110px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 10px 12px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-top: 2px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pending-vendors {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .not-approved {
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #f44336;
+        }
+        .not-approved h3 {
+            color: #c62828;
+            margin-bottom: 10px;
+        }
+        .search-form .form-group {
+            margin-bottom: 0;
+        }
+        .active-filters {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .filter-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #4f9a2d;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 999px;
+            margin-left: 6px;
+            font-size: 0.85rem;
+        }
+        .product-info {
+            padding: 16px;
+        }
+        .product-description {
+            color: #64748b;
+            font-size: 0.93rem;
+            line-height: 1.6;
+            min-height: 56px;
+            margin-bottom: 12px;
+        }
+        .btn-small {
+            padding: 8px 14px;
+            font-size: 0.9rem;
+        }
+        .orders-table-wrapper {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            overflow: auto;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.06);
+            max-height: 480px;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255,255,255,0.95);
+        }
+        .orders-table th {
+            background: linear-gradient(135deg, #e8f5e9 0%, #d8f0dc 100%);
+            color: #2f5f3b;
+            text-align: center;
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 800;
+        }
+        .orders-table td {
+            padding: 12px 14px;
+            border-top: 1px solid #eef2f7;
+            color: #334155;
+            vertical-align: middle;
+            text-align: center;
+            background-color: rgba(255,255,255,0.55);
+        }
+        .orders-table td:first-child,
+        .orders-table th:first-child {
+            text-align: center;
+        }
+        .orders-table td:last-child,
+        .orders-table th:last-child {
+            text-align: center;
+        }
+        .orders-table th:last-child {
+            justify-content: center;
+        }
+        .orders-table tr:first-child td {
+            border-top: none;
+        }
+        .orders-table .order-product {
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .orders-table .status-badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .orders-table .status-badge.estado-pendiente {
+            background: #fff7e6;
+            color: #b45309;
+        }
+        .orders-table .status-badge.estado-confirmado {
+            background: #ecfdf3;
+            color: #166534;
+        }
+        .orders-table .status-badge.estado-cancelado {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .orders-table .order-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .orders-table .order-actions .btn {
+            padding: 7px 12px;
+            font-size: 0.9rem;
+        }
+        .order-detail-btn,
+        .view-cancel-reason-btn {
+            background: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            box-shadow: none;
+        }
+        .order-detail-btn:hover,
+        .view-cancel-reason-btn:hover {
+            background: #e2e8f0;
+        }
+        .cancel-reason-view-content {
+            white-space: pre-wrap;
+            line-height: 1.7;
+            color: #374151;
+            font-size: 15px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 14px 16px;
+            min-height: 90px;
+        }
+        .order-detail-btn:hover {
+            background: #e2e8f0;
+        }
+        @media (max-width: 768px) {
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+            .products-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hero-section {
+                grid-template-columns: 1fr;
+                padding: 24px;
+            }
+            .search-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 560px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar page-bg">
+    <div class="brand">
+        <img src="/static/marketplace/img/Logo-AgroClick.png" alt="AgroClick logo" />
+        <div class="site-title">AgroClick</div>
+    </div>
+    <div class="nav-links">
+        {% if user.is_authenticated %}
+            {% if request.resolver_match.url_name == 'ver_notificaciones' %}
+                <span class="nav-link-disabled">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</span>
+            {% else %}
+                <a href="{% url 'ver_notificaciones' %}">Notificaciones{% if notificaciones_count %} ({{ notificaciones_count }}){% endif %}</a>
+            {% endif %}
+            {% if user.perfil.rol == 'comprador' %}
+                {% if request.resolver_match.url_name == 'ver_carrito' %}
+                    <span class="nav-link-disabled nav-carrito-disabled">🛒 Carrito</span>
+                {% else %}
+                    <a href="{% url 'ver_carrito' %}" class="nav-carrito">🛒 Carrito</a>
+                {% endif %}
+                {% if request.resolver_match.url_name == 'mis_pedidos' %}
+                    <span class="nav-link-disabled nav-carrito-disabled">Mis pedidos</span>
+                {% else %}
+                    <a href="{% url 'mis_pedidos' %}" class="nav-carrito">Mis pedidos</a>
+                {% endif %}
+            {% endif %}
+            {% if user.is_staff %}
+                <details class="admin-actions-menu">
+                    <summary>{{ user.username }}</summary>
+                    <div class="menu-items">
+                        <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+                    </div>
+                </details>
+            {% else %}
+                <details class="user-actions-menu">
+                    <summary>{{ user.username }}</summary>
+                    <div class="menu-items">
+                        <a href="{% url 'enviar_soporte' %}">Soporte</a>
+                        <a href="{% url 'cerrar_sesion' %}">Cerrar sesión</a>
+                    </div>
+                </details>
+            {% endif %}
+        {% else %}
+            <a href="/accounts/login/">Iniciar sesión</a>
+            <a href="/registro/">Registrarse</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if messages %}
+    <div class="messages-container" style="max-width:1100px; margin: 16px auto; padding: 0 20px;">
+        {% for message in messages %}
+            <div class="message message-{{ message.tags }}" style="margin-bottom: 12px; padding: 14px 18px; border-radius: 12px; border: 1px solid #d1d5db; background: #f8fafc; color: #0f172a;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="container home-shell">
+    <div>
+        <div class="welcome" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
+            <p style="color: #666; font-size: 14px;">Conectando productores y compradores de Arica</p>
+            {% if user.is_authenticated %}
+                <h2>Bienvenido, {{ user.username }}! 👋</h2>
+            {% endif %}
+        </div>
+
+    {% include 'partials/inicio_admin.html' %}
+
+    {% include 'partials/inicio_vendedor.html' %}
+
+    {% include 'partials/inicio_delivery.html' %}
+
+    {% if not user.is_authenticated %}
+            <div class="auth-buttons">
+                <h2>Únete a AgroClick</h2>
+            <p>Crea una cuenta para comprar o vender productos agrícolas</p>
+            <a href="/accounts/login/" class="btn btn-primary">Iniciar sesión</a>
+            <a href="/registro/" class="btn btn-secondary">Crear cuenta</a>
+        </div>
+    {% endif %}
+
+    <!-- SECCIÓN DE BÚSQUEDA Y FILTROS -->
+    {% include 'partials/inicio_comprador.html' %}
+</div>
+
+    <div id="confirm-action-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content confirm-modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-action-title">
+            <div class="modal-header">
+                <h3 id="confirm-action-title">¿Seguro que quieres realizar esta acción?</h3>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-confirm-modal">Cerrar</button>
+                <button type="button" id="confirm-action-submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cancel-action-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content cancel-modal-content" role="dialog" aria-modal="true" aria-labelledby="cancel-action-title">
+            <div class="modal-header">
+                <h3 id="cancel-action-title">Motivo de cancelación</h3>
+            </div>
+            <div class="modal-body">
+                <form class="cancel-modal-form" id="cancel-reason-form">
+                    <textarea id="cancel-reason-textarea" class="cancel-modal-textarea" placeholder="Escribe el motivo..."></textarea>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary close-cancel-modal">Cancelar</button>
+                <button type="button" id="cancel-action-submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="product-detail-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+            <div class="modal-header">
+                <h3 id="detail-title">Detalle del pedido</h3>
+            </div>
+            <div class="modal-body">
+                <div class="modal-row"><span class="modal-label">Producto</span><span id="detail-producto" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Comprador:</span><span id="detail-comprador" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Cantidad productos:</span><span id="detail-cantidad" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Total:</span><span id="detail-total" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Método de entrega:</span><span id="detail-entrega" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Dirección de entrega:</span><span id="detail-direccion" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Referencia:</span><span id="detail-referencia" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Método de pago:</span><span id="detail-pago" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Estado:</span><span id="detail-estado" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Estado entrega:</span><span id="detail-estado-entrega" class="modal-value"></span></div>
+                <div class="modal-row"><span class="modal-label">Fecha y hora:</span><span id="detail-fecha" class="modal-value"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-modal" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const MODAL_DETALLE_PEDIDO = document.getElementById('product-detail-modal');
+            const DETALLE_PRODUCTO = document.getElementById('detail-producto');
+            const DETALLE_COMPRADOR = document.getElementById('detail-comprador');
+            const DETALLE_CANTIDAD = document.getElementById('detail-cantidad');
+            const DETALLE_TOTAL = document.getElementById('detail-total');
+            const DETALLE_ENTREGA = document.getElementById('detail-entrega');
+            const DETALLE_DIRECCION = document.getElementById('detail-direccion');
+            const DETALLE_REFERENCIA = document.getElementById('detail-referencia');
+            const DETALLE_PAGO = document.getElementById('detail-pago');
+            const DETALLE_ESTADO = document.getElementById('detail-estado');
+            const DETALLE_ESTADO_ENTREGA = document.getElementById('detail-estado-entrega');
+            const DETALLE_FECHA = document.getElementById('detail-fecha');
+            const botones_cerrar = [
+                document.getElementById('close-modal')
+            ];
+            const MODAL_CONFIRMACION_ACCION = document.getElementById('confirm-action-modal');
+            const BOTON_CONFIRMAR_ACCION = document.getElementById('confirm-action-submit');
+            const MODAL_CANCELACION_ACCION = document.getElementById('cancel-action-modal');
+            const BOTON_CONFIRMAR_CANCELACION = document.getElementById('cancel-action-submit');
+            const botones_cerrar_accion = document.querySelectorAll('.close-confirm-modal');
+            const botones_cerrar_cancelacion = document.querySelectorAll('.close-cancel-modal');
+            let formulario_pendiente = null;
+            let accion_pendiente = 'confirmar';
+
+            function abrir_detalle_pedido(boton) {
+                const productos = boton.dataset.producto || '';
+                const pedidosTexto = productos
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(Boolean)
+                    .map(item => item.trim())
+                    .join('<br>');
+                DETALLE_PRODUCTO.innerHTML = pedidosTexto || '';
+                DETALLE_COMPRADOR.textContent = boton.dataset.comprador || '';
+                DETALLE_CANTIDAD.textContent = boton.dataset.cantidad || '';
+                DETALLE_TOTAL.textContent = `$${boton.dataset.total || '0'}`;
+                DETALLE_ENTREGA.textContent = boton.dataset.entrega || 'No registrada';
+                const entrega = (boton.dataset.entrega || '').toLowerCase();
+                const filaDireccion = document.querySelector('#product-detail-modal .modal-row:nth-child(6)');
+                const filaReferencia = document.querySelector('#product-detail-modal .modal-row:nth-child(7)');
+
+                if (entrega.includes('retiro') || entrega.includes('tienda')) {
+                    filaDireccion.style.display = 'none';
+                    filaReferencia.style.display = 'none';
+                } else {
+                    filaDireccion.style.display = 'flex';
+                    filaReferencia.style.display = 'flex';
+                    DETALLE_DIRECCION.textContent = boton.dataset.direccion || 'No registrada';
+                    DETALLE_REFERENCIA.textContent = boton.dataset.referencia || 'No registrada';
+                }
+                DETALLE_PAGO.textContent = boton.dataset.pago || 'No registrada';
+                DETALLE_ESTADO.textContent = boton.dataset.estado || 'Pendiente';
+                DETALLE_ESTADO_ENTREGA.textContent = boton.dataset.estadoEntrega || 'Pendiente';
+                DETALLE_FECHA.textContent = boton.dataset.fecha || '';
+                MODAL_DETALLE_PEDIDO.classList.add('active');
+                MODAL_DETALLE_PEDIDO.setAttribute('aria-hidden', 'false');
+            }
+
+            function cerrar_modal() {
+                MODAL_DETALLE_PEDIDO.classList.remove('active');
+                MODAL_DETALLE_PEDIDO.setAttribute('aria-hidden', 'true');
+            }
+
+            function abrir_modal_accion(boton) {
+                formulario_pendiente = boton.closest('form');
+                if (formulario_pendiente) {
+                    const inputAccion = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (inputAccion) {
+                        inputAccion.value = 'confirmar';
+                    }
+                }
+                MODAL_CONFIRMACION_ACCION.classList.add('active');
+                MODAL_CONFIRMACION_ACCION.setAttribute('aria-hidden', 'false');
+            }
+
+            function abrir_modal_cancelacion(boton) {
+                formulario_pendiente = boton.closest('form');
+                accion_pendiente = 'cancelar';
+                const campoMotivo = document.getElementById('cancel-reason-textarea');
+                if (campoMotivo) {
+                    campoMotivo.value = '';
+                }
+                if (formulario_pendiente) {
+                    const inputAccion = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (inputAccion) {
+                        inputAccion.value = 'cancelar';
+                    }
+                    const inputMotivoAnterior = formulario_pendiente.querySelector('input[name="motivo_cancelacion"]');
+                    if (inputMotivoAnterior) {
+                        inputMotivoAnterior.remove();
+                    }
+                }
+                MODAL_CANCELACION_ACCION.classList.add('active');
+                MODAL_CANCELACION_ACCION.setAttribute('aria-hidden', 'false');
+            }
+
+            function cerrar_modal_accion() {
+                MODAL_CONFIRMACION_ACCION.classList.remove('active');
+                MODAL_CONFIRMACION_ACCION.setAttribute('aria-hidden', 'true');
+                formulario_pendiente = null;
+            }
+
+            function cerrar_modal_cancelacion() {
+                MODAL_CANCELACION_ACCION.classList.remove('active');
+                MODAL_CANCELACION_ACCION.setAttribute('aria-hidden', 'true');
+                formulario_pendiente = null;
+                accion_pendiente = 'confirmar';
+            }
+
+            document.querySelectorAll('.order-detail-btn').forEach(boton => {
+                boton.addEventListener('click', function(evento) {
+                    evento.stopPropagation();
+                    abrir_detalle_pedido(evento.currentTarget);
+                });
+            });
+
+            document.querySelectorAll('.accept-order-btn').forEach(boton => {
+                boton.addEventListener('click', function(evento) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    abrir_modal_accion(this);
+                });
+            });
+
+            document.querySelectorAll('.cancel-order-btn').forEach(boton => {
+                boton.addEventListener('click', function(evento) {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    abrir_modal_cancelacion(this);
+                });
+            });
+
+            botones_cerrar.forEach(boton => {
+                boton.addEventListener('click', cerrar_modal);
+            });
+
+            botones_cerrar_accion.forEach(boton => {
+                boton.addEventListener('click', cerrar_modal_accion);
+            });
+
+            botones_cerrar_cancelacion.forEach(boton => {
+                boton.addEventListener('click', cerrar_modal_cancelacion);
+            });
+
+            BOTON_CONFIRMAR_ACCION.addEventListener('click', function() {
+                if (formulario_pendiente) {
+                    const accionInput = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (accionInput) {
+                        accionInput.value = 'confirmar';
+                    }
+                    formulario_pendiente.submit();
+                }
+                cerrar_modal_accion();
+            });
+
+            BOTON_CONFIRMAR_CANCELACION.addEventListener('click', function() {
+                if (formulario_pendiente) {
+                    const accionInput = formulario_pendiente.querySelector('input[name="accion"]');
+                    if (accionInput) {
+                        accionInput.value = 'cancelar';
+                    }
+                    const motivoInput = document.getElementById('cancel-reason-textarea');
+                    let motivoText = '';
+                    if (motivoInput) {
+                        motivoText = motivoInput.value.trim();
+                    }
+                    const motivoAnterior = formulario_pendiente.querySelector('input[name="motivo_cancelacion"]');
+                    if (motivoAnterior) {
+                        motivoAnterior.remove();
+                    }
+                    const motivoHidden = document.createElement('input');
+                    motivoHidden.type = 'hidden';
+                    motivoHidden.name = 'motivo_cancelacion';
+                    motivoHidden.value = motivoText;
+                    formulario_pendiente.appendChild(motivoHidden);
+                    formulario_pendiente.submit();
+                }
+                cerrar_modal_cancelacion();
+            });
+
+            MODAL_DETALLE_PEDIDO.addEventListener('click', function(evento) {
+                if (evento.target === MODAL_DETALLE_PEDIDO) {
+                    cerrar_modal();
+                }
+            });
+
+            MODAL_CONFIRMACION_ACCION.addEventListener('click', function(evento) {
+                if (evento.target === MODAL_CONFIRMACION_ACCION) {
+                    cerrar_modal_accion();
+                }
+            });
+
+        });
+    </script>
+</html>
