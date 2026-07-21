@@ -360,6 +360,7 @@
                                         <button type="button" class="btn order-tracking-btn"
                                                 data-pedido-id="{{ pedido.id }}"
                                                 data-estado="{{ pedido.estado }}"
+                                                data-estado-entrega="{{ pedido.estado_entrega }}"
                                                 data-entrega="{{ pedido.tipo_entrega }}"
                                                 data-confirm-url="{% url 'confirmar_retiro_pedido' pedido.id %}">
                                             Seguimiento
@@ -558,6 +559,7 @@
         const confirmPickupForm = document.getElementById('confirm-pickup-form');
         const closeTrackingButton = document.getElementById('close-tracking-modal');
         const pickupNotYetButton = document.getElementById('pickup-not-yet');
+        const trackingThirdStepLabel = trackingSteps[2] ? trackingSteps[2].querySelector('.tracking-label') : null;
 
         function abrirDetallePedido(boton) {
             detalleProducto.innerHTML = (boton.dataset.producto || '').split(',').map(item => item.trim()).filter(Boolean).join('<br>');
@@ -600,13 +602,13 @@
             }
         });
 
-        const estadoPaso = {
+        const estadoPasoRetiro = {
             pendiente: 0,
             preparando: 1,
             listo: 2,
             completado: 3
         };
-        const mensajesEstado = {
+        const mensajesRetiro = {
             pendiente: 'El pedido está pendiente de aceptación por parte del vendedor.',
             preparando: 'El vendedor está preparando tu pedido.',
             listo: 'Tu pedido está listo para ser retirado en tienda.',
@@ -614,24 +616,82 @@
             cancelado: 'Este pedido fue cancelado.'
         };
 
+        const estadoPasoDelivery = {
+            pendiente: 0,
+            confirmado: 1,
+            asignado: 1,
+            en_camino: 2,
+            entregado: 3,
+            completado: 3,
+            no_entregado: 2
+        };
+
+        const mensajesDelivery = {
+            pendiente: 'El pedido está pendiente de aceptación por parte del vendedor.',
+            confirmado: 'El pedido fue confirmado y está esperando asignación de repartidor.',
+            asignado: 'El pedido ya fue asignado a un repartidor.',
+            en_camino: 'Tu pedido está en camino.',
+            entregado: 'El pedido fue entregado correctamente.',
+            completado: 'El pedido fue entregado correctamente.',
+            no_entregado: 'El repartidor no pudo completar la entrega en este intento.',
+            cancelado: 'Este pedido fue cancelado.'
+        };
+
+        function obtenerSeguimiento(estadoPedido, estadoEntrega, esRetiro) {
+            if (estadoPedido === 'cancelado') {
+                return {
+                    pasoActual: undefined,
+                    mensaje: 'Este pedido fue cancelado.'
+                };
+            }
+
+            if (esRetiro) {
+                return {
+                    pasoActual: estadoPasoRetiro[estadoPedido],
+                    mensaje: mensajesRetiro[estadoPedido] || 'Estado del pedido no disponible.'
+                };
+            }
+
+            let clave = estadoEntrega || estadoPedido;
+            if (estadoPedido === 'pendiente') {
+                clave = 'pendiente';
+            }
+            if (estadoPedido === 'completado') {
+                clave = 'completado';
+            }
+            if (!clave || clave === 'pendiente') {
+                clave = estadoPedido === 'confirmado' ? 'confirmado' : 'pendiente';
+            }
+
+            return {
+                pasoActual: estadoPasoDelivery[clave],
+                mensaje: mensajesDelivery[clave] || 'Estado del pedido no disponible.'
+            };
+        }
+
         function abrirSeguimiento(boton) {
             const estado = boton.dataset.estado || 'pendiente';
-            const pasoActual = estadoPaso[estado];
+            const estadoEntrega = boton.dataset.estadoEntrega || '';
             const esRetiro = boton.dataset.entrega === 'tienda';
+            const seguimiento = obtenerSeguimiento(estado, estadoEntrega, esRetiro);
+
+            if (trackingThirdStepLabel) {
+                trackingThirdStepLabel.textContent = esRetiro ? 'Listo para retiro' : 'En camino';
+            }
 
             trackingSteps.forEach(function(paso, indice) {
                 paso.classList.remove('is-active', 'is-complete');
-                if (pasoActual === undefined) {
+                if (seguimiento.pasoActual === undefined) {
                     return;
                 }
-                if (indice < pasoActual || estado === 'completado') {
+                if (indice < seguimiento.pasoActual || estado === 'completado' || estadoEntrega === 'entregado') {
                     paso.classList.add('is-complete');
-                } else if (indice === pasoActual) {
+                } else if (indice === seguimiento.pasoActual) {
                     paso.classList.add('is-active');
                 }
             });
 
-            trackingMessage.textContent = mensajesEstado[estado] || 'Estado del pedido no disponible.';
+            trackingMessage.textContent = seguimiento.mensaje;
             pickupConfirmation.classList.toggle('active', esRetiro && estado === 'listo');
             confirmPickupForm.action = boton.dataset.confirmUrl || '';
             trackingModal.classList.add('active');
