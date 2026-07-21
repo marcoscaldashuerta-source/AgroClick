@@ -944,6 +944,10 @@ def agregar_al_carrito(request, producto_id):
         item.cantidad += 1
         item.save()
 
+    # Detectar si es una petición AJAX
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': 'Producto agregado al carrito'})
+    
     return redirect('ver_carrito')
 
 
