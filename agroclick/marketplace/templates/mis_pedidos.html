@@ -285,6 +285,7 @@
                             <th>Vendedor</th>
                             <th>Total</th>
                             <th>Estado</th>
+                            <th>Estado entrega</th>
                             <th>Fecha</th>
                             <th>Acciones</th>
                         </tr>
@@ -300,10 +301,17 @@
                                 <td>
                                     <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
                                 </td>
+                                <td>
+                                    {% if pedido.tipo_entrega == 'delivery' %}
+                                        <span class="status-badge estado-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span>
+                                    {% else %}
+                                        <span>—</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
                                 <td>
                                     <div class="order-actions">
-                                        <button type="button" class="btn order-detail-btn" data-producto="{% if pedido.referencia_historica %}{{ pedido.referencia_historica|escapejs }}{% else %}Sin referencia{% endif %}" data-vendedor="{{ pedido.vendedor.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
+                                        <button type="button" class="btn order-detail-btn" data-producto="{% if pedido.referencia_historica %}{{ pedido.referencia_historica|escapejs }}{% else %}Sin referencia{% endif %}" data-vendedor="{{ pedido.vendedor.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-estado-entrega="{{ pedido.get_estado_entrega_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
                                             Ver detalles
                                         </button>
                                     </div>

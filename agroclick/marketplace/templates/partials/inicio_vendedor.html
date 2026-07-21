@@ -34,6 +34,7 @@
                                 <th>Comprador</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                <th>Estado entrega</th>
                                 <th>Fecha</th>
                                 <th>Acciones</th>
                             </tr>
@@ -48,6 +49,13 @@
                                     <td>${{ pedido.total }}</td>
                                     <td>
                                         <span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                                    </td>
+                                    <td>
+                                        {% if pedido.tipo_entrega == 'delivery' %}
+                                            <span class="status-badge estado-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span>
+                                        {% else %}
+                                            <span>—</span>
+                                        {% endif %}
                                     </td>
                                     <td>{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}</td>
                                     <td>
