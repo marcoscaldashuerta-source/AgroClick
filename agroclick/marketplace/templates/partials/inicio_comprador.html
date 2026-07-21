@@ -103,6 +103,8 @@
             </div>
             <div class="product-grid">
                 {% for producto in productos %}
+                    {% comment %}Construir lista de imágenes del producto{% endcomment %}
+                    {% with imgs_extra=producto.imagenes.all %}
                     <div class="product-card" 
                          data-nombre="{{ producto.nombre|escapejs }}"
                          data-precio="{{ producto.precio }}"
@@ -110,7 +112,9 @@
                          data-stock="{{ producto.stock }}"
                          data-descripcion="{{ producto.descripcion|escapejs }}"
                          data-vendedor="{{ producto.vendedor.username|escapejs }}"
-                         data-categoria="{{ producto.categoria|escapejs }}">
+                         data-categoria="{{ producto.categoria|escapejs }}"
+                         data-images="[{% if producto.imagen %}&quot;{{ producto.imagen.url }}&quot;{% endif %}{% for pi in imgs_extra %}{% if not forloop.first or producto.imagen %},{% endif %}&quot;{{ pi.imagen.url }}&quot;{% endfor %}]"
+                         >
                         {% if producto.imagen %}
                             <div class="product-image">
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" />
@@ -149,6 +153,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endwith %}
                 {% endfor %}
             </div>
         {% else %}

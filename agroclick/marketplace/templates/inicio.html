@@ -756,6 +756,121 @@
         </div>
     </div>
 
+    <!-- MODAL: VER DETALLE DE PRODUCTO (con carrusel) -->
+    <style>
+        .prod-carousel {
+            position: relative;
+            width: 220px;
+            flex: 0 0 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .prod-carousel-img-wrap {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .prod-carousel-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 14px;
+            transition: opacity 0.25s ease;
+        }
+        .prod-carousel-no-img {
+            color: #999;
+            font-size: 13px;
+        }
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.45);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: background 0.18s;
+            line-height: 1;
+        }
+        .carousel-arrow:hover { background: rgba(0,0,0,0.72); }
+        .carousel-arrow.prev { left: 6px; }
+        .carousel-arrow.next { right: 6px; }
+        .carousel-arrow.hidden { display: none; }
+        .carousel-counter {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+        }
+        .carousel-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 2px;
+        }
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #d1d5db;
+            transition: background 0.18s;
+            cursor: pointer;
+        }
+        .carousel-dot.active { background: #4CAF50; }
+        .producto-detalle-content {
+            max-width: 760px;
+            width: 100%;
+        }
+    </style>
+    <div id="producto-detalle-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content producto-detalle-content" role="dialog" aria-modal="true" aria-labelledby="prod-detail-title">
+            <div class="modal-header" style="position:relative;">
+                <h3 id="prod-detail-title">Detalle del producto</h3>
+                <button id="close-producto-modal" aria-label="Cerrar" style="position:absolute;right:18px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#fff;font-size:22px;line-height:1;">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+                <!-- Carrusel de imágenes -->
+                <div class="prod-carousel">
+                    <div class="prod-carousel-img-wrap">
+                        <button class="carousel-arrow prev hidden" id="carousel-prev" aria-label="Imagen anterior">&#8592;</button>
+                        <img id="prod-detail-img" src="" alt="Imagen del producto">
+                        <div id="prod-detail-no-img" class="prod-carousel-no-img" style="display:none;">Sin imagen</div>
+                        <button class="carousel-arrow next hidden" id="carousel-next" aria-label="Imagen siguiente">&#8594;</button>
+                    </div>
+                    <span class="carousel-counter" id="carousel-counter"></span>
+                    <div class="carousel-dots" id="carousel-dots"></div>
+                </div>
+                <!-- Datos del producto -->
+                <div style="flex:1;min-width:200px;">
+                    <div class="modal-row"><span class="modal-label">Nombre:</span><span id="prod-detail-nombre" class="modal-value"></span></div>
+                    <div class="modal-row"><span class="modal-label">Categor&#237;a:</span><span id="prod-detail-categoria" class="modal-value"></span></div>
+                    <div class="modal-row"><span class="modal-label">Precio:</span><span id="prod-detail-precio" class="modal-value"></span></div>
+                    <div class="modal-row"><span class="modal-label">Unidad de venta:</span><span id="prod-detail-unidad" class="modal-value"></span></div>
+                    <div class="modal-row"><span class="modal-label">Stock disponible:</span><span id="prod-detail-stock" class="modal-value"></span></div>
+                    <div class="modal-row"><span class="modal-label">Vendedor:</span><span id="prod-detail-vendedor" class="modal-value"></span></div>
+                    <div class="modal-row" style="align-items:flex-start;"><span class="modal-label">Descripci&#243;n:</span><span id="prod-detail-descripcion" class="modal-value" style="white-space:pre-wrap;"></span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-producto-modal-footer" class="btn btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const MODAL_DETALLE_PEDIDO = document.getElementById('product-detail-modal');
@@ -947,6 +1062,118 @@
                     cerrar_modal_accion();
                 }
             });
+
+            // ── MODAL VER DETALLE DE PRODUCTO (con carrusel) ───────────────
+            const MODAL_PRODUCTO    = document.getElementById('producto-detalle-modal');
+            const PROD_IMG          = document.getElementById('prod-detail-img');
+            const PROD_NO_IMG       = document.getElementById('prod-detail-no-img');
+            const PROD_NOMBRE       = document.getElementById('prod-detail-nombre');
+            const PROD_CATEGORIA    = document.getElementById('prod-detail-categoria');
+            const PROD_PRECIO       = document.getElementById('prod-detail-precio');
+            const PROD_UNIDAD       = document.getElementById('prod-detail-unidad');
+            const PROD_STOCK        = document.getElementById('prod-detail-stock');
+            const PROD_VENDEDOR     = document.getElementById('prod-detail-vendedor');
+            const PROD_DESC         = document.getElementById('prod-detail-descripcion');
+            const BTN_PREV          = document.getElementById('carousel-prev');
+            const BTN_NEXT          = document.getElementById('carousel-next');
+            const CAROUSEL_COUNTER  = document.getElementById('carousel-counter');
+            const CAROUSEL_DOTS     = document.getElementById('carousel-dots');
+
+            let carrusel_imgs = [];
+            let carrusel_idx  = 0;
+
+            function carruselActualizar(idx) {
+                carrusel_idx = Math.max(0, Math.min(idx, carrusel_imgs.length - 1));
+                if (carrusel_imgs.length === 0) {
+                    PROD_IMG.style.display = 'none';
+                    PROD_NO_IMG.style.display = 'flex';
+                    BTN_PREV.classList.add('hidden');
+                    BTN_NEXT.classList.add('hidden');
+                    CAROUSEL_COUNTER.textContent = '';
+                    CAROUSEL_DOTS.innerHTML = '';
+                    return;
+                }
+                PROD_IMG.style.opacity = '0';
+                setTimeout(function() {
+                    PROD_IMG.src = carrusel_imgs[carrusel_idx];
+                    PROD_IMG.style.display = 'block';
+                    PROD_NO_IMG.style.display = 'none';
+                    PROD_IMG.style.opacity = '1';
+                }, 120);
+                // Flechas: solo si hay más de 1 imagen
+                if (carrusel_imgs.length > 1) {
+                    BTN_PREV.classList.toggle('hidden', carrusel_idx === 0);
+                    BTN_NEXT.classList.toggle('hidden', carrusel_idx === carrusel_imgs.length - 1);
+                    CAROUSEL_COUNTER.textContent = `${carrusel_idx + 1} / ${carrusel_imgs.length}`;
+                } else {
+                    BTN_PREV.classList.add('hidden');
+                    BTN_NEXT.classList.add('hidden');
+                    CAROUSEL_COUNTER.textContent = '';
+                }
+                // Dots
+                CAROUSEL_DOTS.innerHTML = '';
+                if (carrusel_imgs.length > 1) {
+                    carrusel_imgs.forEach(function(_, i) {
+                        const dot = document.createElement('span');
+                        dot.className = 'carousel-dot' + (i === carrusel_idx ? ' active' : '');
+                        dot.addEventListener('click', function() { carruselActualizar(i); });
+                        CAROUSEL_DOTS.appendChild(dot);
+                    });
+                }
+            }
+
+            BTN_PREV.addEventListener('click', function(e) {
+                e.stopPropagation();
+                carruselActualizar(carrusel_idx - 1);
+            });
+            BTN_NEXT.addEventListener('click', function(e) {
+                e.stopPropagation();
+                carruselActualizar(carrusel_idx + 1);
+            });
+
+            function abrirDetalleProducto(card) {
+                // Datos texto
+                PROD_NOMBRE.textContent    = card.dataset.nombre    || '';
+                PROD_CATEGORIA.textContent = card.dataset.categoria || '';
+                const precio = card.dataset.precio || '';
+                const unidad = card.dataset.unidad || '';
+                PROD_PRECIO.textContent  = precio ? `$${Number(precio).toLocaleString('es-CL')} / ${unidad}` : '\u2014';
+                PROD_UNIDAD.textContent  = unidad;
+                PROD_STOCK.textContent   = card.dataset.stock ? `${card.dataset.stock} unidades` : '\u2014';
+                PROD_VENDEDOR.textContent = card.dataset.vendedor || '';
+                PROD_DESC.textContent    = card.dataset.descripcion || '';
+                // Imágenes
+                try {
+                    carrusel_imgs = JSON.parse(card.dataset.images || '[]');
+                } catch(e) {
+                    carrusel_imgs = [];
+                }
+                // Filtrar vacíos
+                carrusel_imgs = carrusel_imgs.filter(function(s) { return s && s.trim(); });
+                carruselActualizar(0);
+                MODAL_PRODUCTO.classList.add('active');
+                MODAL_PRODUCTO.setAttribute('aria-hidden', 'false');
+            }
+
+            function cerrarDetalleProducto() {
+                MODAL_PRODUCTO.classList.remove('active');
+                MODAL_PRODUCTO.setAttribute('aria-hidden', 'true');
+            }
+
+            document.querySelectorAll('.btn-detail').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const card = btn.closest('.product-card');
+                    if (card) abrirDetalleProducto(card);
+                });
+            });
+
+            document.getElementById('close-producto-modal').addEventListener('click', cerrarDetalleProducto);
+            document.getElementById('close-producto-modal-footer').addEventListener('click', cerrarDetalleProducto);
+            MODAL_PRODUCTO.addEventListener('click', function(e) {
+                if (e.target === MODAL_PRODUCTO) cerrarDetalleProducto();
+            });
+            // ───────────────────────────────────────────────────────────────
 
         });
     </script>
