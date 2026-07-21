@@ -55,9 +55,7 @@
                                             {% comment %}Attach last payment proof image if exists{% endcomment %}
                                             {% with last_proof=pedido.comprobantes.last %}
                                                 {% if last_proof %}
-                                                    <div style="display:inline-block; margin-right:8px;">
-                                                        <a href="{{ last_proof.imagen.url }}" target="_blank">Ver comprobante</a>
-                                                    </div>
+                                                    <a href="{{ last_proof.imagen.url }}" class="btn order-detail-btn" target="_blank" rel="noopener">Ver comprobante</a>
                                                 {% endif %}
                                             {% endwith %}
                                             <button type="button" class="btn order-detail-btn" data-order-id="{{ pedido.id }}" data-producto="{% if pedido.referencia_historica %}{{ pedido.referencia_historica|escapejs }}{% else %}Sin referencia{% endif %}" data-pedido-id="{{ pedido.id }}" data-comprador="{{ pedido.comprador.username|escapejs }}" data-cantidad="{{ pedido.cantidad }}" data-total="{{ pedido.total }}" data-entrega="{{ pedido.get_tipo_entrega_display }}" data-direccion="{% if pedido.direccion_entrega %}{{ pedido.direccion_entrega|escapejs }}{% else %}No registrada{% endif %}" data-referencia="{% if pedido.referencia %}{{ pedido.referencia|escapejs }}{% else %}No registrada{% endif %}" data-pago="{{ pedido.get_tipo_pago_display }}" data-estado="{{ pedido.get_estado_display }}" data-fecha="{{ pedido.fecha_creacion|date:'d/m/Y H:i' }}">
@@ -73,6 +71,11 @@
                                                     </form>
                                                 {% else %}
                                                     <span class="status-badge estado-pendiente">Esperando comprobante</span>
+                                                    <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; gap: 8px; margin: 0;">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="accion" value="cancelar">
+                                                        <button type="button" class="btn btn-secondary cancel-order-btn">Cancelar</button>
+                                                    </form>
                                                 {% endif %}
                                             {% endif %}
                                         </div>

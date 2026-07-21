@@ -3,8 +3,229 @@
 {% block title %}Pedido registrado - AgroClick{% endblock %}
 
 {% block content %}
+<style>
+    .proof-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+    }
+    .proof-modal-overlay.active {
+        display: flex;
+    }
+    .proof-modal {
+        width: 100%;
+        max-width: 560px;
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+        overflow: hidden;
+    }
+    .proof-modal-header {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #4CAF50, #2e7d32);
+        color: #ffffff;
+    }
+    .proof-modal-header h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        text-align: center;
+    }
+    .proof-modal-body {
+        padding: 18px 20px 16px;
+    }
+    .proof-modal-body p {
+        margin: 0 0 14px;
+        color: #4b5563;
+    }
+    .proof-dropzone {
+        border: 2px dashed #8bc34a;
+        border-radius: 20px;
+        padding: 18px;
+        background: linear-gradient(135deg, #f8fff7 0%, #eef9ee 100%);
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+    .proof-dropzone:hover,
+    .proof-dropzone.dragover {
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(76, 175, 80, 0.16);
+    }
+    .proof-dropzone-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+    }
+    .proof-dropzone-content strong {
+        display: block;
+        font-size: 15px;
+        color: #1f2937;
+        margin-bottom: 4px;
+    }
+    .proof-dropzone-content p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 12px;
+    }
+    .proof-dropzone-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 13px;
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.16);
+    }
+    .proof-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .proof-preview {
+        display: none;
+        margin-top: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 10px;
+        background: #f8fafc;
+    }
+    .proof-preview.show {
+        display: block;
+    }
+    .proof-preview-media {
+        position: relative;
+    }
+    .proof-preview img {
+        width: 100%;
+        max-height: 250px;
+        object-fit: contain;
+        border-radius: 10px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+    }
+    .proof-preview-meta {
+        margin-top: 8px;
+    }
+    .proof-preview-name {
+        margin: 0;
+        font-size: 12px;
+        color: #475569;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .proof-remove-btn {
+        border: none;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.75);
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+    }
+    .proof-remove-btn:hover {
+        background: rgba(185, 28, 28, 0.92);
+    }
+    .proof-modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        padding: 0 20px 20px;
+    }
+    .proof-modal-actions .btn {
+        border: none;
+    }
+    .leave-warning-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10010;
+        padding: 20px;
+    }
+    .leave-warning-overlay.active {
+        display: flex;
+    }
+    .leave-warning-modal {
+        width: 100%;
+        max-width: 460px;
+        background: #ffffff;
+        border-radius: 18px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+        overflow: hidden;
+    }
+    .leave-warning-header {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #4CAF50, #2e7d32);
+        color: #ffffff;
+    }
+    .leave-warning-header h3 {
+        margin: 0;
+        text-align: center;
+        font-size: 1.15rem;
+    }
+    .leave-warning-body {
+        padding: 22px 20px 16px;
+        text-align: center;
+        color: #4b5563;
+        line-height: 1.55;
+        background: #fcfffc;
+    }
+    .leave-warning-body p {
+        margin: 0;
+    }
+    .leave-warning-actions {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        padding: 0 20px 20px;
+        background: #fcfffc;
+    }
+    .leave-warning-actions .btn {
+        min-width: 118px;
+        border: none;
+    }
+</style>
+
 <div class="page-shell">
     <div class="page-card" style="max-width: 760px; margin: 32px auto;">
+        <div class="page-top">
+            <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
+        </div>
+
         {% if pago_transferencia %}
             <h1 class="page-title" style="margin-bottom: 10px;">Pedido pendiente de comprobante</h1>
             <p style="color: #4b5563; margin-bottom: 20px;">Transfiere a cada vendedor y sube el comprobante correspondiente. El pedido seguirá pendiente hasta que el vendedor lo acepte.</p>
@@ -33,7 +254,17 @@
                                 <td>${{ pedido.total }}</td>
                                 <td><span class="status-badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></td>
                                 {% if pago_transferencia %}
-                                    <td><a href="{% url 'subir_comprobante' pedido.id %}" class="btn btn-primary">Subir comprobante</a></td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary open-proof-modal-btn"
+                                            data-upload-url="{% url 'subir_comprobante' pedido.id %}"
+                                            data-pedido-id="{{ pedido.id }}"
+                                            data-vendedor="{{ pedido.vendedor.username }}"
+                                        >
+                                            Subir comprobante
+                                        </button>
+                                    </td>
                                 {% endif %}
                             </tr>
                         {% endfor %}
@@ -54,15 +285,257 @@
                         <p><strong>Número de cuenta:</strong> {{ datos.numero_cuenta }}</p>
                         <p><strong>Tipo:</strong> {{ datos.get_tipo_cuenta_display }}</p>
                         <p><strong>Correo:</strong> {{ datos.email }}</p>
-                        <a href="{% url 'subir_comprobante' pedido.id %}" class="btn btn-primary">Subir comprobante</a>
                     </div>
                 {% endwith %}
             {% endfor %}
         {% endif %}
+    </div>
+</div>
 
-        <div style="margin-top: 20px;">
-            <a href="{% url 'inicio' %}" class="btn btn-primary">Volver al inicio</a>
+<div id="proof-upload-modal" class="proof-modal-overlay" aria-hidden="true">
+    <div class="proof-modal" role="dialog" aria-modal="true" aria-labelledby="proof-modal-title">
+        <div class="proof-modal-header">
+            <h3 id="proof-modal-title">Subir comprobante</h3>
+        </div>
+        <form id="proof-upload-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="proof-modal-body">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="proof-image-input" id="proof-dropzone" class="proof-dropzone">
+                        <span class="proof-dropzone-inner">
+                            <span class="proof-dropzone-content">
+                                <strong>Arrastra tu imagen aquí</strong>
+                                <p>o selecciona un archivo desde tu dispositivo (solo 1 imagen)</p>
+                            </span>
+                            <span class="proof-dropzone-button">Elegir imagen</span>
+                        </span>
+                    </label>
+                    <input id="proof-image-input" class="proof-file-input" type="file" name="imagen" accept="image/*" required>
+                    <div id="proof-preview" class="proof-preview" aria-live="polite">
+                        <div class="proof-preview-media">
+                            <img id="proof-preview-image" alt="Vista previa del comprobante">
+                            <button type="button" id="proof-remove-image" class="proof-remove-btn" aria-label="Quitar foto">×</button>
+                        </div>
+                        <div class="proof-preview-meta">
+                            <p id="proof-preview-name" class="proof-preview-name"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="proof-modal-actions">
+                <button type="button" id="proof-modal-cancel" class="btn order-detail-btn">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="leave-warning-modal" class="leave-warning-overlay" aria-hidden="true">
+    <div class="leave-warning-modal" role="dialog" aria-modal="true" aria-labelledby="leave-warning-title">
+        <div class="leave-warning-header">
+            <h3 id="leave-warning-title">Aviso</h3>
+        </div>
+        <div class="leave-warning-body">
+            <p>No has subido el comprobante. ¿Seguro que quieres salir?</p>
+        </div>
+        <div class="leave-warning-actions">
+            <button type="button" id="leave-warning-cancel" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="leave-warning-accept" class="btn btn-primary">Aceptar</button>
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('proof-upload-modal');
+        if (!modal) {
+            return;
+        }
+
+        const form = document.getElementById('proof-upload-form');
+        const fileInput = document.getElementById('proof-image-input');
+        const dropzone = document.getElementById('proof-dropzone');
+        const preview = document.getElementById('proof-preview');
+        const previewImage = document.getElementById('proof-preview-image');
+        const previewName = document.getElementById('proof-preview-name');
+        const removeImageBtn = document.getElementById('proof-remove-image');
+        const cancelBtn = document.getElementById('proof-modal-cancel');
+        const openButtons = document.querySelectorAll('.open-proof-modal-btn');
+        const leaveWarningModal = document.getElementById('leave-warning-modal');
+        const leaveWarningCancel = document.getElementById('leave-warning-cancel');
+        const leaveWarningAccept = document.getElementById('leave-warning-accept');
+        const shouldWarnOnLeave = openButtons.length > 0;
+        let hasSubmittedProof = false;
+        let pendingAction = null;
+
+        const clearPreview = function () {
+            preview.classList.remove('show');
+            previewImage.removeAttribute('src');
+            previewName.textContent = '';
+            fileInput.value = '';
+        };
+
+        const renderPreview = function (file) {
+            if (!file) {
+                clearPreview();
+                return;
+            }
+
+            previewName.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                previewImage.setAttribute('src', event.target.result);
+                preview.classList.add('show');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const closeModal = function () {
+            modal.classList.remove('active');
+            modal.setAttribute('aria-hidden', 'true');
+            form.reset();
+            clearPreview();
+        };
+
+        const openLeaveWarning = function (onAccept) {
+            pendingAction = onAccept;
+            leaveWarningModal.classList.add('active');
+            leaveWarningModal.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeLeaveWarning = function () {
+            leaveWarningModal.classList.remove('active');
+            leaveWarningModal.setAttribute('aria-hidden', 'true');
+            pendingAction = null;
+        };
+
+        openButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const uploadUrl = btn.getAttribute('data-upload-url');
+
+                form.setAttribute('action', uploadUrl);
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+                fileInput.focus();
+            });
+        });
+
+        cancelBtn.addEventListener('click', closeModal);
+
+        form.addEventListener('submit', function () {
+            hasSubmittedProof = true;
+        });
+
+        fileInput.addEventListener('change', function () {
+            const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            renderPreview(file);
+        });
+
+        dropzone.addEventListener('dragover', function (event) {
+            event.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', function () {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', function (event) {
+            event.preventDefault();
+            dropzone.classList.remove('dragover');
+
+            const files = event.dataTransfer && event.dataTransfer.files ? event.dataTransfer.files : null;
+            if (!files || files.length === 0) {
+                return;
+            }
+
+            const file = files[0];
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            fileInput.files = transfer.files;
+            renderPreview(file);
+        });
+
+        removeImageBtn.addEventListener('click', function () {
+            clearPreview();
+            fileInput.focus();
+        });
+
+        if (shouldWarnOnLeave) {
+            document.addEventListener('click', function (event) {
+                if (hasSubmittedProof) {
+                    return;
+                }
+
+                const target = event.target;
+                const anchor = target.closest('a[href]');
+                const button = target.closest('button');
+
+                if (target.closest('#proof-upload-modal') || target.closest('#leave-warning-modal')) {
+                    return;
+                }
+
+                if (button && (
+                    button.classList.contains('open-proof-modal-btn') ||
+                    button.id === 'proof-remove-image'
+                )) {
+                    return;
+                }
+
+                if (anchor) {
+                    const href = anchor.getAttribute('href');
+                    if (!href || href === '#') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    openLeaveWarning(function () {
+                        window.location.href = href;
+                    });
+                    return;
+                }
+
+                if (button && button.type === 'submit') {
+                    const formElement = button.form;
+                    if (formElement && formElement.id !== 'proof-upload-form') {
+                        event.preventDefault();
+                        openLeaveWarning(function () {
+                            formElement.submit();
+                        });
+                    }
+                }
+            }, true);
+        }
+
+        leaveWarningCancel.addEventListener('click', closeLeaveWarning);
+
+        leaveWarningAccept.addEventListener('click', function () {
+            if (typeof pendingAction === 'function') {
+                const action = pendingAction;
+                closeLeaveWarning();
+                action();
+                return;
+            }
+            closeLeaveWarning();
+        });
+
+        leaveWarningModal.addEventListener('click', function (event) {
+            if (event.target === leaveWarningModal) {
+                closeLeaveWarning();
+            }
+        });
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+    })();
+</script>
 {% endblock %}
