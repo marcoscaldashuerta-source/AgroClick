@@ -16,138 +16,174 @@
         overflow: hidden;
     }
     .page-top {
-        padding: 24px;
-        border-bottom: 1px solid #e5e7eb;
+        padding: 20px 24px 0;
     }
+    .back-link {
+        color: #22c55e;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+    .back-link:hover { text-decoration: underline; }
     .page-title {
-        font-size: 28px;
+        font-size: 26px;
+        font-weight: 800;
         color: #0f172a;
-        margin-bottom: 0;
+        padding: 0 24px 16px;
+        border-bottom: 1px solid #e5e7eb;
     }
     .section-block {
         padding: 24px;
     }
     .section-title {
-        font-size: 20px;
+        font-size: 18px;
+        font-weight: 700;
         margin-bottom: 16px;
         color: #111827;
+    }
+    .orders-table-wrapper {
+        overflow-x: auto;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
     }
     .orders-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 12px;
-    }
-    .orders-table th,
-    .orders-table td {
-        padding: 16px 14px;
-        border-bottom: 1px solid #e5e7eb;
-        text-align: left;
     }
     .orders-table th {
-        background: #f8fafc;
+        background: linear-gradient(135deg, #e8f5e9 0%, #d8f0dc 100%);
+        color: #2f5f3b;
+        text-align: center;
+        padding: 12px 14px;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-weight: 800;
+    }
+    .orders-table td {
+        padding: 14px;
+        border-top: 1px solid #eef2f7;
         color: #334155;
-        font-weight: 700;
-        font-size: 0.92rem;
+        vertical-align: middle;
+        text-align: center;
+        background-color: rgba(255,255,255,0.55);
     }
-    .order-row:last-child td {
-        border-bottom: none;
-    }
+    .orders-table tr:first-child td { border-top: none; }
+    .orders-table tbody tr:hover td { background-color: #f8fdf8; }
     .status-badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 12px;
+        display: inline-block;
+        padding: 6px 12px;
         border-radius: 999px;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         white-space: nowrap;
     }
-    .status-pendiente { background: #fef3c7; color: #92400e; }
-    .status-asignado { background: #dcfce7; color: #166534; }
-    .status-en_camino { background: #e0f2fe; color: #0369a1; }
-    .status-entregado { background: #ecfdf5; color: #0f766e; }
-    .button-group {
-        display: grid;
-        gap: 10px;
+    .status-pendiente  { background: #fef3c7; color: #92400e; }
+    .status-asignado   { background: #dcfce7; color: #166534; }
+    .status-en_camino  { background: #e0f2fe; color: #0369a1; }
+    .status-entregado  { background: #ecfdf5; color: #0f766e; }
+    .status-no_entregado { background: #fee2e2; color: #b91c1c; }
+    .order-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
     }
-    .btn-small {
-        padding: 10px 14px;
-        border-radius: 999px;
+    .btn-action {
+        padding: 7px 16px;
+        border-radius: 20px;
         font-weight: 700;
+        font-size: 0.88rem;
         border: none;
         cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: opacity 0.2s;
     }
-    .btn-primary { background: #22c55e; color: white; }
-    .btn-secondary { background: #0ea5e9; color: white; }
-    .btn-tertiary { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; }
-    .order-details {
-        display: grid;
-        gap: 10px;
+    .btn-action:hover { opacity: 0.85; }
+    .btn-green  { background: #22c55e; color: white; }
+    .btn-blue   { background: #0ea5e9; color: white; }
+    .btn-gray   { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+    .update-form {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 180px;
     }
-    .order-card {
-        background: #fafaf9;
-        border: 1px solid #e7e8ea;
-        border-radius: 16px;
-        padding: 18px;
+    .update-form select {
+        padding: 6px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        background: white;
     }
-    .order-card p { margin: 6px 0; color: #334155; }
+    .update-form textarea {
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        resize: vertical;
+        min-height: 55px;
+        font-family: inherit;
+    }
     .empty-state {
         padding: 28px;
-        border-radius: 20px;
+        border-radius: 14px;
         text-align: center;
         background: #f8fafc;
         border: 1px dashed #cbd5e1;
         color: #475569;
-    }
-    .badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
     }
 </style>
 
 <div class="page-shell">
     <div class="page-card">
         <div class="page-top">
-            <a href="{% url 'inicio' %}" class="btn btn-tertiary" style="margin-bottom: 14px; display: inline-flex;">← Volver al inicio</a>
-            <h1 class="page-title">Pedidos delivery</h1>
-            <p style="margin-top: 8px; color: #475569;">Aquí ves los pedidos confirmados con delivery disponibles y los que ya te asignaron.</p>
+            <a href="{% url 'inicio' %}" class="back-link">← Volver al inicio</a>
         </div>
+        <h1 class="page-title">Pedidos Delivery</h1>
 
         <div class="section-block">
             <h2 class="section-title">Pedidos disponibles</h2>
             {% if pedidos_disponibles %}
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Comprador</th>
-                            <th>Dirección</th>
-                            <th>Productos</th>
-                            <th>Total</th>
-                            <th>Estado entrega</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pedido in pedidos_disponibles %}
-                            <tr class="order-row">
-                                <td>{{ pedido.id }}</td>
-                                <td>{{ pedido.comprador.username }}</td>
-                                <td>{{ pedido.direccion_entrega }}</td>
-                                <td>{{ pedido.referencia_historica }}</td>
-                                <td>${{ pedido.total }}</td>
-                                <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
-                                <td>
-                                    <form method="post" action="{% url 'asignar_pedido_delivery' pedido.id %}" style="margin:0;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-primary btn-small">Realizar delivery</button>
-                                    </form>
-                                </td>
+                <div class="orders-table-wrapper">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Comprador</th>
+                                <th>Dirección</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                                <th>Estado entrega</th>
+                                <th>Acción</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for pedido in pedidos_disponibles %}
+                                <tr>
+                                    <td>{{ pedido.id }}</td>
+                                    <td>{{ pedido.comprador.username }}</td>
+                                    <td>{{ pedido.direccion_entrega }}</td>
+                                    <td>{{ pedido.referencia_historica }}</td>
+                                    <td>${{ pedido.total }}</td>
+                                    <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
+                                    <td>
+                                        <div class="order-actions">
+                                            <form method="post" action="{% url 'asignar_pedido_delivery' pedido.id %}" style="margin:0;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn-action btn-green">Realizar delivery</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
                 <div class="empty-state">
                     <p>No hay pedidos delivery disponibles en este momento.</p>
@@ -158,59 +194,51 @@
         <div class="section-block" style="border-top: 1px solid #e5e7eb;">
             <h2 class="section-title">Mis pedidos asignados</h2>
             {% if pedidos_asignados %}
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Comprador</th>
-                            <th>Dirección</th>
-                            <th>Productos</th>
-                            <th>Total</th>
-                            <th>Estado entrega</th>
-                            <th>Actualizar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pedido in pedidos_asignados %}
-                            <tr class="order-row">
-                                <td>{{ pedido.id }}</td>
-                                <td>{{ pedido.comprador.username }}</td>
-                                <td>{{ pedido.direccion_entrega }}</td>
-                                <td>{{ pedido.referencia_historica }}</td>
-                                <td>${{ pedido.total }}</td>
-                                <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
-                                <td>
-<<<<<<< Updated upstream
-                                    <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:grid; gap: 8px;">
-                                        {% csrf_token %}
-                                        <select name="estado_entrega" class="btn btn-tertiary" style="width:100%; text-align:left;">
-                                            <option value="asignado" {% if pedido.estado_entrega == 'asignado' %}selected{% endif %}>Asignado</option>
-                                            <option value="en_camino" {% if pedido.estado_entrega == 'en_camino' %}selected{% endif %}>En camino</option>
-                                            <option value="entregado" {% if pedido.estado_entrega == 'entregado' %}selected{% endif %}>Entregado</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-secondary btn-small">Actualizar</button>
-                                    </form>
-=======
-                                    <div class="button-group">
-                                        <a href="{% url 'detalle_pedido_delivery' pedido.id %}" class="btn btn-tertiary btn-small">Ver detalle</a>
-                                        <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="display:grid; gap: 8px; margin:0;">
-                                            {% csrf_token %}
-                                            <select name="estado_entrega" class="btn btn-tertiary" style="width:100%; text-align:left;">
-                                                <option value="asignado" {% if pedido.estado_entrega == 'asignado' %}selected{% endif %}>Asignado</option>
-                                                <option value="en_camino" {% if pedido.estado_entrega == 'en_camino' %}selected{% endif %}>En camino</option>
-                                                <option value="entregado" {% if pedido.estado_entrega == 'entregado' %}selected{% endif %}>Entregado</option>
-                                                <option value="no_entregado" {% if pedido.estado_entrega == 'no_entregado' %}selected{% endif %}>No entregado</option>
-                                            </select>
-                                            <textarea name="motivo_no_entrega" placeholder="Motivo si no entregado" style="width:100%; min-height:60px; border:1px solid #d1d5db; border-radius:12px; padding:10px; resize: vertical;">{{ pedido.motivo_cancelacion }}</textarea>
-                                            <button type="submit" class="btn btn-secondary btn-small">Actualizar</button>
-                                        </form>
-                                    </div>
->>>>>>> Stashed changes
-                                </td>
+                <div class="orders-table-wrapper">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Comprador</th>
+                                <th>Dirección</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                                <th>Estado entrega</th>
+                                <th>Actualizar</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for pedido in pedidos_asignados %}
+                                <tr>
+                                    <td>{{ pedido.id }}</td>
+                                    <td>{{ pedido.comprador.username }}</td>
+                                    <td>{{ pedido.direccion_entrega }}</td>
+                                    <td>{{ pedido.referencia_historica }}</td>
+                                    <td>${{ pedido.total }}</td>
+                                    <td><span class="status-badge status-{{ pedido.estado_entrega }}">{{ pedido.get_estado_entrega_display }}</span></td>
+                                    <td>
+                                        <div class="order-actions">
+                                            <a href="{% url 'detalle_pedido_delivery' pedido.id %}" class="btn-action btn-gray">Ver detalle</a>
+                                            <form method="post" action="{% url 'actualizar_estado_entrega' pedido.id %}" style="margin:0;">
+                                                {% csrf_token %}
+                                                <div class="update-form">
+                                                    <select name="estado_entrega">
+                                                        <option value="asignado" {% if pedido.estado_entrega == 'asignado' %}selected{% endif %}>Asignado</option>
+                                                        <option value="en_camino" {% if pedido.estado_entrega == 'en_camino' %}selected{% endif %}>En camino</option>
+                                                        <option value="entregado" {% if pedido.estado_entrega == 'entregado' %}selected{% endif %}>Entregado</option>
+                                                        <option value="no_entregado" {% if pedido.estado_entrega == 'no_entregado' %}selected{% endif %}>No entregado</option>
+                                                    </select>
+                                                    <textarea name="motivo_no_entrega" placeholder="Motivo si no entregado">{{ pedido.motivo_cancelacion }}</textarea>
+                                                    <button type="submit" class="btn-action btn-blue">Actualizar</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
                 <div class="empty-state">
                     <p>No tienes pedidos asignados todavía.</p>
