@@ -75,6 +75,82 @@
             margin: 0 auto;
             padding: 20px 24px 32px;
         }
+        .home-hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            align-items: center;
+            gap: 26px;
+            background: linear-gradient(135deg, #ffffff 0%, #f5fbf0 100%);
+            border: 1px solid rgba(79,154,45,0.2);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 18px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+        .home-hero-copy h2 {
+            color: #14532d;
+            font-size: clamp(1.5rem, 2.3vw, 2.1rem);
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eaf7e1;
+            color: #2f5f3b;
+            border: 1px solid #b9e3a7;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            margin-bottom: 10px;
+        }
+        .home-hero-copy p {
+            color: #475569;
+            font-size: 1rem;
+            line-height: 1.65;
+            max-width: 56ch;
+        }
+        .auth-buttons {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .auth-buttons h2 {
+            color: #14532d;
+            margin-bottom: 6px;
+        }
+        .auth-buttons p {
+            color: #64748b;
+            margin-bottom: 14px;
+        }
+        .auth-buttons-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-buttons-actions .btn {
+            min-width: 186px;
+            text-align: center;
+        }
+        .home-hero-art {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .home-hero-art img {
+            width: min(100%, 400px);
+            height: auto;
+            filter: drop-shadow(0 12px 18px rgba(15, 23, 42, 0.12));
+        }
         .welcome p {
             margin-bottom: 12px;
         }
@@ -626,9 +702,20 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+            .home-hero,
             .hero-section {
                 grid-template-columns: 1fr;
                 padding: 24px;
+            }
+            .home-hero-copy {
+                text-align: center;
+            }
+            .auth-buttons-actions {
+                justify-content: center;
+            }
+            .auth-buttons-actions .btn {
+                min-width: 0;
+                width: 100%;
             }
             .search-grid {
                 grid-template-columns: 1fr 1fr;
@@ -686,36 +773,45 @@
                     </div>
                 </details>
             {% endif %}
-        {% else %}
-            <a href="/accounts/login/">Iniciar sesión</a>
-            <a href="/registro/">Registrarse</a>
         {% endif %}
     </div>
 </div>
 
 <div class="container home-shell">
     <div>
-        <div class="welcome" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
-            <p style="color: #666; font-size: 14px;">Conectando productores y compradores de Arica</p>
-            {% if user.is_authenticated %}
+        {% if not user.is_authenticated %}
+            <div class="auth-buttons">
+                <h2>Únete a AgroClick</h2>
+                <p>Crea una cuenta para comprar o vender productos agrícolas</p>
+                <div class="auth-buttons-actions">
+                    <a href="/accounts/login/" class="btn btn-primary">Iniciar sesión</a>
+                    <a href="/registro/" class="btn btn-secondary">Crear cuenta</a>
+                </div>
+            </div>
+        {% endif %}
+
+        <section class="home-hero" aria-label="Hero AgroClick">
+            <div class="home-hero-copy">
+                <span class="hero-chip">Terminal Asoagro</span>
+                <h2>Frescura local, directo a tu mesa</h2>
+                <p>Descubre frutas y verduras de temporada desde productores de Arica y el entorno de Terminal Asoagro. Compra con confianza, coordina entrega o retiro, y sigue tu pedido en cada etapa.</p>
+            </div>
+            <div class="home-hero-art">
+                <img src="{% static 'marketplace/img/hero-frutas.svg' %}" alt="Ilustracion de frutas y verduras frescas" />
+            </div>
+        </section>
+
+        {% if user.is_authenticated %}
+            <div class="welcome" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); margin-bottom: 20px;">
                 <h2>Bienvenido, {{ user.username }}! 👋</h2>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
 
     {% include 'partials/inicio_admin.html' %}
 
     {% include 'partials/inicio_vendedor.html' %}
 
     {% include 'partials/inicio_delivery.html' %}
-
-    {% if not user.is_authenticated %}
-            <div class="auth-buttons">
-                <h2>Únete a AgroClick</h2>
-            <p>Crea una cuenta para comprar o vender productos agrícolas</p>
-            <a href="/accounts/login/" class="btn btn-primary">Iniciar sesión</a>
-            <a href="/registro/" class="btn btn-secondary">Crear cuenta</a>
-        </div>
-    {% endif %}
 
     <!-- SECCIÓN DE BÚSQUEDA Y FILTROS -->
     {% include 'partials/inicio_comprador.html' %}
