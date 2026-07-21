@@ -1012,7 +1012,7 @@ def checkout(request):
 
 @require_http_methods(['POST'])
 def actualizar_estado_pedido(request, pedido_id):
-    """Permite al vendedor confirmar o cancelar un pedido desde su panel."""
+    """Permite al vendedor avanzar o cancelar un pedido desde su panel."""
     if not request.user.is_authenticated:
         return redirect('/accounts/login/')
 
@@ -1056,7 +1056,26 @@ def actualizar_estado_pedido(request, pedido_id):
             mensaje=f'Tu Pedido N°{pedido.id} fue aceptado y se está preparando.',
         )
         messages.success(request, f'Pedido N°{pedido.id} aceptado y en preparación.')
+    elif accion == 'marcar_listo':
+        if pedido.tipo_entrega != 'tienda':
+            messages.error(request, 'Esta acción solo está disponible para pedidos con retiro en tienda.')
+            return redirect('inicio')
+        if pedido.estado != 'preparando':
+            messages.error(request, 'El pedido debe estar en preparación antes de marcarlo como listo.')
+            return redirect('inicio')
+
+        pedido.estado = 'listo'
+        ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pedido_listo', razon=f'Pedido N°{pedido.id}')
+        Notificacion.objects.create(
+            usuario=pedido.comprador,
+            mensaje=f'Tu Pedido N°{pedido.id} está listo para retiro.',
+        )
+        messages.success(request, f'Pedido N°{pedido.id} marcado como listo para retiro.')
     elif accion == 'cancelar':
+        if pedido.estado != 'pendiente':
+            messages.error(request, 'Solo se pueden cancelar pedidos pendientes.')
+            return redirect('inicio')
+
         motivo_cancelacion = request.POST.get('motivo_cancelacion', '').strip()
         if motivo_cancelacion:
             mensaje = f"Tu pedido N°{pedido.id} fue cancelado por el vendedor. Motivo: {motivo_cancelacion}"
@@ -1074,6 +1093,47 @@ def actualizar_estado_pedido(request, pedido_id):
 
     pedido.save(update_fields=['estado', 'motivo_cancelacion'])
     return redirect('inicio')
+
+
+@require_http_methods(['POST'])
+def confirmar_retiro_pedido(request, pedido_id):
+    """Permite al comprador confirmar que retiró un pedido listo en tienda."""
+    if not request.user.is_authenticated:
+        return redirect('/accounts/login/')
+
+    try:
+        perfil = request.user.perfil
+    except Perfil.DoesNotExist:
+        return redirect('/')
+
+    if perfil.rol != 'comprador':
+        return redirect('/')
+
+    pedido = get_object_or_404(
+        Pedido,
+        id=pedido_id,
+        comprador=request.user,
+        tipo_entrega='tienda',
+    )
+
+    if pedido.estado != 'listo':
+        messages.error(request, 'El pedido todavía no está listo para confirmar el retiro.')
+        return redirect('mis_pedidos')
+
+    pedido.estado = 'completado'
+    pedido.save(update_fields=['estado'])
+    ProductActionLog.objects.create(
+        producto=pedido.producto,
+        actor=request.user,
+        accion='pedido_completado',
+        razon=f'Pedido N°{pedido.id} retirado por el comprador',
+    )
+    Notificacion.objects.create(
+        usuario=pedido.vendedor,
+        mensaje=f'El comprador confirmó el retiro del Pedido N°{pedido.id}. El pedido fue completado.',
+    )
+    messages.success(request, f'Pedido N°{pedido.id} completado. Gracias por confirmar el retiro.')
+    return redirect('mis_pedidos')
 
 
 def subir_comprobante(request, pedido_id):
@@ -1148,18 +1208,25 @@ def revisar_comprobante(request, proof_id):
     accion = request.POST.get('accion', '').strip().lower()
 
     if accion == 'aprobar':
+        pedido = comprobante.pedido
+        if pedido.estado == 'pendiente' and pedido.producto.stock < pedido.cantidad:
+            messages.error(request, 'No hay suficiente stock para aprobar y preparar este pedido.')
+            return redirect('ver_comprobantes_vendedor')
+
         comprobante.estado = 'aprobado'
         comprobante.revisado_por = request.user
         comprobante.fecha_revision = timezone.now()
         comprobante.save()
 
-        pedido = comprobante.pedido
-        pedido.estado = 'confirmado'
-        pedido.save(update_fields=['estado'])
+        if pedido.estado == 'pendiente':
+            pedido.producto.stock -= pedido.cantidad
+            pedido.producto.save(update_fields=['stock'])
+            pedido.estado = 'preparando'
+            pedido.save(update_fields=['estado'])
 
         ProductActionLog.objects.create(producto=pedido.producto, actor=request.user, accion='pago_aprobado', razon=f'Pedido N°{pedido.id}')
 
-        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f"Tu pago para el pedido N°{pedido.id} ha sido aprobado. El vendedor procederá al despacho.")
+        Notificacion.objects.create(usuario=pedido.comprador, mensaje=f"Tu pago para el Pedido N°{pedido.id} fue aprobado y el pedido se está preparando.")
 
         messages.success(request, f'Comprobante #{comprobante.id} aprobado y comprador notificado.')
 

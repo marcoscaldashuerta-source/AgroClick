@@ -74,6 +74,16 @@
                                                 {% else %}
                                                     <span class="status-badge estado-pendiente">Esperando comprobante</span>
                                                 {% endif %}
+                                            {% elif pedido.estado == 'preparando' and pedido.tipo_entrega == 'tienda' %}
+                                                <form method="post" action="{% url 'actualizar_estado_pedido' pedido.id %}" style="display: inline-flex; margin: 0;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="accion" value="marcar_listo">
+                                                    <button type="submit" class="btn btn-primary">Pedido listo</button>
+                                                </form>
+                                            {% elif pedido.estado == 'listo' and pedido.tipo_entrega == 'tienda' %}
+                                                <span class="status-badge estado-listo">Esperando confirmación del comprador</span>
+                                            {% elif pedido.estado == 'completado' %}
+                                                <span class="status-badge estado-completado">Pedido finalizado</span>
                                             {% endif %}
                                         </div>
                                     </td>
