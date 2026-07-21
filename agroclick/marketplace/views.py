@@ -167,7 +167,7 @@ def inicio(request):
     now = timezone.now()
     for p in productos:
         try:
-            p.is_new = (now - p.fecha_creacion) <= timedelta(days=14)
+            p.is_new = (now - p.fecha_creacion) <= timedelta(days=1)
         except Exception:
             p.is_new = False
 
@@ -203,10 +203,12 @@ def registro(request):
                 password=form.cleaned_data['password']
             )
 
+            # Delivery se aprueba automáticamente, vendedor requiere aprobación manual
+            es_delivery = form.cleaned_data['rol'] == 'delivery'
             Perfil.objects.create(
                 usuario=usuario,
                 rol=form.cleaned_data['rol'],
-                aprobado=False
+                aprobado=es_delivery
             )
 
             return redirect('login')
