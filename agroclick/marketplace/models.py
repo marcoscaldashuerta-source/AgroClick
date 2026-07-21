@@ -242,12 +242,51 @@ class SolicitudEntrega(models.Model):
         return f"Entrega de {self.comprador.username} - {self.get_tipo_entrega_display()}"
 
 
+class DatosTransferenciaVendedor(models.Model):
+    """Datos bancarios que un vendedor publica para recibir transferencias."""
+
+    TIPO_CUENTA_CHOICES = [
+        ('corriente', 'Cuenta corriente'),
+        ('vista', 'Cuenta vista'),
+        ('ahorro', 'Cuenta de ahorro'),
+        ('rut', 'Cuenta RUT'),
+    ]
+
+    vendedor = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='datos_transferencia',
+    )
+    banco = models.CharField(max_length=100)
+    tipo_cuenta = models.CharField(max_length=20, choices=TIPO_CUENTA_CHOICES)
+    numero_cuenta = models.CharField(max_length=50)
+    titular = models.CharField(max_length=150)
+    rut = models.CharField(max_length=20)
+    email = models.EmailField()
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Datos de transferencia de {self.vendedor.username}"
+
+    @property
+    def esta_completo(self):
+        return all([
+            self.banco,
+            self.tipo_cuenta,
+            self.numero_cuenta,
+            self.titular,
+            self.rut,
+            self.email,
+        ])
+
+
 class Pedido(models.Model):
     """Registro de un pedido confirmado por un comprador para un vendedor."""
 
     ESTADO_PEDIDO_CHOICES = [
         ('pendiente', 'Pendiente'),
         ('confirmado', 'Confirmado'),
+        ('preparando', 'Preparando'),
         ('cancelado', 'Cancelado'),
     ]
 

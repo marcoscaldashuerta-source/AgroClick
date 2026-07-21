@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
 
-from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, Notificacion, deshabilitar_cuenta_usuario, ProductImage
+from .models import Perfil, Producto, Carrito, ItemCarrito, Pedido, Notificacion, deshabilitar_cuenta_usuario, ProductImage, DatosTransferenciaVendedor, PaymentProof
 
 
 class DeshabilitarCuentaUsuarioTests(TestCase):
@@ -126,6 +126,15 @@ class CheckoutOrdersTests(TestCase):
         vendedor = User.objects.create_user(username='vendedor_test', email='vendedor@test.com', password='pass1234')
         Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
         Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+        DatosTransferenciaVendedor.objects.create(
+            vendedor=vendedor,
+            banco='Banco Test',
+            tipo_cuenta='corriente',
+            numero_cuenta='123456',
+            titular='Vendedor Test',
+            rut='12.345.678-9',
+            email='vendedor@test.com',
+        )
 
         producto = Producto.objects.create(
             vendedor=vendedor,
@@ -168,6 +177,15 @@ class CheckoutOrdersTests(TestCase):
         vendedor = User.objects.create_user(username='vendedor_multi', email='vendedor_multi@test.com', password='pass1234')
         Perfil.objects.create(usuario=comprador, rol='comprador', aprobado=True)
         Perfil.objects.create(usuario=vendedor, rol='vendedor', aprobado=True)
+        DatosTransferenciaVendedor.objects.create(
+            vendedor=vendedor,
+            banco='Banco Test',
+            tipo_cuenta='corriente',
+            numero_cuenta='654321',
+            titular='Vendedor Multi',
+            rut='11.111.111-1',
+            email='vendedor_multi@test.com',
+        )
 
         tomate = Producto.objects.create(
             vendedor=vendedor,
@@ -211,6 +229,135 @@ class CheckoutOrdersTests(TestCase):
         self.assertEqual(pedido.direccion_entrega, 'Calle 456')
         self.assertIn('Tomate', pedido.productos_detalle)
         self.assertIn('Plátano', pedido.productos_detalle)
+
+
+class TransferenciaVendedorTests(TestCase):
+    def setUp(self):
+        self.comprador = User.objects.create_user(username='comprador_transfer', password='pass1234')
+        self.vendedor = User.objects.create_user(username='vendedor_transfer', password='pass1234')
+        Perfil.objects.create(usuario=self.comprador, rol='comprador', aprobado=True)
+        Perfil.objects.create(usuario=self.vendedor, rol='vendedor', aprobado=True)
+        self.producto = Producto.objects.create(
+            vendedor=self.vendedor,
+            nombre='Caja transferencia',
+            categoria='Verduras',
+            descripcion='Producto para transferencia',
+            precio=8000,
+            unidad_venta='unidad',
+            stock=10,
+            borrador=False,
+            estado='activo',
+        )
+
+    def crear_carrito(self):
+        carrito, _ = Carrito.objects.get_or_create(comprador=self.comprador)
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+        return carrito
+
+    def crear_datos_transferencia(self):
+        return DatosTransferenciaVendedor.objects.create(
+            vendedor=self.vendedor,
+            banco='Banco QA',
+            tipo_cuenta='vista',
+            numero_cuenta='998877',
+            titular='Vendedor Transferencia',
+            rut='10.000.000-1',
+            email='transferencia@example.com',
+        )
+
+    def test_vendedor_guarda_mis_datos_y_habilita_transferencias(self):
+        self.client.force_login(self.vendedor)
+
+        response = self.client.post('/vendedor/mis-datos/', {
+            'banco': 'Banco QA',
+            'tipo_cuenta': 'corriente',
+            'numero_cuenta': '12345678',
+            'titular': 'Vendedor Transferencia',
+            'rut': '10.000.000-1',
+            'email': 'transferencia@example.com',
+        }, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        datos = DatosTransferenciaVendedor.objects.get(vendedor=self.vendedor)
+        self.assertTrue(datos.esta_completo)
+        self.assertContains(response, 'Transferencias habilitadas')
+
+    def test_menu_principal_del_vendedor_muestra_mis_datos(self):
+        self.client.force_login(self.vendedor)
+
+        response = self.client.get('/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mis datos')
+        self.assertContains(response, '/vendedor/mis-datos/')
+
+    def test_checkout_bloquea_transferencia_si_faltan_datos_del_vendedor(self):
+        carrito = self.crear_carrito()
+        self.client.force_login(self.comprador)
+
+        response = self.client.post('/carrito/checkout/', {
+            'tipo_entrega': 'tienda',
+            'tipo_pago': 'transferencia',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Transferencia no disponible')
+        self.assertEqual(Pedido.objects.filter(comprador=self.comprador).count(), 0)
+        self.assertEqual(carrito.items.count(), 1)
+
+    def test_checkout_muestra_datos_reales_y_boton_subir_comprobante(self):
+        self.crear_datos_transferencia()
+        self.crear_carrito()
+        self.client.force_login(self.comprador)
+
+        response = self.client.post('/carrito/checkout/', {
+            'tipo_entrega': 'tienda',
+            'tipo_pago': 'transferencia',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        pedido = Pedido.objects.get(comprador=self.comprador)
+        self.assertEqual(pedido.estado, 'pendiente')
+        self.assertContains(response, 'Pedido pendiente de comprobante')
+        self.assertContains(response, 'Banco QA')
+        self.assertContains(response, f'/pedido/{pedido.id}/subir-comprobante/')
+
+    def test_vendedor_solo_acepta_transferencia_despues_del_comprobante(self):
+        pedido = Pedido.objects.create(
+            comprador=self.comprador,
+            vendedor=self.vendedor,
+            producto=self.producto,
+            cantidad=1,
+            precio_unitario=8000,
+            total=8000,
+            tipo_entrega='tienda',
+            tipo_pago='transferencia',
+            estado='pendiente',
+        )
+        self.client.force_login(self.vendedor)
+
+        self.client.post(f'/pedido/estado/{pedido.id}/', {'accion': 'confirmar'})
+        pedido.refresh_from_db()
+        self.assertEqual(pedido.estado, 'pendiente')
+
+        comprobante = PaymentProof.objects.create(
+            pedido=pedido,
+            imagen=SimpleUploadedFile('comprobante.jpg', b'contenido-prueba', content_type='image/jpeg'),
+            subido_por=self.comprador,
+            estado='pendiente',
+        )
+        response = self.client.post(
+            f'/pedido/estado/{pedido.id}/',
+            {'accion': 'confirmar'},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        pedido.refresh_from_db()
+        comprobante.refresh_from_db()
+        self.assertEqual(pedido.estado, 'preparando')
+        self.assertEqual(comprobante.estado, 'aprobado')
+        self.assertEqual(comprobante.revisado_por, self.vendedor)
 
 
 class NavbarMisPedidosTests(TestCase):
@@ -306,7 +453,7 @@ class ActualizarEstadoPedidoTests(TestCase):
             tipo_entrega='delivery',
             direccion_entrega='Calle 456',
             referencia='Portón negro',
-            tipo_pago='transferencia',
+            tipo_pago='efectivo',
             estado='pendiente',
         )
 
@@ -316,7 +463,7 @@ class ActualizarEstadoPedidoTests(TestCase):
         self.assertEqual(response.status_code, 200)
         pedido.refresh_from_db()
         producto.refresh_from_db()
-        self.assertEqual(pedido.estado, 'confirmado')
+        self.assertEqual(pedido.estado, 'preparando')
         self.assertEqual(producto.stock, 5)
 
 
